@@ -2,23 +2,27 @@
 
 ## 1. 项目概述
 
-**项目简介：** DaoMind 是一个现代化、简洁、平衡的系统框架，采用 monorepo 架构设计。Modulux 是高效、灵活、可复用的模块化组件库，是 DaoMind 的重要组成部分。项目基于 TypeScript 开发，注重代码质量和可维护性。
+**项目简介：** DaoMind 是一个基于道家哲学思想的现代化系统框架，采用 monorepo 架构设计。Modulux 是其核心组件库，提供高效、灵活、可复用的模块化组件。项目基于 TypeScript 开发，融合东方传统智慧与现代技术，注重代码质量、可维护性和系统平衡。
 
 **核心功能：**
-- **DaoMind Core**：提供完整的系统架构解决方案，注重设计哲学和用户体验，支持模块化开发和快速迭代
+- **DaoMind Core**：提供完整的系统架构解决方案，基于道家哲学思想，支持模块化开发和快速迭代
 - **Modulux Components**：提供标准化、高质量的模块化组件，加速开发过程，确保代码一致性和可维护性
 - **类型安全**：基于 TypeScript 开发，提供完整的类型定义
-- **生态系统**：包含多个功能模块，如代理管理、应用容器、监控系统等
+- **消息传递系统（DaoQi）**：基于四气通道（天、地、人、冲）的消息总线，支持高效的系统内部通信
+- **监控系统（DaoMonitor）**：包含阴阳仪表盘、热力图、向量场、告警引擎和诊断引擎，提供全面的系统监控
+- **代理管理**：支持代理的创建、初始化、激活和管理
+- **模块管理**：支持模块的注册、初始化、激活和管理
 - **性能优化**：内置基准测试套件，确保系统性能
 - **扩展性**：提供清晰的接口和类型定义，便于扩展和定制
 
 **哲学架构：**
-- **道宇宙（daoCollective）**：基于帛书版《道德经》的哲学架构
-- **无（daoNothing）**：潜在性空间，类型论根基
+- **道宇宙（daoCollective）**：基于帛书版《道德经》的哲学架构，系统总入口
+- **无（daoNothing）**：潜在性空间，类型论根基，零运行时开销
 - **有（daoAnything）**：显化容器，实例化空间
-- **气（Qi）**：消息总线/数据流，四通道系统
-- **反者道之动**：反馈回归四阶段生命周期
+- **气（Qi）**：消息总线/数据流，四通道系统（天/地/人/冲）
+- **反者道之动**：反馈回归四阶段生命周期（感知 → 聚合 → 冲和 → 归元）
 - **阴阳平衡**：冲气调节机制，五组阴阳对偶矩阵
+- **自然无为**：自适应策略，去中心化协调
 
 ## 2. 环境要求
 
@@ -88,48 +92,199 @@ pnpm run typecheck
    
    const agent = createAgent({
      id: 'example-agent',
-     // 配置选项
+     type: 'test',
+     config: {
+       // 配置选项
+     }
    });
    ```
 
 ### 4.2 核心功能操作示例
 
-#### 4.2.1 使用 Modulux Qi 进行消息传递
+#### 4.2.1 代理管理
 
 ```typescript
-import { createQiChannel } from '@modulux/qi';
+import { createAgent } from '@daomind/agents';
 
-// 创建通道
-const channel = createQiChannel('chong-qi');
-
-// 发送消息
-channel.send({ type: 'test', data: 'Hello DaoMind' });
-
-// 接收消息
-channel.on('message', (message) => {
-  console.log('Received message:', message);
+// 创建代理
+const agent = createAgent({
+  id: 'test-agent',
+  type: 'test',
+  config: {}
 });
+
+// 初始化代理
+await agent.initialize();
+
+// 激活代理
+await agent.activate();
+
+// 执行动作
+const result = await agent.execute('test-action', { message: 'Hello DaoMind' });
+console.log('执行结果:', result);
+
+// 让代理休息
+await agent.rest();
+
+// 终止代理
+await agent.terminate();
 ```
 
-#### 4.2.2 使用 DaoMind Monitor 进行系统监控
+#### 4.2.2 模块管理
 
 ```typescript
-import { createMonitor } from '@daomind/monitor';
+import { registerModule, getModule, getAllModules } from '@daomind/anything';
 
-// 创建监控实例
-const monitor = createMonitor();
+// 注册模块
+const module = await registerModule({
+  id: 'test-module',
+  name: 'test-module',
+  existentialType: 'anything',
+  config: {}
+});
 
-// 注册指标
-const gauge = monitor.createGauge('system_health', 'System health status');
+// 初始化模块
+await module.initialize();
 
-// 更新指标
-setInterval(() => {
-  gauge.set(Math.random() * 100);
-}, 1000);
+// 激活模块
+await module.activate();
 
-// 生成快照
-const snapshot = monitor.createSnapshot();
-console.log('System snapshot:', snapshot);
+// 获取模块
+const retrievedModule = await getModule('test-module');
+
+// 获取所有模块
+const allModules = await getAllModules();
+console.log('所有模块:', allModules);
+```
+
+#### 4.2.3 消息传递系统（DaoQi）
+
+```typescript
+import { DaoHunyuanBus, TianQiChannel, DiQiChannel, RenQiChannel, ChongQiChannel } from '@modulux/qi';
+
+// 创建混元气总线
+const bus = new DaoHunyuanBus();
+
+// 监听总线消息
+bus.on('message', (message) => {
+  console.log('总线收到消息:', message);
+});
+
+// 创建四气通道
+const tianChannel = new TianQiChannel('tian', bus);
+const diChannel = new DiQiChannel('di', bus);
+const renChannel = new RenQiChannel('ren', bus);
+const chongChannel = new ChongQiChannel('chong', bus);
+
+// 通过天气通道发送消息
+tianChannel.send('source-node', 'target-node', { type: 'command', data: 'Hello from Tian' });
+
+// 通过地气通道发送消息
+diChannel.send('source-node', 'target-node', { type: 'data', data: { value: 42 } });
+
+// 通过人气通道发送消息
+renChannel.send('source-node', 'target-node', { type: 'event', data: 'User logged in' });
+
+// 通过冲气通道发送消息
+chongChannel.send('source-node', 'target-node', { type: 'balance', data: { yin: 50, yang: 50 } });
+
+// 获取总线统计信息
+const stats = bus.getStats();
+console.log('总线统计信息:', stats);
+```
+
+#### 4.2.4 监控系统（DaoMonitor）
+
+```typescript
+import { 
+  DaoYinYangGaugeEngine, 
+  DaoHeatmapEngine, 
+  DaoVectorField, 
+  DaoAlertEngine, 
+  DaoDiagnosisEngine, 
+  DaoSnapshotAggregator 
+} from '@daomind/monitor';
+
+// 创建阴阳仪表盘引擎
+const gaugeEngine = new DaoYinYangGaugeEngine();
+
+// 更新阴阳平衡状态
+gaugeEngine.updatePair('system_health', 'system_health_yin', 'system_health_yang', 30, 70);
+
+// 获取系统健康状态
+const healthStatus = gaugeEngine.getGauge('system_health');
+console.log('系统健康状态:', healthStatus);
+
+// 创建热力图引擎
+const heatmapEngine = new DaoHeatmapEngine();
+
+// 记录热力图数据
+heatmapEngine.record('chong', 'source-node', 'target-node', 100, 50, 0.01);
+
+// 获取热力图数据
+const heatmapData = heatmapEngine.getHeatmap();
+console.log('热力图数据:', heatmapData);
+
+// 创建向量场
+const vectorField = new DaoVectorField();
+
+// 记录流量向量
+vectorField.recordFlow('node-1', 'node-2', 50, Math.PI / 4, 0.5);
+
+// 获取系统热点
+const hotspots = vectorField.getHotspots(5);
+console.log('系统热点:', hotspots);
+
+// 创建告警引擎
+const alertEngine = new DaoAlertEngine();
+
+// 设置告警规则
+const customRules = [
+  {
+    condition: (metrics) => metrics.rate > 200,
+    severity: 'critical',
+    reason: 'high_load',
+    messageTemplate: '系统负载过高：消息速率 {rate} msg/s 超过阈值 200'
+  }
+];
+alertEngine.setRules(customRules);
+
+// 检查告警
+const alert = alertEngine.check('chong', 'source-node', 'target-node', {
+  rate: 250,
+  latency: 30,
+  errorRate: 0.01
+});
+console.log('告警检查结果:', alert);
+
+// 创建诊断引擎
+const diagnosisEngine = new DaoDiagnosisEngine();
+
+// 诊断系统状态
+const diagnosis = diagnosisEngine.diagnose({
+  nodeId: 'system',
+  system: { cpu: 75, memory: 60, disk: 45 },
+  network: { latency: 15, throughput: 100 },
+  services: { api: 'healthy', database: 'healthy', cache: 'warning' }
+});
+console.log('系统诊断结果:', diagnosis);
+
+// 创建快照聚合器
+const snapshotAggregator = new DaoSnapshotAggregator(
+  heatmapEngine,
+  vectorField,
+  gaugeEngine,
+  alertEngine,
+  diagnosisEngine
+);
+
+// 生成系统快照
+const snapshot = snapshotAggregator.capture();
+console.log('系统快照:', snapshot);
+
+// 获取快照历史
+const snapshotHistory = snapshotAggregator.getHistory(5);
+console.log('快照历史数量:', snapshotHistory.length);
 ```
 
 ### 4.3 命令行参数说明
@@ -146,29 +301,66 @@ pnpm run verify [options]
 # --silent           静默模式，只输出错误
 ```
 
+### 4.4 测试文件说明
+
+项目包含多个测试文件，用于验证核心功能的正常运行：
+
+#### 4.4.1 核心代理和模块管理测试
+
+**文件：** `test-project.js`
+
+**功能：** 测试代理的创建、初始化、激活、执行动作、休息和终止，以及模块的注册、初始化、激活和管理。
+
+**运行：**
+```bash
+node test-project.js
+```
+
+#### 4.4.2 消息传递系统测试
+
+**文件：** `test-qi-message.js`
+
+**功能：** 测试混元气总线的创建、四气通道的创建、消息发送和接收，以及总线统计信息的获取。
+
+**运行：**
+```bash
+node test-qi-message.js
+```
+
+#### 4.4.3 监控系统测试
+
+**文件：** `test-monitor-system.js`
+
+**功能：** 测试阴阳仪表盘、热力图、向量场、告警引擎、诊断引擎和快照聚合器的功能。
+
+**运行：**
+```bash
+node test-monitor-system.js
+```
+
 ## 5. 项目结构说明
 
 ```
-daomind-modulux/
+dao/
 ├── .trae/             # Trae 配置和规范
 ├── packages/          # 子包目录
-│   ├── daomind-agents/     # 代理管理
-│   ├── daomind-anything/   # 通用容器
-│   ├── daomind-apps/       # 应用管理
-│   ├── daomind-benchmark/  # 基准测试
-│   ├── daomind-chronos/    # 时间管理
-│   ├── daomind-collective/ # 集体智能
-│   ├── daomind-docs/       # 文档管理
-│   ├── daomind-feedback/   # 反馈系统
-│   ├── daomind-monitor/    # 监控系统
-│   ├── daomind-nexus/      # 服务协调
-│   ├── daomind-nothing/    # 无为约束
-│   ├── daomind-pages/      # 页面管理
-│   ├── modulux-qi/         # 消息传递
-│   ├── modulux-skills/     # 技能管理
-│   ├── modulux-spaces/     # 空间管理
-│   ├── daomind-verify/     # 验证工具
-│   └── daomind-times/      # 时间工具
+│   ├── daoAgents/     # 代理管理
+│   ├── daoAnything/   # 通用容器
+│   ├── daoApps/       # 应用管理
+│   ├── daoBenchmark/  # 基准测试
+│   ├── daoChronos/    # 时间管理
+│   ├── daoCollective/ # 集体智能
+│   ├── daoDocs/       # 文档管理
+│   ├── daoFeedback/   # 反馈系统
+│   ├── daoMonitor/    # 监控系统
+│   ├── daoNexus/      # 服务协调
+│   ├── daoNothing/    # 无为约束
+│   ├── daoPages/      # 页面管理
+│   ├── daoQi/         # 消息传递
+│   ├── daoSkills/     # 技能管理
+│   ├── daoSpaces/     # 空间管理
+│   ├── daoVerify/     # 验证工具
+│   └── daoTimes/      # 时间工具
 ├── .eslintrc.js       # ESLint 配置
 ├── .gitignore         # Git 忽略文件
 ├── .prettierrc        # Prettier 配置
@@ -177,7 +369,10 @@ daomind-modulux/
 ├── pnpm-lock.yaml     # pnpm 锁定文件
 ├── pnpm-workspace.yaml # pnpm 工作区配置
 ├── tsconfig.base.json # TypeScript 基础配置
-└── tsconfig.json      # TypeScript 配置
+├── tsconfig.json      # TypeScript 配置
+├── test-project.js    # 核心代理和模块管理测试
+├── test-qi-message.js # 消息传递系统测试
+└── test-monitor-system.js # 监控系统测试
 ```
 
 **核心目录/文件说明：**
@@ -186,6 +381,9 @@ daomind-modulux/
 - **.trae/specs/**：包含项目规范和任务定义
 - **tsconfig.base.json**：TypeScript 基础配置，被所有子包继承
 - **pnpm-workspace.yaml**：pnpm 工作区配置，定义了项目的包结构
+- **test-project.js**：核心代理和模块管理测试文件
+- **test-qi-message.js**：消息传递系统测试文件
+- **test-monitor-system.js**：监控系统测试文件
 
 ## 6. 配置方法
 

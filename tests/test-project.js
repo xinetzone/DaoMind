@@ -1,6 +1,6 @@
 // 测试 DaoMind 项目的核心功能
-import { DaoBaseAgent } from './packages/daoAgents/src/base.js';
-import { daoContainer } from './packages/daoAnything/src/container.js';
+import { DaoBaseAgent } from './packages/daoAgents/dist/base.js';
+import { daoContainer } from './packages/daoAnything/dist/container.js';
 
 // 测试 1: 创建一个简单的代理类
 class TestAgent extends DaoBaseAgent {

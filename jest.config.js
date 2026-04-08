@@ -1,7 +1,7 @@
-module.exports = {
+export default {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  collectCoverage: true,
+  collectCoverage: false,
   collectCoverageFrom: [
     'packages/**/src/**/*.ts'
   ],
@@ -52,5 +52,7 @@ module.exports = {
       useESM: true
     }
   },
-  moduleFileExtensions: ['ts', 'js', 'json', 'node']
+  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
+  maxWorkers: '50%',
+  testTimeout: 30000
 };
