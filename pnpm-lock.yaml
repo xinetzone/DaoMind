@@ -1,0 +1,102 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      '@types/node':
+        specifier: ^25.5.2
+        version: 25.5.2
+      typescript:
+        specifier: ^6.0.2
+        version: 6.0.2
+
+  packages/daoAgents: {}
+
+  packages/daoAnything: {}
+
+  packages/daoApps: {}
+
+  packages/daoBenchmark:
+    dependencies:
+      '@daomind/feedback':
+        specifier: workspace:*
+        version: link:../daoFeedback
+      '@daomind/nexus':
+        specifier: workspace:*
+        version: link:../daoNexus
+      '@modulux/qi':
+        specifier: workspace:*
+        version: link:../daoQi
+
+  packages/daoChronos: {}
+
+  packages/daoCollective: {}
+
+  packages/daoDocs: {}
+
+  packages/daoFeedback: {}
+
+  packages/daoMonitor: {}
+
+  packages/daoNexus: {}
+
+  packages/daoNothing: {}
+
+  packages/daoPages: {}
+
+  packages/daoQi: {}
+
+  packages/daoSkilLs: {}
+
+  packages/daoSpaces: {}
+
+  packages/daoVerify:
+    dependencies:
+      chalk:
+        specifier: ^5.3.0
+        version: 5.6.2
+      commander:
+        specifier: ^12.1.0
+        version: 12.1.0
+
+  packages/daotimes: {}
+
+packages:
+
+  '@types/node@25.5.2':
+    resolution: {integrity: sha512-tO4ZIRKNC+MDWV4qKVZe3Ql/woTnmHDr5JD8UI5hn2pwBrHEwOEMZK7WlNb5RKB6EoJ02gwmQS9OrjuFnZYdpg==}
+
+  chalk@5.6.2:
+    resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
+    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
+
+  commander@12.1.0:
+    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
+    engines: {node: '>=18'}
+
+  typescript@6.0.2:
+    resolution: {integrity: sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  undici-types@7.18.2:
+    resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
+
+snapshots:
+
+  '@types/node@25.5.2':
+    dependencies:
+      undici-types: 7.18.2
+
+  chalk@5.6.2: {}
+
+  commander@12.1.0: {}
+
+  typescript@6.0.2: {}
+
+  undici-types@7.18.2: {}

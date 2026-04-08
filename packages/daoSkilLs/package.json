@@ -1,0 +1,1 @@
+{"name": "@daomind/skills", "version": "1.0.0", "type": "module", "description": "DaoMind Skills — 技能库 — 行动者的能力集合", "main": "./dist/index.js", "types": "./dist/index.d.ts", "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}}, "scripts": {"build": "tsc"}}

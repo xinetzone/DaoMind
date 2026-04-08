@@ -1,0 +1,1 @@
+{"name":"daomind-modulux","version":"1.0.0","private":true,"description":"DaoMind & Modulux — 现代化系统框架与模块化组件库","scripts":{"build":"pnpm -r build","test":"pnpm -r test","lint":"pnpm -r lint"},"engines":{"node":">=18.0.0"},"devDependencies":{"@types/node":"^25.5.2","typescript":"^6.0.2"}}
