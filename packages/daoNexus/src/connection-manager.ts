@@ -97,7 +97,7 @@ class DaoConnectionManager {
   cleanupIdle(): number {
     const now = Date.now();
     let cleaned = 0;
-    for (const [, conn] of this.connections) {
+    for (const [handle, conn] of this.connections) {
       if (conn.state === 'established' && now - conn.lastActiveAt > this.idleTimeout) {
         (conn as { state: ConnectionState }).state = 'closing';
         cleaned++;
