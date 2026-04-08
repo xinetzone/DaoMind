@@ -1,5 +1,6 @@
 module.exports = {
   root: true,
+  ignorePatterns: ['**/coverage/**'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2022,

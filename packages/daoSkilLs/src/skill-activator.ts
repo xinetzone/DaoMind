@@ -2,7 +2,7 @@
 // 设计原则：技能激活器管理技能的生命周期转换
 // 从潜能态到活跃态的跃迁，需满足依赖条件方可完成
 
-import type { SkillId, SkillState, DaoSkillInstance } from './types.js';
+import type { SkillId } from './types.js';
 import { daoSkillRegistry } from './skill-registry.js';
 
 class DaoSkillActivator {

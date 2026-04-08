@@ -1,4 +1,4 @@
-import type { ComponentState, DaoComponent, DaoViewSnapshot } from './types';
+import type { DaoComponent, DaoViewSnapshot } from './types';
 
 class DaoComponentTree {
   private components = new Map<string, DaoComponent>();
@@ -69,7 +69,7 @@ class DaoComponentTree {
     if (!this.rootId) return;
     const root = this.components.get(this.rootId);
     if (!root) return;
-    const visit = (comp: DaoComponent, depth: number) => {
+    const visit = (comp: DaoComponent, depth: number): void => {
       visitor(comp, depth);
       if (comp.children) {
         for (const child of comp.children) {

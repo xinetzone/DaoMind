@@ -35,7 +35,7 @@ describe('DaoAgents and DaoApps Integration', () => {
         }
       ];
 
-      async execute<T>(action: string, payload?: unknown): Promise<T> {
+      async execute<T>(_action: string, _payload?: unknown): Promise<T> {
         return { success: true, result: '测试执行成功' } as T;
       }
     }

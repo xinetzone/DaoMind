@@ -4,7 +4,7 @@
  * 气在传输过程中需要凝聚成形（序列化）与散开还原（反序列化）
  */
 
-import type { DaoMessage, DaoMessageBody, DaoEncoding } from '../types/message.js';
+import type { DaoMessage, DaoMessageBody } from '../types/message.js';
 
 const BINARY_MAGIC = 0xD401;
 

@@ -1,4 +1,4 @@
-import type { ExistenceContract, MutabilityContract } from '@daomind/nothing';
+import type { ExistenceContract } from '@daomind/nothing';
 
 export interface DaoModuleRegistration {
   readonly name: string;

@@ -25,8 +25,6 @@ const ENCOURAGED_NATURE_WORDS = [
   'mirror', 'lotus', 'bamboo', 'crane', 'phoenix', 'dragon',
 ] as const;
 
-const DAO_PREFIX_PATTERN = /^export\s+(?:type\s+|(?:const|let|var|function|class|enum)\s+(?:dao\w+)|default)/;
-
 async function collectTsFiles(dir: string): Promise<string[]> {
   const results: string[] = [];
   try {

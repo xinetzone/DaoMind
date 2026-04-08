@@ -107,7 +107,6 @@ export class RenQiChannel {
     incoming: { from: string; to: string; messageType: string; payload: unknown; timestamp: number },
   ): Promise<void> {
     const winner = existing.timestamp <= incoming.timestamp ? existing : incoming;
-    const loser = winner === existing ? incoming : existing;
 
     const message: DaoMessage = {
       header: {

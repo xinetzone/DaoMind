@@ -76,7 +76,7 @@ describe('daoGetChronos', () => {
 
   test('should return instance with custom config on first call', () => {
     // Clear singleton instance
-    (daoGetChronos as any).instance = null;
+    (daoGetChronos as typeof daoGetChronos & { instance: DaoChronos | null }).instance = null;
     
     const config = {
       tickInterval: 1000,

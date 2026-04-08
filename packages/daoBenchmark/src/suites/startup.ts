@@ -19,9 +19,9 @@ export async function daoMeasureStartupTime(): Promise<DaoBenchmarkResult> {
   const importTimings: ImportTiming[] = [];
 
   const packages = [
-    { name: '@dao/nexus', importFn: () => import('../../daoNexus/dist/index.js' as string) },
-    { name: '@dao/feedback', importFn: () => import('../../daoFeedback/dist/index.js' as string) },
-    { name: '@dao/qi', importFn: () => import('../../daoQi/dist/index.js' as string) },
+    { name: '@dao/nexus', importFn: (): Promise<unknown> => import('../../daoNexus/dist/index.js' as string) },
+    { name: '@dao/feedback', importFn: (): Promise<unknown> => import('../../daoFeedback/dist/index.js' as string) },
+    { name: '@dao/qi', importFn: (): Promise<unknown> => import('../../daoQi/dist/index.js' as string) },
   ];
 
   for (const pkg of packages) {

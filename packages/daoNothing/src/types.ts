@@ -8,4 +8,4 @@ export type Void = never;
 export type Potential<T = unknown> = T extends Void ? never : T | undefined;
 
 /** 万物之始 —— 所有类型的联合上限 */
-export type Origin = Potential<any>;
+export type Origin = Potential<unknown>;

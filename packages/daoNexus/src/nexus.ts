@@ -3,10 +3,10 @@
 // 为枢纽中心提供统一的请求处理能力
 
 import type { DaoNexusRequest, DaoNexusMetrics, DaoRouteRule } from './types';
-import { daoConnectionManager } from './connection-manager';
-import { daoNexusRouter } from './router';
-import { daoLoadBalancer } from './load-balancer';
-import { daoServiceDiscovery } from './service-discovery';
+import { daoConnectionManager, DaoConnectionManager } from './connection-manager';
+import { daoNexusRouter, DaoNexusRouter } from './router';
+import { daoLoadBalancer, DaoLoadBalancer } from './load-balancer';
+import { daoServiceDiscovery, DaoServiceDiscovery } from './service-discovery';
 
 class DaoNexus {
   private totalRequests = 0;
@@ -81,19 +81,19 @@ class DaoNexus {
     this.totalLatency = 0;
   }
 
-  get connectionManager() {
+  get connectionManager(): DaoConnectionManager {
     return daoConnectionManager;
   }
 
-  get router() {
+  get router(): DaoNexusRouter {
     return daoNexusRouter;
   }
 
-  get loadBalancer() {
+  get loadBalancer(): DaoLoadBalancer {
     return daoLoadBalancer;
   }
 
-  get serviceDiscovery() {
+  get serviceDiscovery(): DaoServiceDiscovery {
     return daoServiceDiscovery;
   }
 }

@@ -1,6 +1,12 @@
 import { daoNexus, DaoNexus } from '../nexus';
 import { daoServiceDiscovery } from '../service-discovery';
 
+interface RequestResult {
+  target: string;
+  status: string;
+  latency?: number;
+}
+
 describe('DaoNexus', () => {
   let nexus: DaoNexus;
 
@@ -91,8 +97,8 @@ describe('daoNexus singleton', () => {
 
     // Verify the result
     expect(result).toBeDefined();
-    expect((result as any).target).toBe('http://localhost:3000');
-    expect((result as any).status).toBe('sent');
+    expect((result as RequestResult).target).toBe('http://localhost:3000');
+    expect((result as RequestResult).status).toBe('sent');
 
     // Verify metrics were updated
     const metrics = daoNexus.getMetrics();
@@ -122,8 +128,8 @@ describe('daoNexus singleton', () => {
 
     // Verify the result
     expect(result).toBeDefined();
-    expect((result as any).target).toBe('http://localhost:3000');
-    expect((result as any).status).toBe('sent');
+    expect((result as RequestResult).target).toBe('http://localhost:3000');
+    expect((result as RequestResult).status).toBe('sent');
   });
 
   test('should handle request with undefined payload', async () => {
@@ -140,7 +146,7 @@ describe('daoNexus singleton', () => {
 
     // Verify the result
     expect(result).toBeDefined();
-    expect((result as any).target).toBe('http://localhost:3000');
-    expect((result as any).status).toBe('sent');
+    expect((result as RequestResult).target).toBe('http://localhost:3000');
+    expect((result as RequestResult).status).toBe('sent');
   });
 });

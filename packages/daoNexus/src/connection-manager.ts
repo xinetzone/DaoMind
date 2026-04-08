@@ -81,7 +81,7 @@ class DaoConnectionManager {
     return result;
   }
 
-  async sendMessage(handle: ConnectionHandle, data: unknown): Promise<void> {
+  async sendMessage(handle: ConnectionHandle, _data: unknown): Promise<void> {
     const conn = this.connections.get(handle);
     if (!conn) {
       throw new Error(`[daoNexus] 连接不存在`);
@@ -97,7 +97,7 @@ class DaoConnectionManager {
   cleanupIdle(): number {
     const now = Date.now();
     let cleaned = 0;
-    for (const [handle, conn] of this.connections) {
+    for (const [, conn] of this.connections) {
       if (conn.state === 'established' && now - conn.lastActiveAt > this.idleTimeout) {
         (conn as { state: ConnectionState }).state = 'closing';
         cleaned++;

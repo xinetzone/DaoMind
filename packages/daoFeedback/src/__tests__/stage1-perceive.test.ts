@@ -182,7 +182,7 @@ describe('DaoPerceiver', () => {
   });
 
   test('should return opportunity level for default case', () => {
-    const level = perceiver.evaluateLevel('performance' as any, {});
+    const level = perceiver.evaluateLevel('performance', {});
     expect(level).toBe('opportunity');
   });
 

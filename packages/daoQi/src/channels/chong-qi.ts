@@ -235,7 +235,7 @@ export class ChongQiRegulator {
       }
     }
 
-    console.log(
+    console.warn(
       `[冲气] 执行信号: ${signal.pairId} | 方向: ${signal.imbalanceDirection} | ` +
         `动作: ${signal.compensationAction} | 紧急程度: ${signal.urgency} | ` +
         `目标值: ${signal.targetValue.toFixed(4)} | 偏差: ${(signal.deviationMagnitude * 100).toFixed(1)}%`,

@@ -21,7 +21,7 @@ const CHECK_REGISTRY: ReadonlyMap<DaoVerificationCategory, { fn: CheckFn; label:
 function computePhilosophyDepth(results: ReadonlyArray<DaoVerificationResult>): DaoPhilosophyAssessment {
   const resultMap = new Map(results.map((r) => [r.category, r.score]));
 
-  const getScore = (cat: DaoVerificationCategory) => resultMap.get(cat) ?? 0;
+  const getScore = (cat: DaoVerificationCategory): number => resultMap.get(cat) ?? 0;
 
   const ontologyScore = Math.round(
     (getScore('wu-you-balance') * 0.4 + getScore('yin-yang-balance') * 0.35 + getScore('architecture-depth') * 0.25)

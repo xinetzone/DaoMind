@@ -92,12 +92,12 @@ export class HunyuanBus extends EventEmitter {
   }
 
   subscribe(channelType: QiChannelType, handler: (msg: DaoMessage) => void | Promise<void>): () => void {
-    const wrapper = (msg: DaoMessage) => handler(msg);
+    const wrapper = (msg: DaoMessage): void | Promise<void> => handler(msg);
     this.addListener(channelType, wrapper);
     return () => this.removeListener(channelType, wrapper);
   }
 
-  async probe(target: string): Promise<number> {
+  async probe(_target: string): Promise<number> {
     const start = Date.now();
     return new Promise((resolve) => {
       setTimeout(() => {

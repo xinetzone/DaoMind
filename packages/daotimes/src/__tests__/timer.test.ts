@@ -76,9 +76,7 @@ describe('DaoTimer', () => {
   });
 
   test('should set and clear timeout', (done) => {
-    let called = false;
     const handle = timer.setTimeout(() => {
-      called = true;
       done();
     }, 10);
 
@@ -100,7 +98,7 @@ describe('DaoTimer', () => {
   });
 
   test('should handle timeout callback errors silently', (done) => {
-    const handle = timer.setTimeout(() => {
+    timer.setTimeout(() => {
       throw new Error('Test error');
     }, 10);
 

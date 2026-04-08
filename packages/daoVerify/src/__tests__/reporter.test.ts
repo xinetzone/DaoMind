@@ -1,5 +1,4 @@
 import { DaoVerificationReporter } from '../reporter';
-import type { DaoVerificationResult } from '../types';
 
 describe('DaoVerificationReporter', () => {
   let reporter: DaoVerificationReporter;
