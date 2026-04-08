@@ -8,7 +8,7 @@ import {
   DaoAlertEngine, 
   DaoDiagnosisEngine, 
   DaoSnapshotAggregator 
-} from './packages/daoMonitor/dist/index.js';
+} from '@daomind/monitor';
 
 console.log('DaoMonitor 模块加载成功');
 

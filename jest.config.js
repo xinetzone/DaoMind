@@ -29,7 +29,8 @@ export default {
   },
   roots: [
     '<rootDir>/packages',
-    '<rootDir>/src'
+    '<rootDir>/src',
+    '<rootDir>/tests'
   ],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {

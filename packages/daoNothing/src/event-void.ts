@@ -50,7 +50,13 @@ class DaoNothingVoid extends EventEmitter {
         if (event) {
           return this.listenerCount(event);
         }
-        return this.listenerCount('observed');
+        // 返回所有事件的总监听器数量
+        const events = this.eventNames();
+        let count = 0;
+        for (const eventName of events) {
+          count += this.listenerCount(eventName);
+        }
+        return count;
       },
       state: 'void' as const,
     };
