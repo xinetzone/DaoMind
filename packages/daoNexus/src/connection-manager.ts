@@ -97,12 +97,20 @@ class DaoConnectionManager {
   cleanupIdle(): number {
     const now = Date.now();
     let cleaned = 0;
+    const toCleanup: ConnectionHandle[] = [];
+    
     for (const [handle, conn] of this.connections) {
       if (conn.state === 'established' && now - conn.lastActiveAt > this.idleTimeout) {
-        (conn as { state: ConnectionState }).state = 'closing';
+        toCleanup.push(handle);
+      }
+    }
+    
+    for (const handle of toCleanup) {
+      if (this.disconnect(handle)) {
         cleaned++;
       }
     }
+    
     return cleaned;
   }
 
