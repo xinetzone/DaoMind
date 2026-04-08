@@ -1,4 +1,4 @@
-import type { DocType, DaoDocEntry } from './types.js';
+import type { DocType, DaoDocEntry } from './types';
 
 class DaoDocStore {
   private docs = new Map<string, DaoDocEntry>();

@@ -1,8 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import type { VerificationResult, VerificationCategory } from '../types.js';
+import type { DaoVerificationResult, DaoVerificationCategory } from '../types.js';
 
-const CATEGORY: VerificationCategory = 'naming-convention';
+const CATEGORY: DaoVerificationCategory = 'naming-convention';
 
 const FORBIDDEN_PATTERNS = [
   { pattern: /\bkill\b/i, label: 'kill' },
@@ -127,7 +127,7 @@ async function analyzeNaming(packagesDir: string): Promise<NamingStats> {
   return stats;
 }
 
-export async function daoCheckNamingConvention(projectRoot: string): Promise<VerificationResult> {
+export async function daoCheckNamingConvention(projectRoot: string): Promise<DaoVerificationResult> {
   const timestamp = Date.now();
   const packagesDir = path.join(projectRoot, 'packages');
 

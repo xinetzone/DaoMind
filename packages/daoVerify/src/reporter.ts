@@ -1,15 +1,15 @@
-import type { VerificationReport, VerificationResult, VerificationCategory, PhilosophyAssessment } from './types.js';
-import { VERIFICATION_CATEGORY_LABELS } from './types.js';
-import { daoCheckWuYouBalance } from './checks/wu-you-balance.js';
-import { daoCheckFeedbackIntegrity } from './checks/feedback-integrity.js';
-import { daoCheckQiFluency } from './checks/qi-fluency.js';
-import { daoCheckYinYangBalance } from './checks/yin-yang-balance.js';
-import { daoCheckWuWeiVerification } from './checks/wu-wei-verification.js';
-import { daoCheckNamingConvention } from './checks/naming-convention.js';
+import type { DaoVerificationReport, DaoVerificationResult, DaoVerificationCategory, DaoPhilosophyAssessment } from './types';
+import { DAO_VERIFICATION_CATEGORY_LABELS } from './types';
+import { daoCheckWuYouBalance } from './checks/wu-you-balance';
+import { daoCheckFeedbackIntegrity } from './checks/feedback-integrity';
+import { daoCheckQiFluency } from './checks/qi-fluency';
+import { daoCheckYinYangBalance } from './checks/yin-yang-balance';
+import { daoCheckWuWeiVerification } from './checks/wu-wei-verification';
+import { daoCheckNamingConvention } from './checks/naming-convention';
 
-type CheckFn = (projectRoot: string) => Promise<VerificationResult>;
+type CheckFn = (projectRoot: string) => Promise<DaoVerificationResult>;
 
-const CHECK_REGISTRY: ReadonlyMap<VerificationCategory, { fn: CheckFn; label: string }> = new Map([
+const CHECK_REGISTRY: ReadonlyMap<DaoVerificationCategory, { fn: CheckFn; label: string }> = new Map([
   ['wu-you-balance', { fn: daoCheckWuYouBalance, label: '有无平衡' }],
   ['feedback-integrity', { fn: daoCheckFeedbackIntegrity, label: '反馈完整性' }],
   ['qi-fluency', { fn: daoCheckQiFluency, label: '气流通畅性' }],
@@ -18,10 +18,10 @@ const CHECK_REGISTRY: ReadonlyMap<VerificationCategory, { fn: CheckFn; label: st
   ['naming-convention', { fn: daoCheckNamingConvention, label: '命名规范' }],
 ]);
 
-function computePhilosophyDepth(results: ReadonlyArray<VerificationResult>): PhilosophyAssessment {
+function computePhilosophyDepth(results: ReadonlyArray<DaoVerificationResult>): DaoPhilosophyAssessment {
   const resultMap = new Map(results.map((r) => [r.category, r.score]));
 
-  const getScore = (cat: VerificationCategory) => resultMap.get(cat) ?? 0;
+  const getScore = (cat: DaoVerificationCategory) => resultMap.get(cat) ?? 0;
 
   const ontologyScore = Math.round(
     (getScore('wu-you-balance') * 0.4 + getScore('yin-yang-balance') * 0.35 + getScore('architecture-depth') * 0.25)
@@ -63,20 +63,20 @@ function computePhilosophyDepth(results: ReadonlyArray<VerificationResult>): Phi
 }
 
 export class DaoVerificationReporter {
-  async runAllChecks(projectRoot: string): Promise<VerificationReport> {
+  async runAllChecks(projectRoot: string): Promise<DaoVerificationReport> {
     const checks = Array.from(CHECK_REGISTRY.values());
     const results = await Promise.all(checks.map((c) => c.fn(projectRoot)));
     return this.buildReport(results);
   }
 
-  async runCategory(category: VerificationCategory, projectRoot: string): Promise<VerificationReport> {
+  async runCategory(category: DaoVerificationCategory, projectRoot: string): Promise<DaoVerificationReport> {
     if (category === 'overall') {
       return this.runAllChecks(projectRoot);
     }
 
     const entry = CHECK_REGISTRY.get(category);
     if (!entry) {
-      const emptyResults: VerificationResult[] = [{
+      const emptyResults: DaoVerificationResult[] = [{
         name: `未知类别: ${category}`,
         category,
         passed: false,
@@ -91,7 +91,7 @@ export class DaoVerificationReporter {
     return this.buildReport([result]);
   }
 
-  private buildReport(results: ReadonlyArray<VerificationResult>): VerificationReport {
+  private buildReport(results: ReadonlyArray<DaoVerificationResult>): DaoVerificationReport {
     const passedCount = results.filter((r) => r.passed).length;
     const failedCount = results.length - passedCount;
     const overallScore = results.length > 0
@@ -101,10 +101,10 @@ export class DaoVerificationReporter {
     const warnings: string[] = [];
     for (const r of results) {
       if (!r.passed && r.recommendation) {
-        warnings.push(`[${VERIFICATION_CATEGORY_LABELS[r.category] ?? r.category}] ${r.recommendation}`);
+        warnings.push(`[${DAO_VERIFICATION_CATEGORY_LABELS[r.category as DaoVerificationCategory] ?? r.category}] ${r.recommendation}`);
       }
       if (r.passed && r.score < 80) {
-        warnings.push(`[${VERIFICATION_CATEGORY_LABELS[r.category] ?? r.category}] 得分 ${r.score}，有改进空间`);
+        warnings.push(`[${DAO_VERIFICATION_CATEGORY_LABELS[r.category as DaoVerificationCategory] ?? r.category}] 得分 ${r.score}，有改进空间`);
       }
     }
 
@@ -119,7 +119,7 @@ export class DaoVerificationReporter {
     };
   }
 
-  generateMarkdown(report: VerificationReport): string {
+  generateMarkdown(report: DaoVerificationReport): string {
     const lines: string[] = [];
     lines.push('# 道宇宙 · 哲学一致性检验报告');
     lines.push('');
@@ -147,13 +147,13 @@ export class DaoVerificationReporter {
 
     for (const r of report.results) {
       const statusIcon = r.passed ? '✅' : '❌';
-      const categoryLabel = VERIFICATION_CATEGORY_LABELS[r.category] ?? r.category;
+      const categoryLabel = DAO_VERIFICATION_CATEGORY_LABELS[r.category as DaoVerificationCategory] ?? r.category;
       lines.push(`### ${statusIcon} ${r.name}（${categoryLabel}）— 得分: ${r.score}`);
       lines.push('');
       lines.push(`<details>`);
       lines.push(`<summary>点击展开详情</summary>`);
       lines.push('');
-      lines.push(r.details.split('\n').map((l) => `> ${l}`).join('\n'));
+      lines.push(r.details.split('\n').map((l: string) => `> ${l}`).join('\n'));
       if (r.recommendation) {
         lines.push('');
         lines.push(`**建议**: ${r.recommendation}`);
@@ -178,7 +178,7 @@ export class DaoVerificationReporter {
     return lines.join('\n');
   }
 
-  generateJson(report: VerificationReport): string {
+  generateJson(report: DaoVerificationReport): string {
     return JSON.stringify(report, null, 2);
   }
 }

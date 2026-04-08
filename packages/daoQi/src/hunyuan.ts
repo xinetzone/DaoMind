@@ -5,18 +5,19 @@
  */
 
 import { EventEmitter } from 'node:events';
-import type { DaoMessage } from './types/message.js';
-import type { QiChannelType } from './types/channel.js';
-import { DaoSerializer } from './codec/serializer.js';
-import { DaoRouter } from './router.js';
-import { DaoSigner } from './signer.js';
-import { DaoBackpressure } from './backpressure.js';
+import type { DaoMessage } from './types/message';
+import type { QiChannelType } from './types/channel';
+import { DaoSerializer } from './codec/serializer';
+import { DaoRouter } from './router';
+import { DaoSigner } from './signer';
+import { DaoBackpressure } from './backpressure';
 
 export class HunyuanBus extends EventEmitter {
   private serializer: DaoSerializer;
   private router: DaoRouter;
   private signer: DaoSigner;
   private backpressure: DaoBackpressure;
+  private secretKey: string;
   private totalEmitted = 0;
   private totalDropped = 0;
   private channelsStats: Record<QiChannelType | string, number> = {
@@ -31,18 +32,44 @@ export class HunyuanBus extends EventEmitter {
     router: DaoRouter,
     signer: DaoSigner,
     backpressure: DaoBackpressure,
+    secretKey: string,
   ) {
     super();
     this.serializer = serializer;
     this.router = router;
     this.signer = signer;
     this.backpressure = backpressure;
+    this.secretKey = secretKey;
   }
 
   async send(message: DaoMessage): Promise<void> {
+    // Validate message structure
+    if (!message || !message.header) {
+      throw new Error('[HunyuanBus] Invalid message: missing header');
+    }
+    if (!message.header.source) {
+      throw new Error('[HunyuanBus] Invalid message: missing source in header');
+    }
+    if (!message.header.target) {
+      throw new Error('[HunyuanBus] Invalid message: missing target in header');
+    }
+    if (!message.header.timestamp) {
+      throw new Error('[HunyuanBus] Invalid message: missing timestamp in header');
+    }
+    if (!message.header.type) {
+      throw new Error('[HunyuanBus] Invalid message: missing type in header');
+    }
+    if (!message.body) {
+      throw new Error('[HunyuanBus] Invalid message: missing body');
+    }
+    // Only check body.type if body is an object
+    if (typeof message.body === 'object' && message.body !== null && !('type' in message.body)) {
+      throw new Error('[HunyuanBus] Invalid message: missing type in body');
+    }
+    
     if (message.header.signature) {
       const payload = JSON.stringify(message.header);
-      if (!this.signer.verify(payload, message.header.signature, 'root-secret')) {
+      if (!this.signer.verify(payload, message.header.signature, this.secretKey)) {
         this.totalDropped++;
         return;
       }

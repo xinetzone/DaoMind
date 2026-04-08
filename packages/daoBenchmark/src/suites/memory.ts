@@ -1,4 +1,4 @@
-import type { BenchmarkMetric, BenchmarkResult } from '../types.js';
+import type { DaoBenchmarkMetric, DaoBenchmarkResult } from '../types.js';
 
 const MEMORY_TARGET_MB = 50;
 
@@ -11,7 +11,7 @@ function daoGetHeapUsedMB(): number {
   return process.memoryUsage().heapUsed / (1024 * 1024);
 }
 
-export function daoMeasureMemoryBaseline(): BenchmarkResult {
+export function daoMeasureMemoryBaseline(): DaoBenchmarkResult {
   const suiteStart = process.hrtime.bigint();
   const baselineMemory = daoGetHeapUsedMB();
   const snapshots: MemorySnapshot[] = [];
@@ -39,7 +39,7 @@ export function daoMeasureMemoryBaseline(): BenchmarkResult {
   const currentMemory = daoGetHeapUsedMB();
   const totalMemoryMB = Math.round((currentMemory - baselineMemory) * 100) / 100;
 
-  const metrics: BenchmarkMetric[] = [
+  const metrics: DaoBenchmarkMetric[] = [
     {
       name: '空载堆内存',
       value: totalMemoryMB,

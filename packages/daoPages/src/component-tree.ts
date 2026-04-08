@@ -1,4 +1,4 @@
-import type { ComponentState, DaoComponent, DaoViewSnapshot } from './types.js';
+import type { ComponentState, DaoComponent, DaoViewSnapshot } from './types';
 
 class DaoComponentTree {
   private components = new Map<string, DaoComponent>();
@@ -6,12 +6,27 @@ class DaoComponentTree {
   private version = 0;
   private latestSnapshot: DaoViewSnapshot | null = null;
 
-  mount(component: Omit<DaoComponent, 'state'>): string {
+  mount(component: Omit<DaoComponent, 'state'> & { children?: readonly (Omit<DaoComponent, 'state'>)[] }): string {
     const id = component.id;
     if (this.components.has(id)) {
       throw new Error(`[daoPages] 组件已挂载: ${id}`);
     }
-    const fullComponent: DaoComponent = { ...component, state: 'mounted' };
+    
+    // Process children recursively
+    let processedChildren: readonly DaoComponent[] | undefined;
+    if (component.children) {
+      processedChildren = component.children.map(child => {
+        const fullChild: DaoComponent = { ...child, state: 'mounted' };
+        this.components.set(child.id, fullChild);
+        return fullChild;
+      });
+    }
+    
+    const fullComponent: DaoComponent = { 
+      ...component, 
+      state: 'mounted',
+      children: processedChildren
+    };
     this.components.set(id, fullComponent);
     if (!this.rootId) this.rootId = id;
     this.version++;

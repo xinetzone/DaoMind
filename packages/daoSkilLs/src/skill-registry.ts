@@ -2,7 +2,7 @@
 // 设计原则：技能库为行动者提供能力存储与管理
 // 新注册之技能默认处于潜能态，体现"藏器"之意
 
-import type { SkillId, SkillState, DaoSkillDefinition, DaoSkillInstance } from './types.js';
+import type { SkillId, SkillState, DaoSkillDefinition, DaoSkillInstance } from './types';
 
 class DaoSkillRegistry {
   private readonly skills = new Map<SkillId, DaoSkillInstance>();

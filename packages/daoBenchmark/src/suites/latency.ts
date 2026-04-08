@@ -1,4 +1,4 @@
-import type { BenchmarkMetric, BenchmarkResult } from '../types.js';
+import type { DaoBenchmarkMetric, DaoBenchmarkResult } from '../types.js';
 
 const LATENCY_P99_TARGET_MS = 500;
 
@@ -31,7 +31,7 @@ async function daoSimulateFeedbackLoop(): Promise<number> {
   return Number(end - start) / 1_000_000;
 }
 
-export async function daoMeasureFeedbackLatency(iterations: number = 1000): Promise<BenchmarkResult> {
+export async function daoMeasureFeedbackLatency(iterations: number = 1000): Promise<DaoBenchmarkResult> {
   const suiteStart = process.hrtime.bigint();
   const latencies: number[] = [];
 
@@ -45,7 +45,7 @@ export async function daoMeasureFeedbackLatency(iterations: number = 1000): Prom
   const p99 = daoCalculatePercentile(latencies, 99);
   const p999 = daoCalculatePercentile(latencies, 99.9);
 
-  const metrics: BenchmarkMetric[] = [
+  const metrics: DaoBenchmarkMetric[] = [
     {
       name: 'P50 延迟',
       value: Math.round(p50 * 100) / 100,

@@ -1,4 +1,4 @@
-import type { Void } from './types.js';
+import type { Void } from './types';
 
 /** 检查某值是否符合"无"的定义 */
 export function daoIsNothing(value: unknown): value is Void {

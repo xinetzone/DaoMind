@@ -1,8 +1,8 @@
-import type { BenchmarkMetric, BenchmarkResult } from '../types.js';
+import type { DaoBenchmarkMetric, DaoBenchmarkResult } from '../types.js';
 
 const THROUGHPUT_TARGET_MSG_PER_SEC = 10000;
 
-export async function daoMeasureThroughput(messageCount: number = 10000): Promise<BenchmarkResult> {
+export async function daoMeasureThroughput(messageCount: number = 10000): Promise<DaoBenchmarkResult> {
   const suiteStart = process.hrtime.bigint();
   const channelResults: Array<{ channel: string; throughput: number }> = [];
 
@@ -25,20 +25,20 @@ export async function daoMeasureThroughput(messageCount: number = 10000): Promis
 
   const avgThroughput = channelResults.reduce((sum, r) => sum + r.throughput, 0) / channelResults.length;
 
-  const metrics: BenchmarkMetric[] = [
+  const metrics: DaoBenchmarkMetric[] = [
     {
       name: '平均吞吐量',
       value: Math.round(avgThroughput),
       unit: 'msg/s',
       target: THROUGHPUT_TARGET_MSG_PER_SEC,
-      passed: avgThroughput > THROUGHPUT_TARGET_MSG_PER_SEC,
+      passed: avgThroughput >= THROUGHPUT_TARGET_MSG_PER_SEC,
     },
-    ...channelResults.map(r => ({
-      name: `${r.channel}通道吞吐量`,
-      value: Math.round(r.throughput),
+    ...channelResults.map(c => ({
+      name: `${c.channel}通道吞吐量`,
+      value: Math.round(c.throughput),
       unit: 'msg/s',
       target: THROUGHPUT_TARGET_MSG_PER_SEC,
-      passed: r.throughput > THROUGHPUT_TARGET_MSG_PER_SEC,
+      passed: c.throughput >= THROUGHPUT_TARGET_MSG_PER_SEC,
     })),
   ];
 

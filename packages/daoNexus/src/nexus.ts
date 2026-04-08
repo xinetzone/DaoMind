@@ -2,11 +2,11 @@
 // 设计原则：Nexus 核心聚合连接管理、路由、负载均衡与服务发现
 // 为枢纽中心提供统一的请求处理能力
 
-import type { DaoNexusRequest, DaoNexusMetrics, DaoRouteRule } from './types.js';
-import { daoConnectionManager } from './connection-manager.js';
-import { daoNexusRouter } from './router.js';
-import { daoLoadBalancer } from './load-balancer.js';
-import { daoServiceDiscovery } from './service-discovery.js';
+import type { DaoNexusRequest, DaoNexusMetrics, DaoRouteRule } from './types';
+import { daoConnectionManager } from './connection-manager';
+import { daoNexusRouter } from './router';
+import { daoLoadBalancer } from './load-balancer';
+import { daoServiceDiscovery } from './service-discovery';
 
 class DaoNexus {
   private totalRequests = 0;

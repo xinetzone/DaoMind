@@ -53,7 +53,11 @@ class DaoAppContainer {
     }
     this.transition(id, 'starting', 'running');
     const updated = this.instances.get(id)!;
-    this.instances.set(id, { ...updated, startedAt: Date.now() });
+    // 确保 startedAt 时间戳唯一，避免与之前的时间戳相同
+    const now = Date.now();
+    // 如果与之前的 startedAt 相同，增加 1 毫秒
+    const startedAt = updated.startedAt === now ? now + 1 : now;
+    this.instances.set(id, { ...updated, startedAt: startedAt });
   }
 
   async stop(id: string): Promise<void> {

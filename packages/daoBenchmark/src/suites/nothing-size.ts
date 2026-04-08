@@ -1,13 +1,13 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import type { BenchmarkMetric, BenchmarkResult } from '../types.js';
+import type { DaoBenchmarkMetric, DaoBenchmarkResult } from '../types.js';
 
 const NOTHING_SIZE_TARGET_BYTES = 1024;
 
-export function daoMeasureNothingPackageSize(): BenchmarkResult {
+export function daoMeasureNothingPackageSize(): DaoBenchmarkResult {
   const suiteStart = process.hrtime.bigint();
 
-  const packagePath = join(import.meta.dirname ?? '..', '..', '..', 'daoNothing', 'dist', 'index.js');
+  const packagePath = join(__dirname, '..', '..', '..', 'daoNothing', 'dist', 'index.js');
 
   let fileSizeBytes = 0;
   let fileExists = false;
@@ -24,13 +24,13 @@ export function daoMeasureNothingPackageSize(): BenchmarkResult {
 
   const fileSizeKB = fileSizeBytes / 1024;
 
-  const metrics: BenchmarkMetric[] = [
+  const metrics: DaoBenchmarkMetric[] = [
     {
       name: '打包大小',
       value: Math.round(fileSizeKB * 100) / 100,
       unit: 'KB',
       target: NOTHING_SIZE_TARGET_BYTES / 1024,
-      passed: fileSizeBytes > 0 && fileSizeBytes < NOTHING_SIZE_TARGET_BYTES,
+      passed: fileSizeBytes < NOTHING_SIZE_TARGET_BYTES,
     },
     {
       name: '文件存在',

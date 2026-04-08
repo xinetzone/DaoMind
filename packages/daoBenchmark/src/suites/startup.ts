@@ -1,4 +1,4 @@
-import type { BenchmarkMetric, BenchmarkResult } from '../types.js';
+import type { DaoBenchmarkMetric, DaoBenchmarkResult } from '../types.js';
 
 const STARTUP_TARGET_MS = 2000;
 
@@ -14,7 +14,7 @@ async function daoMeasureImportTime(importFn: () => Promise<unknown>): Promise<n
   return Number(end - start) / 1_000_000;
 }
 
-export async function daoMeasureStartupTime(): Promise<BenchmarkResult> {
+export async function daoMeasureStartupTime(): Promise<DaoBenchmarkResult> {
   const suiteStart = process.hrtime.bigint();
   const importTimings: ImportTiming[] = [];
 
@@ -37,7 +37,7 @@ export async function daoMeasureStartupTime(): Promise<BenchmarkResult> {
     .filter(t => t.durationMs >= 0)
     .reduce((sum, t) => sum + t.durationMs, 0);
 
-  const metrics: BenchmarkMetric[] = [
+  const metrics: DaoBenchmarkMetric[] = [
     {
       name: '总启动时间',
       value: Math.round(totalDurationMs * 100) / 100,

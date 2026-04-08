@@ -1,8 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import type { VerificationResult, VerificationCategory } from '../types.js';
+import type { DaoVerificationResult, DaoVerificationCategory } from '../types.js';
 
-const CATEGORY: VerificationCategory = 'yin-yang-balance';
+const CATEGORY: DaoVerificationCategory = 'yin-yang-balance';
 
 const EXPECTED_PAIR_COUNT = 5;
 
@@ -71,7 +71,7 @@ async function checkChongQiRegulatorMethods(chongQiPath: string): Promise<{
   }
 }
 
-export async function daoCheckYinYangBalance(projectRoot: string): Promise<VerificationResult> {
+export async function daoCheckYinYangBalance(projectRoot: string): Promise<DaoVerificationResult> {
   const timestamp = Date.now();
   const chongQiPath = path.join(
     projectRoot, 'packages', 'daoQi', 'src', 'channels', 'chong-qi.ts'

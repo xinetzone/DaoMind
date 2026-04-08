@@ -1,13 +1,13 @@
 import { readFileSync, existsSync } from 'node:fs';
-import type { BenchmarkResult, PerformanceReport } from './types.js';
-import { daoMeasureStartupTime } from './suites/startup.js';
-import { daoMeasureMemoryBaseline } from './suites/memory.js';
-import { daoMeasureThroughput } from './suites/throughput.js';
-import { daoMeasureFeedbackLatency } from './suites/latency.js';
-import { daoMeasureConvergenceTime } from './suites/chong-qi-convergence.js';
-import { daoMeasureNothingPackageSize } from './suites/nothing-size.js';
+import type { DaoBenchmarkResult, DaoPerformanceReport } from './types';
+import { daoMeasureStartupTime } from './suites/startup';
+import { daoMeasureMemoryBaseline } from './suites/memory';
+import { daoMeasureThroughput } from './suites/throughput';
+import { daoMeasureFeedbackLatency } from './suites/latency';
+import { daoMeasureConvergenceTime } from './suites/chong-qi-convergence';
+import { daoMeasureNothingPackageSize } from './suites/nothing-size';
 
-type SuiteRunner = () => Promise<BenchmarkResult> | BenchmarkResult;
+type SuiteRunner = () => Promise<DaoBenchmarkResult> | DaoBenchmarkResult;
 
 const SUITE_MAP: Record<string, SuiteRunner> = {
   '启动时间测试': daoMeasureStartupTime,
@@ -21,9 +21,9 @@ const SUITE_MAP: Record<string, SuiteRunner> = {
 const QUICK_SUITES = ['启动时间测试', '内存占用测试', '消息吞吐量测试'];
 
 export class DaoBenchmarkRunner {
-  private results: BenchmarkResult[] = [];
+  private results: DaoBenchmarkResult[] = [];
 
-  async daoRunAll(): Promise<PerformanceReport> {
+  async daoRunAll(): Promise<DaoPerformanceReport> {
     this.results = [];
     const suiteNames = Object.keys(SUITE_MAP);
 
@@ -37,7 +37,7 @@ export class DaoBenchmarkRunner {
     return this.daoBuildReport();
   }
 
-  async daoRunSuite(name: string): Promise<BenchmarkResult> {
+  async daoRunSuite(name: string): Promise<DaoBenchmarkResult> {
     const runner = SUITE_MAP[name];
     if (!runner) {
       throw new Error(`未知测试套件: ${name}. 可用套件: ${Object.keys(SUITE_MAP).join(', ')}`);
@@ -47,7 +47,7 @@ export class DaoBenchmarkRunner {
     return result;
   }
 
-  async daoRunQuick(): Promise<PerformanceReport> {
+  async daoRunQuick(): Promise<DaoPerformanceReport> {
     this.results = [];
 
     for (const name of QUICK_SUITES) {
@@ -61,13 +61,13 @@ export class DaoBenchmarkRunner {
     return this.daoBuildReport();
   }
 
-  async daoCompareWithBaseline(baselinePath: string): Promise<PerformanceReport> {
+  async daoCompareWithBaseline(baselinePath: string): Promise<DaoPerformanceReport> {
     if (!existsSync(baselinePath)) {
       throw new Error(`基线文件不存在: ${baselinePath}`);
     }
 
     const baselineContent = readFileSync(baselinePath, 'utf-8');
-    const baseline: PerformanceReport = JSON.parse(baselineContent);
+    const baseline: DaoPerformanceReport = JSON.parse(baselineContent);
 
     const currentReport = await this.daoRunAll();
 
@@ -120,7 +120,7 @@ export class DaoBenchmarkRunner {
     }
   }
 
-  private daoBuildReport(): PerformanceReport {
+  private daoBuildReport(): DaoPerformanceReport {
     const totalSuites = this.results.length;
     const passedSuites = this.results.filter(r => r.overallPassed).length;
     const failedSuites = totalSuites - passedSuites;
@@ -154,7 +154,7 @@ export class DaoBenchmarkRunner {
     };
   }
 
-  private daoGenerateText(report: PerformanceReport): string {
+  private daoGenerateText(report: DaoPerformanceReport): string {
     const lines: string[] = [];
     lines.push('='.repeat(60));
     lines.push('DAO 性能基准测试报告');
@@ -198,7 +198,7 @@ export class DaoBenchmarkRunner {
     return lines.join('\n');
   }
 
-  private daoGenerateMarkdown(report: PerformanceReport): string {
+  private daoGenerateMarkdown(report: DaoPerformanceReport): string {
     const lines: string[] = [];
     lines.push('# DAO 性能基准测试报告');
     lines.push('');

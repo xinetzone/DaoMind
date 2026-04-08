@@ -4,9 +4,9 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import path from 'node:path';
 import { DaoVerificationReporter } from './reporter.js';
-import type { VerificationCategory } from './types.js';
+import type { DaoVerificationCategory } from './types.js';
 
-const CATEGORY_ALIASES: Record<string, VerificationCategory> = {
+const CATEGORY_ALIASES: Record<string, DaoVerificationCategory> = {
   'wu-you': 'wu-you-balance',
   'balance': 'wu-you-balance',
   'feedback': 'feedback-integrity',
@@ -23,10 +23,10 @@ const CATEGORY_ALIASES: Record<string, VerificationCategory> = {
   'all': 'overall',
 };
 
-function resolveCategory(input?: string): VerificationCategory | undefined {
+function resolveCategory(input?: string): DaoVerificationCategory | undefined {
   if (!input) return undefined;
   const lower = input.toLowerCase();
-  return CATEGORY_ALIASES[lower] ?? (lower as VerificationCategory);
+  return CATEGORY_ALIASES[lower] ?? (lower as DaoVerificationCategory);
 }
 
 import type { ChalkInstance } from 'chalk';

@@ -1,8 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import type { VerificationResult, VerificationCategory } from '../types.js';
+import type { DaoVerificationResult, DaoVerificationCategory } from '../types.js';
 
-const CATEGORY: VerificationCategory = 'qi-fluency';
+const CATEGORY: DaoVerificationCategory = 'qi-fluency';
 
 const REQUIRED_CHANNELS = [
   { file: 'tian-qi.ts', label: '天气通道（天道）' },
@@ -58,7 +58,7 @@ async function checkMessageProtocol(qiSrc: string): Promise<{
   };
 }
 
-export async function daoCheckQiFluency(projectRoot: string): Promise<VerificationResult> {
+export async function daoCheckQiFluency(projectRoot: string): Promise<DaoVerificationResult> {
   const timestamp = Date.now();
   const qiSrc = path.join(projectRoot, 'packages', 'daoQi', 'src');
   const channelsDir = path.join(qiSrc, 'channels');

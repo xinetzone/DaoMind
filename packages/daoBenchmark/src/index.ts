@@ -1,7 +1,7 @@
 export type {
-  BenchmarkMetric,
-  BenchmarkResult,
-  PerformanceReport,
+  DaoBenchmarkMetric,
+  DaoBenchmarkResult,
+  DaoPerformanceReport,
 } from './types.js';
 
 export { DaoBenchmarkRunner } from './runner.js';

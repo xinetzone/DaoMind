@@ -1,4 +1,4 @@
-import type { BenchmarkMetric, BenchmarkResult } from '../types.js';
+import type { DaoBenchmarkMetric, DaoBenchmarkResult } from '../types.js';
 
 const CONVERGENCE_TARGET_SEC = 30;
 
@@ -65,7 +65,7 @@ async function daoSimulateConvergence(scenario: ConvergenceScenario): Promise<Co
 
 export async function daoMeasureConvergenceTime(
   scenarios: ReadonlyArray<ConvergenceScenario> = DEFAULT_SCENARIOS
-): Promise<BenchmarkResult> {
+): Promise<DaoBenchmarkResult> {
   const suiteStart = process.hrtime.bigint();
   const results: ConvergenceResult[] = [];
 
@@ -78,7 +78,7 @@ export async function daoMeasureConvergenceTime(
   const allConverged = results.every(r => r.converged);
   const maxConvergenceTimeSec = maxConvergenceTimeMs / 1000;
 
-  const metrics: BenchmarkMetric[] = [
+  const metrics: DaoBenchmarkMetric[] = [
     {
       name: '最大收敛时间',
       value: Math.round(maxConvergenceTimeSec * 100) / 100,

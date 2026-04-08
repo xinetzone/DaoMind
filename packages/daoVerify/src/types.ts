@@ -1,7 +1,7 @@
 /** 检验结果 */
-export interface VerificationResult {
+export interface DaoVerificationResult {
   readonly name: string;
-  readonly category: VerificationCategory;
+  readonly category: DaoVerificationCategory;
   readonly passed: boolean;
   readonly score: number;
   readonly details: string;
@@ -9,30 +9,19 @@ export interface VerificationResult {
   readonly timestamp: number;
 }
 
-/** 检验类别 */
-export type VerificationCategory =
-  | 'wu-you-balance'
-  | 'feedback-integrity'
-  | 'qi-fluency'
-  | 'yin-yang-balance'
-  | 'wu-wei-verification'
-  | 'naming-convention'
-  | 'architecture-depth'
-  | 'overall';
+export type DaoVerificationCategory = 'wu-you-balance' | 'feedback-integrity' | 'qi-fluency' | 'yin-yang-balance' | 'wu-wei-verification' | 'naming-convention' | 'architecture-depth' | 'overall';
 
-/** 综合检验报告 */
-export interface VerificationReport {
+export interface DaoVerificationReport {
   readonly generatedAt: number;
-  readonly results: ReadonlyArray<VerificationResult>;
+  readonly results: ReadonlyArray<DaoVerificationResult>;
   readonly overallScore: number;
   readonly passedCount: number;
   readonly failedCount: number;
   readonly warnings: ReadonlyArray<string>;
-  readonly philosophyDepth: PhilosophyAssessment;
+  readonly philosophyDepth: DaoPhilosophyAssessment;
 }
 
-/** 哲学深度评估 */
-export interface PhilosophyAssessment {
+export interface DaoPhilosophyAssessment {
   readonly ontologyScore: number;
   readonly epistemologyScore: number;
   readonly methodologyScore: number;
@@ -42,7 +31,7 @@ export interface PhilosophyAssessment {
   readonly weightedTotal: number;
 }
 
-export const VERIFICATION_CATEGORY_LABELS: Record<VerificationCategory, string> = {
+export const DAO_VERIFICATION_CATEGORY_LABELS: Record<DaoVerificationCategory, string> = {
   'wu-you-balance': '有无平衡',
   'feedback-integrity': '反馈完整性',
   'qi-fluency': '气流通畅性',

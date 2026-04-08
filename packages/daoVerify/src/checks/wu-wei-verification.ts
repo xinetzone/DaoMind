@@ -1,8 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import type { VerificationResult, VerificationCategory } from '../types.js';
+import type { DaoVerificationResult, DaoVerificationCategory } from '../types.js';
 
-const CATEGORY: VerificationCategory = 'wu-wei-verification';
+const CATEGORY: DaoVerificationCategory = 'wu-wei-verification';
 
 async function fileExists(filePath: string): Promise<boolean> {
   try {
@@ -65,7 +65,7 @@ async function analyzeCollectiveIndex(collectivePath: string): Promise<Collectiv
   }
 }
 
-export async function daoCheckWuWeiVerification(projectRoot: string): Promise<VerificationResult> {
+export async function daoCheckWuWeiVerification(projectRoot: string): Promise<DaoVerificationResult> {
   const timestamp = Date.now();
   const collectiveIndex = path.join(projectRoot, 'packages', 'daoCollective', 'src', 'index.ts');
 

@@ -1,8 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import type { VerificationResult, VerificationCategory } from '../types.js';
+import type { DaoVerificationResult, DaoVerificationCategory } from '../types.js';
 
-const CATEGORY: VerificationCategory = 'wu-you-balance';
+const CATEGORY: DaoVerificationCategory = 'wu-you-balance';
 
 async function countLines(dir: string): Promise<number> {
   let total = 0;
@@ -46,7 +46,7 @@ async function analyzeNothingContent(projectRoot: string): Promise<{ typeLines: 
   return { typeLines, totalLines };
 }
 
-export async function daoCheckWuYouBalance(projectRoot: string): Promise<VerificationResult> {
+export async function daoCheckWuYouBalance(projectRoot: string): Promise<DaoVerificationResult> {
   const timestamp = Date.now();
   const nothingDir = path.join(projectRoot, 'packages', 'daoNothing', 'src');
   const anythingDir = path.join(projectRoot, 'packages', 'daoAnything', 'src');

@@ -1,5 +1,5 @@
 /** 基准测试指标 */
-export interface BenchmarkMetric {
+export interface DaoBenchmarkMetric {
   readonly name: string;
   readonly value: number;
   readonly unit: string;
@@ -7,19 +7,17 @@ export interface BenchmarkMetric {
   readonly passed: boolean;
 }
 
-/** 基准测试结果 */
-export interface BenchmarkResult {
+export interface DaoBenchmarkResult {
   readonly suiteName: string;
   readonly timestamp: number;
-  readonly metrics: ReadonlyArray<BenchmarkMetric>;
+  readonly metrics: ReadonlyArray<DaoBenchmarkMetric>;
   readonly overallPassed: boolean;
   readonly duration: number;
 }
 
-/** 性能报告 */
-export interface PerformanceReport {
+export interface DaoPerformanceReport {
   readonly generatedAt: number;
-  readonly benchmarks: ReadonlyArray<BenchmarkResult>;
+  readonly benchmarks: ReadonlyArray<DaoBenchmarkResult>;
   readonly summary: {
     totalSuites: number;
     passedSuites: number;

@@ -1,4 +1,4 @@
-import type { QiChannelType, HeatmapPoint } from './types.js';
+import type { QiChannelType, HeatmapPoint } from './types';
 
 const DEFAULT_BUFFER_SIZE = 10000;
 

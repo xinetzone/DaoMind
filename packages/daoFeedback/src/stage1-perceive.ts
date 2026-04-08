@@ -3,7 +3,7 @@ import type {
   SignalLevel,
   SignalCategory,
   DaoFeedbackSignal
-} from './types.js';
+} from './types';
 
 /** 感知配置 — 帛书《道德经》乙本·四十章：反也者，道之动也 */
 export interface PerceiveConfig {

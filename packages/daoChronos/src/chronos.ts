@@ -1,4 +1,4 @@
-import type { DaoChronosConfig, DaoChronosPoint, TimeSource } from './types.js';
+import type { DaoChronosConfig, DaoChronosPoint, TimeSource } from './types';
 
 class DaoChronos {
   private readonly config: Required<DaoChronosConfig>;

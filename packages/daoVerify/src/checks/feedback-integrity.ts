@@ -1,8 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import type { VerificationResult, VerificationCategory } from '../types.js';
+import type { DaoVerificationResult, DaoVerificationCategory } from '../types.js';
 
-const CATEGORY: VerificationCategory = 'feedback-integrity';
+const CATEGORY: DaoVerificationCategory = 'feedback-integrity';
 
 const REQUIRED_STAGES = [
   'stage1-perceive.ts',
@@ -44,7 +44,7 @@ async function checkLifecycleIntegratesStages(lifecyclePath: string): Promise<bo
   }
 }
 
-export async function daoCheckFeedbackIntegrity(projectRoot: string): Promise<VerificationResult> {
+export async function daoCheckFeedbackIntegrity(projectRoot: string): Promise<DaoVerificationResult> {
   const timestamp = Date.now();
   const feedbackSrc = path.join(projectRoot, 'packages', 'daoFeedback', 'src');
   const lifecyclePath = path.join(feedbackSrc, 'lifecycle.ts');
