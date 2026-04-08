@@ -32,8 +32,8 @@
 - Linux 发行版（Ubuntu 20.04 或更高版本）
 
 **编程语言：**
-- Node.js 16.0 或更高版本
-- TypeScript 4.5 或更高版本
+- Node.js 18.0 或更高版本
+- TypeScript 6.0 或更高版本
 
 **依赖软件/工具：**
 - pnpm 6.0 或更高版本（推荐）
@@ -44,7 +44,7 @@
 ### 3.1 克隆项目
 
 ```bash
-git clone https://github.com/your-username/dao.git
+git clone git@github.com:xinetzone/DaoMind.git
 cd dao
 ```
 
@@ -85,7 +85,12 @@ pnpm run typecheck
    pnpm run test
    ```
 
-3. **使用特定包**：
+3. **代码质量检查**：
+   ```bash
+   pnpm run lint
+   ```
+
+4. **使用特定包**：
    ```typescript
    // 示例：使用 DaoMind Agents 包
    import { createAgent } from '@daomind/agents';
@@ -303,39 +308,16 @@ pnpm run verify [options]
 
 ### 4.4 测试文件说明
 
-项目包含多个测试文件，用于验证核心功能的正常运行：
+项目采用 Jest 测试框架，各子包中的测试文件位于 `src/__tests__` 目录下，用于验证核心功能的正常运行。
 
-#### 4.4.1 核心代理和模块管理测试
-
-**文件：** `test-project.js`
-
-**功能：** 测试代理的创建、初始化、激活、执行动作、休息和终止，以及模块的注册、初始化、激活和管理。
-
-**运行：**
+**运行测试：**
 ```bash
-node test-project.js
-```
+# 运行所有测试
+pnpm run test
 
-#### 4.4.2 消息传递系统测试
-
-**文件：** `test-qi-message.js`
-
-**功能：** 测试混元气总线的创建、四气通道的创建、消息发送和接收，以及总线统计信息的获取。
-
-**运行：**
-```bash
-node test-qi-message.js
-```
-
-#### 4.4.3 监控系统测试
-
-**文件：** `test-monitor-system.js`
-
-**功能：** 测试阴阳仪表盘、热力图、向量场、告警引擎、诊断引擎和快照聚合器的功能。
-
-**运行：**
-```bash
-node test-monitor-system.js
+# 运行特定子包的测试
+cd packages/daoAgents
+pnpm run test
 ```
 
 ## 5. 项目结构说明
@@ -357,33 +339,23 @@ dao/
 │   ├── daoNothing/    # 无为约束
 │   ├── daoPages/      # 页面管理
 │   ├── daoQi/         # 消息传递
-│   ├── daoSkills/     # 技能管理
-│   ├── daoSpaces/     # 空间管理
-│   ├── daoVerify/     # 验证工具
-│   └── daoTimes/      # 时间工具
 ├── .eslintrc.js       # ESLint 配置
 ├── .gitignore         # Git 忽略文件
 ├── .prettierrc        # Prettier 配置
 ├── LICENSE            # 许可证文件
+├── README.md          # 项目说明文档
+├── eslint.config.js   # ESLint 配置文件
+├── jest.config.js     # Jest 测试配置
 ├── package.json       # 根包配置
-├── pnpm-lock.yaml     # pnpm 锁定文件
-├── pnpm-workspace.yaml # pnpm 工作区配置
-├── tsconfig.base.json # TypeScript 基础配置
-├── tsconfig.json      # TypeScript 配置
-├── test-project.js    # 核心代理和模块管理测试
-├── test-qi-message.js # 消息传递系统测试
-└── test-monitor-system.js # 监控系统测试
 ```
 
 **核心目录/文件说明：**
 
 - **packages/**：包含所有子包，每个子包都是一个独立的功能模块
 - **.trae/specs/**：包含项目规范和任务定义
-- **tsconfig.base.json**：TypeScript 基础配置，被所有子包继承
-- **pnpm-workspace.yaml**：pnpm 工作区配置，定义了项目的包结构
-- **test-project.js**：核心代理和模块管理测试文件
-- **test-qi-message.js**：消息传递系统测试文件
-- **test-monitor-system.js**：监控系统测试文件
+- **package.json**：根包配置，定义了项目的基本信息和脚本
+- **jest.config.js**：Jest 测试框架配置
+- **eslint.config.js**：ESLint 代码质量检查配置
 
 ## 6. 配置方法
 
