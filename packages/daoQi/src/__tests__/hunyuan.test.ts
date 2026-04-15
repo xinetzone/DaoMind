@@ -182,7 +182,7 @@ describe('HunyuanBus', () => {
   });
 
   test('should handle empty message', async () => {
-    await expect(bus.send({} as Partial<import('../types/message').DaoMessage>)).rejects.toThrow();
+    await expect(bus.send({} as unknown as import('../types/message').DaoMessage)).rejects.toThrow();
   });
 
   test('should handle message without header', async () => {
@@ -193,7 +193,7 @@ describe('HunyuanBus', () => {
       },
     };
 
-    await expect(bus.send(message as Partial<import('../types/message').DaoMessage>)).rejects.toThrow();
+    await expect(bus.send(message as unknown as import('../types/message').DaoMessage)).rejects.toThrow();
   });
 
   test('should handle message without body', async () => {
@@ -210,7 +210,7 @@ describe('HunyuanBus', () => {
       },
     };
 
-    await expect(bus.send(message as Partial<import('../types/message').DaoMessage>)).rejects.toThrow();
+    await expect(bus.send(message as unknown as import('../types/message').DaoMessage)).rejects.toThrow();
   });
 
   test('should handle message with incomplete header', async () => {
@@ -226,7 +226,7 @@ describe('HunyuanBus', () => {
       },
     };
 
-    await expect(bus.send(message as Partial<import('../types/message').DaoMessage>)).rejects.toThrow();
+    await expect(bus.send(message as unknown as import('../types/message').DaoMessage)).rejects.toThrow();
   });
 
   test('should handle message with incomplete body', async () => {
@@ -247,7 +247,7 @@ describe('HunyuanBus', () => {
       },
     };
 
-    await expect(bus.send(message as Partial<import('../types/message').DaoMessage>)).rejects.toThrow();
+    await expect(bus.send(message as unknown as import('../types/message').DaoMessage)).rejects.toThrow();
   });
 
   test('should handle subscribe to empty channel', () => {

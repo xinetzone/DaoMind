@@ -88,7 +88,7 @@ async function testMonitorSystem() {
         latency: Math.random() * 100, // 延迟
         errorRate: Math.random() * 0.1 // 错误率
       };
-      heatmapEngine.record(channelType, source, target, metrics);
+      heatmapEngine.record(channelType as 'tian' | 'di' | 'ren' | 'chong', source, target, metrics);
     }
     
     const heatmapData = heatmapEngine.getHeatmap();
@@ -106,8 +106,9 @@ async function testMonitorSystem() {
       const from = `node-${Math.floor(Math.random() * 5)}`;
       const to = `node-${Math.floor(Math.random() * 5)}`;
       if (from !== to) { // 避免自己到自己的流量
+      const directions = ['downstream', 'upstream', 'lateral', 'balancing'] as const;
         const magnitude = Math.random() * 100;
-        const direction = Math.random() * Math.PI * 2; // 方向（弧度）
+        const direction = directions[Math.floor(Math.random() * directions.length)]!;
         vectorField.recordFlow(from, to, magnitude, direction);
       }
     }
@@ -135,15 +136,15 @@ async function testMonitorSystem() {
     // 设置告警规则
     const customRules = [
       {
-        condition: (metrics) => metrics.rate > 200,
-        severity: 'critical',
-        reason: 'high_load',
+        condition: (metrics: { rate: number; latency: number; errorRate: number }) => metrics.rate > 200,
+        severity: 'critical' as const,
+        reason: 'congestion' as const,
         messageTemplate: '系统负载过高：消息速率 {rate} msg/s 超过阈值 200'
       },
       {
-        condition: (metrics) => metrics.latency > 50,
-        severity: 'warning',
-        reason: 'high_latency',
+        condition: (metrics: { rate: number; latency: number; errorRate: number }) => metrics.latency > 50,
+        severity: 'warning' as const,
+        reason: 'latency_spike' as const,
         messageTemplate: '系统延迟过高：延迟 {latency}ms 超过阈值 50'
       }
     ];
@@ -193,7 +194,7 @@ async function testMonitorSystem() {
       }
     };
     
-    const diagnosis = diagnosisEngine.diagnose(diagnosisData);
+    const diagnosis = diagnosisEngine.diagnose('test-node', 150, 120);
     console.log('系统诊断结果:', diagnosis);
 
     // 测试 12: 使用快照聚合器
@@ -215,10 +216,11 @@ async function testMonitorSystem() {
     console.log('\n=== 测试完成 ===');
   } catch (error) {
     console.error('测试过程中发生错误:', error);
-    console.error('错误堆栈:', error.stack);
+    console.error('错误堆栈:', (error as Error).stack);
   }
 }
 
 console.log('开始执行测试...');
-testMonitorSystem().catch(console.error);
-console.log('测试函数已调用');
+test('DaoMonitor 监控系统集成测试', async () => {
+  await testMonitorSystem();
+}, 30000);
