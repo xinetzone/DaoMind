@@ -82,12 +82,12 @@ export async function daoCheckWuYouBalance(projectRoot: string): Promise<DaoVeri
   } else if (ratio < minRatio) {
     score = Math.max(20, Math.round(50 * (ratio / minRatio)));
     details = `有无失衡：daoNothing 过轻。daoNothing: ${nothingLines} 行，daoAnything: ${anythingLines} 行，比值: ${(ratio).toFixed(3)}（低于下限 ${minRatio.toFixed(3)}）`;
-    details += `\n  · 帛书依据："无，名天地之始"——无（类型/契约空间）应占据足够的架构比重`;
-    recommendation = '建议增强 daoNothing 的类型定义、接口契约与约束规范，使无之空间更加充实';
+    details += `\n  · 帛书依据："无名，万物之始也"——无名（类型/契约空间）应占据足够的架构比重`;
+    recommendation = '建议增强 daoNothing 的类型定义、接口契约与约束规范，使无名之空间更加充实';
   } else {
     score = Math.max(20, Math.round(50 * (maxRatio / ratio)));
     details = `有无失衡：daoNothing 过重。daoNothing: ${nothingLines} 行，daoAnything: ${anythingLines} 行，比值: ${(ratio).toFixed(3)}（高于上限 ${maxRatio.toFixed(3)}）`;
-    details += `\n  · 帛书依据："有，名万物之母"——有（实现容器）应承载主要的运行逻辑`;
+    details += `\n  · 帛书依据："有名，万物之母也"——有名（实现容器）应承载主要的运行逻辑`;
     recommendation = '建议将部分纯类型定义迁移至 daoNothing，确保 daoAnything 聚焦于实际容器与模块注册功能';
   }
 
