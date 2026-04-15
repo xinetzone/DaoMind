@@ -1,0 +1,41 @@
+{
+  "name": "create-daomind",
+  "version": "2.0.0",
+  "description": "Create DaoMind projects with a single command",
+  "type": "module",
+  "bin": {
+    "create-daomind": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "daomind",
+    "scaffold",
+    "cli",
+    "generator",
+    "typescript"
+  ],
+  "author": "DaoMind Team",
+  "license": "MIT",
+  "dependencies": {
+    "prompts": "^2.4.2",
+    "kolorist": "^1.8.0",
+    "minimist": "^1.2.8"
+  },
+  "devDependencies": {
+    "@types/minimist": "^1.2.5",
+    "@types/prompts": "^2.4.9",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

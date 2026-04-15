@@ -1,0 +1,16 @@
+{
+  "name": "daomind-docs",
+  "version": "2.0.0",
+  "description": "DaoMind documentation site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "vitepress": "^1.0.0-rc.44",
+    "vue": "^3.4.0"
+  }
+}
