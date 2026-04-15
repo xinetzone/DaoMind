@@ -55,18 +55,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
       
-      - name: Install root dependencies
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
-      - name: Install docs dependencies
-        run: |
-          cd docs/site
-          pnpm install --frozen-lockfile
       
       - name: Build with VitePress
         run: |
           cd docs/site
-          pnpm run build
+          pnpx vitepress build .
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
