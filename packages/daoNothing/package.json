@@ -1,1 +1,17 @@
-{"name": "@daomind/nothing", "version": "1.0.0", "type": "module", "description": "DaoMind Nothing — 潜在性空间，万物之源", "main": "./dist/index.js", "types": "./dist/index.d.ts", "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}}, "scripts": {"build": "tsc"}}
+{
+  "name": "@daomind/nothing",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "DaoMind Nothing — 无名，万物之始也（帛书甲本）— 类型空间，零运行时",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}

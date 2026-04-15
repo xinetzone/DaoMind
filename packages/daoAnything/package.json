@@ -1,1 +1,17 @@
-{"name": "@daomind/anything", "version": "1.0.0", "type": "module", "description": "DaoMind Anything — 有 — 显化容器，万物之形", "main": "./dist/index.js", "types": "./dist/index.d.ts", "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}}, "scripts": {"build": "tsc"}}
+{
+  "name": "@daomind/anything",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "DaoMind Anything — 有名，万物之母也（帛书甲本）— 显化容器，实例空间",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}

@@ -1,1 +1,1 @@
-{"name": "@daomind/monitor", "version": "1.0.0", "type": "module", "description": "DaoMind Monitor — 基于中医经络哲学的系统监控与可视化引擎", "main": "./dist/index.js", "types": "./dist/index.d.ts", "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}}, "scripts": {"build": "tsc"}}
+{"name": "@daomind/monitor", "version": "2.0.0", "type": "module", "description": "DaoMind Monitor — 基于中医经络哲学的系统监控与可视化引擎", "main": "./dist/index.js", "types": "./dist/index.d.ts", "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}}, "scripts": {"build": "tsc"}}

@@ -1,1 +1,1 @@
-{"name": "@daomind/docs", "version": "1.0.0", "type": "module", "description": "DaoMind Docs — 文档层 — 项目文档与说明", "main": "./dist/index.js", "types": "./dist/index.d.ts", "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}}, "scripts": {"build": "tsc"}}
+{"name": "@daomind/docs", "version": "2.0.0", "type": "module", "description": "DaoMind Docs — 文档层 — 项目文档与说明", "main": "./dist/index.js", "types": "./dist/index.d.ts", "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}}, "scripts": {"build": "tsc"}}
