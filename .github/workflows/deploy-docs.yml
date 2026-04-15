@@ -38,14 +38,30 @@ jobs:
           node-version: 20
       
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 9
       
-      - name: Install dependencies
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Install docs dependencies
         run: |
           cd docs/site
-          pnpm install
+          pnpm install --frozen-lockfile
       
       - name: Build with VitePress
         run: |
