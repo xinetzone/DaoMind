@@ -3,6 +3,14 @@ import { defineConfig } from 'vitepress';
 export default defineConfig({
   title: 'DaoMind & Modulux',
   description: '融合道家哲学与现代 TypeScript 的模块化框架',
+  head: [
+    ['link', { rel: 'icon', href: '/logo.png' }],
+    ['meta', { name: 'theme-color', content: '#3B4EAC' }],
+    ['meta', { name: 'og:type', content: 'website' }],
+    ['meta', { name: 'og:title', content: 'DaoMind & Modulux' }],
+    ['meta', { name: 'og:description', content: '融合道家哲学与现代 TypeScript 的模块化框架' }],
+    ['meta', { name: 'og:image', content: '/logo.png' }],
+  ],
   
   lang: 'zh-CN',
   

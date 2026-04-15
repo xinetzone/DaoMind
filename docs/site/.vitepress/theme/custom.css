@@ -1,0 +1,125 @@
+/**
+ * DaoMind Documentation Site Custom Styles
+ * 融合道家哲学与现代设计
+ */
+
+:root {
+  /* 主色调 - 深靛蓝（代表"无名"的深邃） */
+  --vp-c-brand: #3B4EAC;
+  --vp-c-brand-light: #5568C4;
+  --vp-c-brand-lighter: #7082DC;
+  --vp-c-brand-dark: #2A3A8C;
+  --vp-c-brand-darker: #1A2A6C;
+  
+  /* 次色调 - 鼠尾草绿（代表"有名"的生机） */
+  --vp-c-accent: #6B9080;
+  --vp-c-accent-light: #8BAA9D;
+  --vp-c-accent-lighter: #ABC4BA;
+  
+  /* 背景渐变 */
+  --vp-home-hero-image-background-image: linear-gradient(
+    135deg,
+    #3B4EAC 0%,
+    #6B9080 100%
+  );
+  
+  /* 自定义渐变 */
+  --dao-gradient: linear-gradient(135deg, var(--vp-c-brand) 0%, var(--vp-c-accent) 100%);
+}
+
+/* Hero 区域自定义样式 */
+.VPHero .name {
+  background: var(--dao-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Logo 样式 */
+.VPNavBarTitle .logo {
+  height: 32px;
+  width: auto;
+}
+
+/* Feature 卡片增强 */
+.VPFeature {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.VPFeature:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgba(59, 78, 172, 0.2);
+}
+
+/* 代码块美化 */
+div[class*='language-'] {
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+/* 链接样式 */
+.vp-doc a {
+  color: var(--vp-c-brand);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.vp-doc a:hover {
+  border-bottom-color: var(--vp-c-brand);
+}
+
+/* 侧边栏美化 */
+.VPSidebarItem.level-0 {
+  font-weight: 600;
+}
+
+/* 搜索框美化 */
+.DocSearch-Button {
+  border-radius: 8px;
+}
+
+/* 暗色模式适配 */
+.dark {
+  --vp-c-brand: #5568C4;
+  --vp-c-brand-light: #7082DC;
+  --vp-c-accent: #8BAA9D;
+}
+
+/* 自定义容器 */
+.custom-block {
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.custom-block.tip {
+  border-left: 4px solid var(--vp-c-brand);
+  background-color: rgba(59, 78, 172, 0.05);
+}
+
+.custom-block.warning {
+  border-left: 4px solid var(--vp-c-accent);
+  background-color: rgba(107, 144, 128, 0.05);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .VPNavBarTitle .logo {
+    height: 24px;
+  }
+}
+
+/* 平滑滚动 */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 打印样式 */
+@media print {
+  .VPNav,
+  .VPSidebar,
+  .VPDocFooter {
+    display: none !important;
+  }
+}
