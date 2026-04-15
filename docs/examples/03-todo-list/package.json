@@ -1,0 +1,23 @@
+{
+  "name": "@daomind-examples/todo-list",
+  "version": "1.0.0",
+  "description": "Todo List example for DaoMind",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "test": "vitest",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@daomind/nothing": "^2.0.0",
+    "@daomind/anything": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.7.2",
+    "vitest": "^1.0.0"
+  }
+}
