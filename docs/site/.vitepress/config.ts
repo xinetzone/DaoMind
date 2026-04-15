@@ -4,17 +4,28 @@ export default defineConfig({
   title: 'DaoMind & Modulux',
   description: '融合道家哲学与现代 TypeScript 的模块化框架',
   
+  // 关键：GitHub Pages 项目站点必须设置 base 路径
+  base: '/DaoMind/',
+  
   // Ignore dead links during build (temporary - until all docs are migrated)
   ignoreDeadLinks: true,
   
   head: [
     ['link', { rel: 'icon', href: '/logo.png' }],
     ['meta', { name: 'theme-color', content: '#3B4EAC' }],
-    ['meta', { name: 'og:type', content: 'website' }],
-    ['meta', { name: 'og:title', content: 'DaoMind & Modulux' }],
-    ['meta', { name: 'og:description', content: '融合道家哲学与现代 TypeScript 的模块化框架' }],
-    ['meta', { name: 'og:image', content: '/logo.png' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:title', content: 'DaoMind & Modulux' }],
+    ['meta', { property: 'og:description', content: '融合道家哲学与现代 TypeScript 的模块化框架' }],
+    ['meta', { property: 'og:url', content: 'https://xinetzone.github.io/DaoMind/' }],
+    ['meta', { property: 'og:image', content: 'https://xinetzone.github.io/DaoMind/logo.png' }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:title', content: 'DaoMind & Modulux' }],
+    ['meta', { name: 'twitter:image', content: 'https://xinetzone.github.io/DaoMind/logo.png' }],
   ],
+  
+  sitemap: {
+    hostname: 'https://xinetzone.github.io/DaoMind/',
+  },
   
   lang: 'zh-CN',
   
@@ -117,7 +128,7 @@ export default defineConfig({
     },
     
     editLink: {
-      pattern: 'https://github.com/xinetzone/DaoMind/edit/enter-main/docs/:path',
+      pattern: 'https://github.com/xinetzone/DaoMind/edit/main/docs/site/:path',
       text: '在 GitHub 上编辑此页',
     },
     
