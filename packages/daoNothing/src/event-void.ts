@@ -46,7 +46,7 @@ class DaoNothingVoid extends EventEmitter {
   stillness(): { totalObserved: number; listenerCount: (event?: string | symbol) => number; state: 'void' } {
     return {
       totalObserved: this.#eventLog.length,
-      listenerCount: (event?: string | symbol) => {
+      listenerCount: (event?: string | symbol): number => {
         if (event) {
           return this.listenerCount(event);
         }

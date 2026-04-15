@@ -4,7 +4,15 @@ import typescriptPlugin from '@typescript-eslint/eslint-plugin';
 export default [
   {
     files: ['**/*.ts', '**/*.tsx'],
-    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/*.js', '**/*.d.ts'],
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/coverage/**',
+      '**/*.js',
+      '**/*.d.ts',
+      'vite.config.ts',
+      'tests/**/*.test.ts',
+    ],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {

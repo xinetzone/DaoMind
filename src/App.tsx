@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function App() {
+export default function App(): React.JSX.Element {
   const packages = [
     { name: 'daoNothing', desc: '潜在性空间，万物之源 - 定义系统的基础契约与类型' },
     { name: 'daoAnything', desc: '万物容器 - 模块注册、生命周期管理' },
