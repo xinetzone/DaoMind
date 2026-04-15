@@ -19,7 +19,7 @@ export default defineConfig({
   lang: 'zh-CN',
   
   themeConfig: {
-    logo: '/logo.svg',
+    logo: '/logo.png',
     
     nav: [
       { text: '首页', link: '/' },
