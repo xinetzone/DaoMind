@@ -6,7 +6,7 @@ hero:
   text: 道家哲学遇见现代 TypeScript
   tagline: 基于"无名，万物之始；有名，万物之母"的模块化框架
   image:
-    src: /logo.svg
+    src: /logo.png
     alt: DaoMind
   actions:
     - theme: brand
