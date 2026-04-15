@@ -137,12 +137,4 @@ export default defineConfig({
     },
     lineNumbers: true,
   },
-  
-  head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
-    ['meta', { name: 'theme-color', content: '#646cff' }],
-    ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:title', content: 'DaoMind & Modulux' }],
-    ['meta', { property: 'og:description', content: '融合道家哲学与现代 TypeScript 的模块化框架' }],
-  ],
 });
