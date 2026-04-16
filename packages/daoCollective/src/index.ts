@@ -175,3 +175,13 @@ export { daoNamespace, DaoNamespaceManager } from '@daomind/spaces';
 // DaoUniverseSpaces — 命名空间 × 服务网格路由归位（daoSpaces × DaoUniverseNexus）
 export type { SpacesSnapshot } from './universe-spaces';
 export { DaoUniverseSpaces } from './universe-spaces';
+
+// ============================================================
+// @daomind/pages — 页面层（组件树 + 状态绑定）
+// ============================================================
+export type { ComponentState, DaoComponent, DaoViewSnapshot, BindingPath, DaoBinding } from '@daomind/pages';
+export { daoComponentTree, DaoComponentTree, daoStateBinding, DaoStateBinding } from '@daomind/pages';
+
+// DaoUniversePages — 组件树 × 状态绑定 × 时序驱动刷新（daoPages × DaoUniverseScheduler）
+export type { PagesSnapshot } from './universe-pages';
+export { DaoUniversePages } from './universe-pages';

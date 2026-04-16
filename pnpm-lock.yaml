@@ -153,6 +153,9 @@ importers:
       '@daomind/nothing':
         specifier: workspace:^
         version: link:../daoNothing
+      '@daomind/pages':
+        specifier: workspace:^
+        version: link:../daoPages
       '@daomind/skills':
         specifier: workspace:^
         version: link:../daoSkilLs

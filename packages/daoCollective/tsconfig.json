@@ -20,7 +20,8 @@
     { "path": "../daoSkilLs" },
     { "path": "../daoNexus" },
     { "path": "../daoDocs" },
-    { "path": "../daoSpaces" }
+    { "path": "../daoSpaces" },
+    { "path": "../daoPages" }
   ],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "src/__tests__/**"]

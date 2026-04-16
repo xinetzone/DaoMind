@@ -29,7 +29,8 @@
     "@daomind/skills":   "workspace:^",
     "@daomind/nexus":    "workspace:^",
     "@daomind/docs":     "workspace:^",
-    "@daomind/spaces":   "workspace:^"
+    "@daomind/spaces":   "workspace:^",
+    "@daomind/pages":    "workspace:^"
   },
   "publishConfig": {
     "access": "public"
