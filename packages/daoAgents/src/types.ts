@@ -1,4 +1,5 @@
 import type { ExistenceContract } from '@daomind/nothing';
+import type { MessageHandler } from './messaging';
 
 export interface DaoAgentCapability {
   readonly name: string;
@@ -27,4 +28,8 @@ export interface DaoAgent extends ExistenceContract {
   rest(): Promise<void>;
   terminate(): Promise<void>;
   execute<T>(action: string, payload?: unknown): Promise<T>;
+  /** 向目标 Agent（或广播 '*'）发送消息 */
+  send(to: string | '*', action: string, payload?: unknown): void;
+  /** 注册消息接收处理器 */
+  onMessage(handler: MessageHandler): void;
 }

@@ -14,3 +14,28 @@ export type { DaoNothingEvent } from './event-void';
 
 export { daoIsNothing, daoBirthFromNothing } from './guards';
 export { daoNothingVoid, DaoNothingVoid } from './event-void';
+
+// 函数式错误处理工具 —— DaoOption<T> + DaoResult<T,E>
+export type { DaoSome, DaoNone, DaoOption } from './result';
+export type { DaoOk, DaoErr, DaoResult } from './result';
+export {
+  daoSome,
+  daoNone,
+  daoIsSome,
+  daoIsNone,
+  daoFromNullable,
+  daoMap,
+  daoUnwrap,
+  daoUnwrapOrThrow,
+  daoOk,
+  daoErr,
+  daoIsOk,
+  daoIsErr,
+  daoTry,
+  daoTryAsync,
+  daoMapResult,
+  daoMapErr,
+  daoUnwrapResult,
+  daoUnwrapOr,
+} from './result';
+
