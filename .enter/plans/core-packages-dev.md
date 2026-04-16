@@ -1,144 +1,166 @@
-# v2.12.0 Plan — DaoUniverseScheduler（daotimes × DaoUniverseClock）
+# v2.13.0 计划 — DaoUniverseSkills（daoSkilLs × DaoUniverseScheduler）
 
-## Context
+## 背景
 
-v2.11.0 已完成 DaoUniverseAudit（496 tests, 36 suites）。
-v2.12.0 目标：将 `@daomind/times` 的 `DaoScheduler` 接入 `DaoUniverseClock.onTick()`，
-实现"待时而动"——任务按延迟时间注册，每次心跳触发 `flush()` 执行所有到期任务。
+v2.12.0 完成了时序驱动调度（DaoUniverseScheduler）。
+v2.13.0 将"藏器于身，待时而动"推进一层：
+技能生命周期（latent → activating → active → cooling → depleted）
+由 DaoUniverseScheduler 驱动：Clock 心跳扫描冷却恢复，Scheduler 驱动延迟激活与冷却重置。
 
----
-
-## 架构
+## 架构（完成后）
 
 ```
 DaoUniverse
   ├── DaoUniverseMonitor (v2.8.0)
-  │       ├── DaoUniverseClock (v2.9.0)
-  │       │       ├── DaoUniverseFeedback (v2.10.0)
-  │       │       └── DaoUniverseScheduler (v2.12.0) ← 时序驱动调度
-  │       └── ↑ runtimeHealth
+  │       └── DaoUniverseClock (v2.9.0)
+  │               ├── DaoUniverseFeedback (v2.10.0)
+  │               └── DaoUniverseScheduler (v2.12.0)
+  │                       └── DaoUniverseSkills (v2.13.0) ← 时序驱动技能生命周期
   └── DaoUniverseAudit (v2.11.0)
 ```
 
----
+## 关键设计决策
 
-## 核心设计
+| 决策 | 选择 | 原因 |
+|------|------|------|
+| 构造参数 | `DaoUniverseScheduler` | 既含 Clock（心跳驱动冷却扫描），又含 Scheduler（延迟激活/冷却重置） |
+| registry | 新建 `new DaoSkillRegistry()` | 隔离全局单例，测试互不干扰 |
+| 激活/使用/评分/组合 | 内联实现 | `DaoSkillActivator/Scorer/Combiner` 硬绑定 `daoSkillRegistry` 全局单例，无法注入 |
+| 冷却重置 | `scheduler.schedule(() => _clearCooling(id), cooldown)` | 替代原 `setTimeout`，时序统一由 Scheduler 管理 |
+| 冷却扫描 | `attach()` → `scheduler.clock.onTick()` → `_sweepCooling()` | Clock 心跳驱动 cooling→active 状态迁移 |
+| 延迟激活 | `scheduleActivation(id, delayMs?)` → `scheduler.schedule(() => activate(id), delayMs)` | 未来时刻激活技能 |
+| 评分存储 | 内部 `Map<SkillId, UsageStats>` | 独立于全局 scorer |
+| 组合存储 | 内部 `Set<string>` | 独立于全局 combiner |
+| 事件上限 | MAX_EVENTS = 200 | 与 executions 保持一致 |
 
-### 类型
+## 接口设计
 
 ```typescript
-export interface ExecutionRecord {
-  readonly taskId: string;
-  readonly executedAt: number;
-  readonly status: 'success' | 'error';
+// universe-skills.ts
+
+export interface SkillEventRecord {
+  readonly skillId: SkillId;
+  readonly event: 'activated' | 'deactivated' | 'used' | 'cooled' | 'depleted';
+  readonly timestamp: number;
 }
-```
 
-### DaoUniverseScheduler API
+export class DaoUniverseSkills {
+  constructor(scheduler: DaoUniverseScheduler)
 
-```typescript
-class DaoUniverseScheduler {
-  constructor(clock: DaoUniverseClock)          // 内部 new DaoScheduler()（非全局单例）
+  // 生命周期订阅（幂等）
+  attach(): void    // scheduler.clock.onTick() → _sweepCooling()
+  detach(): void
 
-  attach(): void                                 // 订阅 clock.onTick() → flush()（幂等）
-  detach(): void                                 // 取消订阅（幂等）
+  // 技能管理
+  register(def: DaoSkillDefinition): void         // 注册 → latent
+  unregister(id: SkillId): boolean
 
-  schedule<T>(handler, delayMs=0, priority=1): string  // 注册任务，返回 taskId
-  cancel(taskId: string): boolean                // 取消任务
-  async flush(): Promise<number>                 // 执行所有到期任务，返回执行数量
+  // 生命周期操作
+  async activate(id: SkillId): Promise<boolean>   // latent→active（检查依赖）
+  async deactivate(id: SkillId): Promise<void>    // → latent
+  scheduleActivation(id: SkillId, delayMs?: number): string  // 返回 taskId
 
-  pending(): number                              // 当前到期待执行任务数
-  executions(limit?: number): ReadonlyArray<ExecutionRecord>
+  // 技能使用（状态检查 + 冷却检查 + maxUses 检查 + scheduler 冷却重置）
+  async use<T>(id: SkillId, executor: () => T | Promise<T>): Promise<T>
 
+  // 查询
+  get(id: SkillId): DaoSkillInstance | undefined
+  listAll(): ReadonlyArray<DaoSkillInstance>
+  listByState(state: SkillState): ReadonlyArray<DaoSkillInstance>
+  score(id: SkillId): DaoSkillScore        // 熟练度/频率/成功率/综合评分
+  rank(limit?: number): ReadonlyArray<DaoSkillScore>
+  combine(skillIds: readonly SkillId[]): readonly SkillId[] | null  // 组合验证（无环+冷却阈值）
+  events(limit?: number): ReadonlyArray<SkillEventRecord>
+
+  // Getters
   get isAttached(): boolean
-  get clock(): DaoUniverseClock
-  get scheduler(): DaoScheduler
+  get scheduler(): DaoUniverseScheduler
+  get registry(): DaoSkillRegistry
 }
 ```
 
-### schedule() 实现要点
+## 评分公式（与 DaoSkillScorer 一致）
 
-用闭包捕获 id（handler 被调用时 id 已赋值）：
-```typescript
-let capturedId = '';
-const wrapped = async () => {
-  try {
-    const r = await Promise.resolve(handler());
-    this._executions.push({ taskId: capturedId, executedAt: Date.now(), status: 'success' });
-    return r;
-  } catch (err) {
-    this._executions.push({ taskId: capturedId, executedAt: Date.now(), status: 'error' });
-    throw err;
-  }
-};
-capturedId = this._scheduler.schedule({ executeAt: Date.now() + delayMs, handler: wrapped, priority });
-return capturedId;
+```
+proficiency = min(1, useCount / (maxUses || 100))
+frequency   = totalUses / hours（自首次使用到最后使用，hours=0时取totalUses）
+successRate = successCount / totalUses（无数据时=1）
+overallScore= proficiency*40 + successRate*30 + min(frequency*10, 30)
 ```
 
-### flush() 实现
+## 实现要点
 
-DaoScheduler.pending() > 0 时 next() 不等待，可安全循环：
+### `use()` 冷却重置（替代 setTimeout）
+
 ```typescript
-async flush(): Promise<number> {
-  let count = 0;
-  while (this._scheduler.pending() > 0) {
-    await this._scheduler.next();
-    count++;
-  }
-  return count;
+async use<T>(id, executor): Promise<T> {
+  // 1. validate state + cooldown + maxUses
+  // 2. result = await executor()
+  // 3. registry.incrementUseCount(id, now)
+  // 4. _recordUsage(id, true)
+  // 5. if cooldown > 0:
+  //      registry.updateState(id, 'cooling')
+  //      this._scheduler.schedule(() => this._clearCooling(id), cooldown)
+  // 6. push event 'used'
+  // 7. return result
+  // on error: _recordUsage(id, false), re-throw
 }
 ```
 
----
+### `_sweepCooling()` 心跳扫描
 
-## 文件
+```typescript
+private _sweepCooling(): void {
+  const now = Date.now();
+  for (const inst of this._registry.listByState('cooling')) {
+    const cooldown = inst.definition.cooldown ?? 0;
+    if (inst.lastUsedAt != null && now - inst.lastUsedAt >= cooldown) {
+      this._clearCooling(inst.definition.id);
+    }
+  }
+}
+```
 
-| 操作 | 路径 |
+## 文件变更清单
+
+| 文件 | 操作 |
 |------|------|
-| 新建 | `retrospectives/2026-04-16-daomind-v2.11.0.md` |
-| 新建 | `packages/daoCollective/src/universe-scheduler.ts` |
-| 修改 | `packages/daoCollective/package.json` — 添加 `@daomind/times: workspace:^` |
-| 修改 | `packages/daoCollective/tsconfig.json` — 添加 `../daotimes` |
-| 修改 | `packages/daoCollective/src/index.ts` — 导出 DaoUniverseScheduler + daotimes 再导出 |
-| 新建 | `packages/daoCollective/src/__tests__/universe-scheduler.test.ts` |
+| `retrospectives/2026-04-16-daomind-v2.12.0.md` | 新建（v2.12.0 复盘） |
+| `packages/daoCollective/src/universe-skills.ts` | 新建 |
+| `packages/daoCollective/package.json` | 添加 `@daomind/skills: workspace:^` |
+| `packages/daoCollective/tsconfig.json` | 添加 `../daoSkilLs` 引用 |
+| `packages/daoCollective/src/index.ts` | 导出 DaoUniverseSkills + SkillEventRecord + @daomind/skills 再导出 |
+| `packages/daoCollective/src/__tests__/universe-skills.test.ts` | 新建（~30 测试） |
 
----
+## 测试计划（~30 tests）
 
-## 测试设计（~30 个）
+| 分组 | 数量 | 内容 |
+|------|------|------|
+| 构建 | 5 | construct / isAttached=false / scheduler getter / registry getter / pending=0 |
+| attach/detach | 4 | attach→true / detach→false / 幂等attach / 幂等detach |
+| register/unregister | 4 | register / 重复注册报错 / unregister / get() |
+| activate/deactivate | 5 | activate latent→active / deps未满足→false / deactivate→latent / scheduleActivation返回taskId / scheduleActivation实际激活 |
+| use() | 5 | 基本use / 非active状态报错 / maxUses耗尽 / 冷却中报错 / 失败记录error |
+| Clock驱动生命周期 | 3 | 手动tick→sweepCooling冷却恢复 / attach后tick自动扫描 / detach后不再扫描 |
+| 评分/组合/事件 | 4 | score() / rank() / combine() / events(limit) |
+| E2E | 3 | 全栈 Universe→Scheduler→Skills / 与Feedback共存 / @daomind/collective导入 |
 
-| 分组 | 测试数 |
-|------|--------|
-| 构建（isAttached=false / scheduler/clock getter / pending=0 / executions=[]）| 6 |
-| attach / detach（+ 幂等）| 4 |
-| schedule（返回 id / pending 增加 / cancel / delayMs / priority）| 5 |
-| flush()（执行到期任务 / 计数 / 无任务返回 0 / 错误不崩溃 / 连续调用）| 5 |
-| attach + fake timers（onTick → flush / 执行积累 / detach 后冻结）| 4 |
-| executions()（limit / success/error status / 顺序）| 3 |
-| E2E（Universe→Clock→Scheduler / 延迟任务 / 与 Feedback 共存）| 3 |
-
----
-
-## 再导出（index.ts 新增）
-
-```typescript
-// @daomind/times
-export type { DaoTimerHandle, DaoTimerOptions, DaoScheduledTask, DaoTimeWindow } from '@daomind/times';
-export { DaoTimer, DaoScheduler, daoTimer, daoScheduler, daoTimeWindow } from '@daomind/times';
-
-// DaoUniverseScheduler
-export type { ExecutionRecord } from './universe-scheduler';
-export { DaoUniverseScheduler } from './universe-scheduler';
-```
-
----
-
-## 验证
+## 验证步骤
 
 ```bash
 pnpm install
-npx tsc --build packages/daoCollective/tsconfig.json    # 无 error TS
-npx jest packages/daoCollective --no-coverage            # 全部通过
-npx jest --no-coverage                                   # 全量 ≥ 526 tests
-pnpm -r run build                                        # 全部 Done
-git commit + git tag v2.12.0 + push origin + push github
+npx tsc --build packages/daoCollective/tsconfig.json  # 无 TS 错误
+npx jest packages/daoCollective/src/__tests__/universe-skills.test.ts --no-coverage  # 30/30
+npx jest --no-coverage  # 全量 ≥555 tests
+pnpm -r run build  # 全量 Done
+```
+
+## Git 操作
+
+```bash
+git add -A
+git commit -m "feat(skills): v2.13.0 — DaoUniverseSkills（daoSkilLs × DaoUniverseScheduler）..."
+git tag -a v2.13.0 -m "release: v2.13.0 — DaoUniverseSkills"
+git push github main:main && git push github v2.13.0
+git push origin main && git push origin v2.13.0
 ```
