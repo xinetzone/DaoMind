@@ -19,7 +19,8 @@
     { "path": "../daotimes" },
     { "path": "../daoSkilLs" },
     { "path": "../daoNexus" },
-    { "path": "../daoDocs" }
+    { "path": "../daoDocs" },
+    { "path": "../daoSpaces" }
   ],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "src/__tests__/**"]

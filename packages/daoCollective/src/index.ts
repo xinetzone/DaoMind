@@ -165,3 +165,13 @@ export { daoDocStore, DaoDocStore, daoApiDocs, DaoApiDocs, daoVersionTracker, Da
 // DaoUniverseDocs — 知识图谱 × 哲学文档管理（daoDocs × DaoUniverseAudit）
 export type { DocAuditResult, DocsSnapshot } from './universe-docs';
 export { DaoUniverseDocs } from './universe-docs';
+
+// ============================================================
+// @daomind/spaces — 空间层（命名空间 + 资源定位）
+// ============================================================
+export type { DaoSpaceId, DaoSpace, DaoResourceLocator, PartitionStrategy } from '@daomind/spaces';
+export { daoNamespace, DaoNamespaceManager } from '@daomind/spaces';
+
+// DaoUniverseSpaces — 命名空间 × 服务网格路由归位（daoSpaces × DaoUniverseNexus）
+export type { SpacesSnapshot } from './universe-spaces';
+export { DaoUniverseSpaces } from './universe-spaces';

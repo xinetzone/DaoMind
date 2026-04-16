@@ -156,6 +156,9 @@ importers:
       '@daomind/skills':
         specifier: workspace:^
         version: link:../daoSkilLs
+      '@daomind/spaces':
+        specifier: workspace:^
+        version: link:../daoSpaces
       '@daomind/times':
         specifier: workspace:^
         version: link:../daotimes
