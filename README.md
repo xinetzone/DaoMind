@@ -1,552 +1,211 @@
 # DaoMind & Modulux
 
-## 1. 项目概述
+> 道家哲学遇见现代 TypeScript —— "无名，万物之始也；有名，万物之母也。" — 帛书《道德经》
 
-**项目简介：** DaoMind 是一个基于道家哲学思想的现代化系统框架，采用 monorepo 架构设计。Modulux 是其核心组件库，提供高效、灵活、可复用的模块化组件。项目基于 TypeScript 开发，融合东方传统智慧与现代技术，注重代码质量、可维护性和系统平衡。
+[![npm](https://img.shields.io/npm/v/@daomind/nothing?label=%40daomind%2Fnothing)](https://www.npmjs.com/package/@daomind/nothing)
+[![Tests](https://img.shields.io/badge/tests-345%20passed-brightgreen)](https://github.com/xinetzone/DaoMind)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
 
-**核心功能：**
-- **DaoMind Core**：提供完整的系统架构解决方案，基于道家哲学思想，支持模块化开发和快速迭代
-- **Modulux Components**：提供标准化、高质量的模块化组件，加速开发过程，确保代码一致性和可维护性
-- **类型安全**：基于 TypeScript 开发，提供完整的类型定义
-- **消息传递系统（DaoQi）**：基于四气通道（天、地、人、冲）的消息总线，支持高效的系统内部通信
-- **监控系统（DaoMonitor）**：包含阴阳仪表盘、热力图、向量场、告警引擎和诊断引擎，提供全面的系统监控
-- **代理管理**：支持代理的创建、初始化、激活和管理
-- **模块管理**：支持模块的注册、初始化、激活和管理
-- **性能优化**：内置基准测试套件，确保系统性能
-- **扩展性**：提供清晰的接口和类型定义，便于扩展和定制
+## 简介
 
-**哲学架构：**
-- **道宇宙（daoCollective）**：基于帛书版《道德经》的哲学架构，系统总入口
-- **无（daoNothing）**：潜在性空间，类型论根基，零运行时开销
-- **有（daoAnything）**：显化容器，实例化空间
-- **气（Qi）**：消息总线/数据流，四通道系统（天/地/人/冲）
-- **反者道之动**：反馈回归四阶段生命周期（感知 → 聚合 → 冲和 → 归元）
-- **阴阳平衡**：冲气调节机制，五组阴阳对偶矩阵
-- **自然无为**：自适应策略，去中心化协调
+**DaoMind** 是基于道家哲学宇宙论的现代化 TypeScript 框架，采用 pnpm monorepo 架构设计。核心思想来自帛书版《道德经》：
 
-## 2. 环境要求
+- **无（daoNothing）**：潜在性空间，编译期类型契约，零运行时开销
+- **有（daoAnything）**：显化容器，运行时模块注册与生命周期管理
+- **行动（daoAgents）**：自主实体，任务执行、事件观察、协调调度
+- **应用（daoApps）**：可执行程序层，状态机驱动的应用生命周期
+- **道宇宙（daoCollective）**：根节点门面，统一入口，系统快照
 
-**操作系统：**
-- Windows 10 或更高版本
-- macOS 10.15 或更高版本
-- Linux 发行版（Ubuntu 20.04 或更高版本）
+## 特性
 
-**编程语言：**
-- Node.js 18.0 或更高版本
-- TypeScript 6.0 或更高版本
+- **19+ 独立包**，从基础契约到完整生态，按需引入零冗余
+- **345 测试用例**（31 套件），TypeScript 5.9 严格模式，100% 类型安全
+- **零运行时开销**：类型定义编译后完全消失
+- **哲学一致**：每一个 API 命名都有对应的道家哲学根据
+- **DaoOption\<T\> + DaoResult\<T,E\>**：函数式错误处理，无 null/undefined 异常
 
-**依赖软件/工具：**
-- pnpm 6.0 或更高版本（推荐）
-- Git 2.20 或更高版本
-
-## 3. 安装步骤
-
-### 3.1 克隆项目
+## 快速开始
 
 ```bash
-git clone git@github.com:xinetzone/DaoMind.git
-cd dao
+# 使用脚手架创建项目
+pnpx create-daomind my-app
+
+# 进入项目并安装依赖
+cd my-app && pnpm install
+
+# 启动开发服务器
+pnpm dev
 ```
 
-### 3.2 安装依赖
+或直接安装单个包：
 
 ```bash
-# 使用 pnpm 安装依赖
-pnpm install
+pnpm add @daomind/collective   # 根节点（推荐，包含所有核心包的再导出）
+pnpm add @daomind/nothing      # 仅需类型与虚空事件总线
+pnpm add @daomind/anything     # 仅需模块容器
+pnpm add @daomind/agents       # 仅需 Agent 系统
 ```
 
-### 3.3 环境配置验证
+## 用法示例
 
-```bash
-# 验证 Node.js 版本
-node -v
-
-# 验证 pnpm 版本
-pnpm -v
-
-# 验证 TypeScript 版本
-npx tsc -v
-
-# 运行类型检查
-pnpm run typecheck
-```
-
-## 4. 使用说明
-
-### 4.1 基础使用流程
-
-1. **构建项目**：
-   ```bash
-   pnpm run build
-   ```
-
-2. **运行测试**：
-   ```bash
-   pnpm run test
-   ```
-
-3. **代码质量检查**：
-   ```bash
-   pnpm run lint
-   ```
-
-4. **使用特定包**：
-   ```typescript
-   // 示例：使用 DaoMind Agents 包
-   import { createAgent } from '@daomind/agents';
-   
-   const agent = createAgent({
-     id: 'example-agent',
-     type: 'test',
-     config: {
-       // 配置选项
-     }
-   });
-   ```
-
-### 4.2 核心功能操作示例
-
-#### 4.2.1 代理管理
+### 方式一：通过 DaoUniverse 统一门面（推荐）
 
 ```typescript
-import { createAgent } from '@daomind/agents';
+import { daoUniverse, TaskAgent, ObserverAgent } from '@daomind/collective';
 
-// 创建代理
-const agent = createAgent({
-  id: 'test-agent',
-  type: 'test',
-  config: {}
+// 工厂方法：创建 Agent + 自动注册
+const worker = daoUniverse.createAgent(TaskAgent, 'worker-1');
+await worker.initialize();
+await worker.activate();
+
+// 添加任务
+await worker.execute('enqueue', { id: 't1', action: 'process', priority: 10 });
+
+// 注册应用
+const app = daoUniverse.createApp({
+  id: 'my-app', name: '我的应用', version: '1.0.0', entry: './app',
 });
+await daoUniverse.appContainer.start('my-app');
 
-// 初始化代理
-await agent.initialize();
-
-// 激活代理
-await agent.activate();
-
-// 执行动作
-const result = await agent.execute('test-action', { message: 'Hello DaoMind' });
-console.log('执行结果:', result);
-
-// 让代理休息
-await agent.rest();
-
-// 终止代理
-await agent.terminate();
+// 系统全局快照
+const snap = daoUniverse.snapshot();
+console.log(snap.agents.byState);  // { active: 1 }
+console.log(snap.apps.byState);    // { running: 1 }
 ```
 
-#### 4.2.2 模块管理
+### 方式二：函数式错误处理（DaoResult / DaoOption）
 
 ```typescript
-import { registerModule, getModule, getAllModules } from '@daomind/anything';
+import { daoTryAsync, daoIsOk, daoUnwrapOr, daoFromNullable } from '@daomind/nothing';
 
-// 注册模块
-const module = await registerModule({
-  id: 'test-module',
-  name: 'test-module',
-  existentialType: 'anything',
-  config: {}
-});
-
-// 初始化模块
-await module.initialize();
-
-// 激活模块
-await module.activate();
-
-// 获取模块
-const retrievedModule = await getModule('test-module');
-
-// 获取所有模块
-const allModules = await getAllModules();
-console.log('所有模块:', allModules);
-```
-
-#### 4.2.3 消息传递系统（DaoQi）
-
-```typescript
-import { DaoHunyuanBus, TianQiChannel, DiQiChannel, RenQiChannel, ChongQiChannel } from '@modulux/qi';
-
-// 创建混元气总线
-const bus = new DaoHunyuanBus();
-
-// 监听总线消息
-bus.on('message', (message) => {
-  console.log('总线收到消息:', message);
-});
-
-// 创建四气通道
-const tianChannel = new TianQiChannel('tian', bus);
-const diChannel = new DiQiChannel('di', bus);
-const renChannel = new RenQiChannel('ren', bus);
-const chongChannel = new ChongQiChannel('chong', bus);
-
-// 通过天气通道发送消息
-tianChannel.send('source-node', 'target-node', { type: 'command', data: 'Hello from Tian' });
-
-// 通过地气通道发送消息
-diChannel.send('source-node', 'target-node', { type: 'data', data: { value: 42 } });
-
-// 通过人气通道发送消息
-renChannel.send('source-node', 'target-node', { type: 'event', data: 'User logged in' });
-
-// 通过冲气通道发送消息
-chongChannel.send('source-node', 'target-node', { type: 'balance', data: { yin: 50, yang: 50 } });
-
-// 获取总线统计信息
-const stats = bus.getStats();
-console.log('总线统计信息:', stats);
-```
-
-#### 4.2.4 监控系统（DaoMonitor）
-
-```typescript
-import { 
-  DaoYinYangGaugeEngine, 
-  DaoHeatmapEngine, 
-  DaoVectorField, 
-  DaoAlertEngine, 
-  DaoDiagnosisEngine, 
-  DaoSnapshotAggregator 
-} from '@daomind/monitor';
-
-// 创建阴阳仪表盘引擎
-const gaugeEngine = new DaoYinYangGaugeEngine();
-
-// 更新阴阳平衡状态
-gaugeEngine.updatePair('system_health', 'system_health_yin', 'system_health_yang', 30, 70);
-
-// 获取系统健康状态
-const healthStatus = gaugeEngine.getGauge('system_health');
-console.log('系统健康状态:', healthStatus);
-
-// 创建热力图引擎
-const heatmapEngine = new DaoHeatmapEngine();
-
-// 记录热力图数据
-heatmapEngine.record('chong', 'source-node', 'target-node', 100, 50, 0.01);
-
-// 获取热力图数据
-const heatmapData = heatmapEngine.getHeatmap();
-console.log('热力图数据:', heatmapData);
-
-// 创建向量场
-const vectorField = new DaoVectorField();
-
-// 记录流量向量
-vectorField.recordFlow('node-1', 'node-2', 50, Math.PI / 4, 0.5);
-
-// 获取系统热点
-const hotspots = vectorField.getHotspots(5);
-console.log('系统热点:', hotspots);
-
-// 创建告警引擎
-const alertEngine = new DaoAlertEngine();
-
-// 设置告警规则
-const customRules = [
-  {
-    condition: (metrics) => metrics.rate > 200,
-    severity: 'critical',
-    reason: 'high_load',
-    messageTemplate: '系统负载过高：消息速率 {rate} msg/s 超过阈值 200'
-  }
-];
-alertEngine.setRules(customRules);
-
-// 检查告警
-const alert = alertEngine.check('chong', 'source-node', 'target-node', {
-  rate: 250,
-  latency: 30,
-  errorRate: 0.01
-});
-console.log('告警检查结果:', alert);
-
-// 创建诊断引擎
-const diagnosisEngine = new DaoDiagnosisEngine();
-
-// 诊断系统状态
-const diagnosis = diagnosisEngine.diagnose({
-  nodeId: 'system',
-  system: { cpu: 75, memory: 60, disk: 45 },
-  network: { latency: 15, throughput: 100 },
-  services: { api: 'healthy', database: 'healthy', cache: 'warning' }
-});
-console.log('系统诊断结果:', diagnosis);
-
-// 创建快照聚合器
-const snapshotAggregator = new DaoSnapshotAggregator(
-  heatmapEngine,
-  vectorField,
-  gaugeEngine,
-  alertEngine,
-  diagnosisEngine
-);
-
-// 生成系统快照
-const snapshot = snapshotAggregator.capture();
-console.log('系统快照:', snapshot);
-
-// 获取快照历史
-const snapshotHistory = snapshotAggregator.getHistory(5);
-console.log('快照历史数量:', snapshotHistory.length);
-```
-
-### 4.3 命令行参数说明
-
-**DaoMind Verify 包命令行工具：**
-
-```bash
-# 运行验证检查
-pnpm run verify [options]
-
-# 选项：
-# --checks <checks>  指定要运行的检查（逗号分隔）
-# --reporter <type>  指定报告格式（json、console）
-# --silent           静默模式，只输出错误
-```
-
-### 4.4 测试文件说明
-
-项目采用 Jest 测试框架，各子包中的测试文件位于 `src/__tests__` 目录下，用于验证核心功能的正常运行。
-
-**运行测试：**
-```bash
-# 运行所有测试
-pnpm run test
-
-# 运行特定子包的测试
-cd packages/daoAgents
-pnpm run test
-```
-
-## 5. 项目结构说明
-
-```
-dao/
-├── .trae/             # Trae 配置和规范
-├── packages/          # 子包目录
-│   ├── daoAgents/     # 代理管理
-│   ├── daoAnything/   # 通用容器
-│   ├── daoApps/       # 应用管理
-│   ├── daoBenchmark/  # 基准测试
-│   ├── daoChronos/    # 时间管理
-│   ├── daoCollective/ # 集体智能
-│   ├── daoDocs/       # 文档管理
-│   ├── daoFeedback/   # 反馈系统
-│   ├── daoMonitor/    # 监控系统
-│   ├── daoNexus/      # 服务协调
-│   ├── daoNothing/    # 无为约束
-│   ├── daoPages/      # 页面管理
-│   ├── daoQi/         # 消息传递
-├── .eslintrc.js       # ESLint 配置
-├── .gitignore         # Git 忽略文件
-├── .prettierrc        # Prettier 配置
-├── LICENSE            # 许可证文件
-├── README.md          # 项目说明文档
-├── eslint.config.js   # ESLint 配置文件
-├── jest.config.js     # Jest 测试配置
-├── package.json       # 根包配置
-```
-
-**核心目录/文件说明：**
-
-- **packages/**：包含所有子包，每个子包都是一个独立的功能模块
-- **.trae/specs/**：包含项目规范和任务定义
-- **package.json**：根包配置，定义了项目的基本信息和脚本
-- **jest.config.js**：Jest 测试框架配置
-- **eslint.config.js**：ESLint 代码质量检查配置
-
-## 6. 配置方法
-
-### 6.1 项目配置
-
-**根目录 package.json：**
-- 定义了项目的基本信息和脚本
-- 配置了工作区和依赖管理
-
-**TypeScript 配置：**
-- `tsconfig.base.json`：定义了基础 TypeScript 配置
-- 每个子包的 `tsconfig.json`：继承基础配置并添加包特定配置
-
-### 6.2 子包配置
-
-每个子包都有自己的 `package.json` 文件，包含：
-- 包的基本信息
-- 依赖项
-- 构建和测试脚本
-
-**示例配置（daomind-agents/package.json）：**
-
-```json
-{
-  "name": "@daomind/agents",
-  "version": "1.0.0",
-  "description": "DaoMind Agents module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "test": "jest"
-  },
-  "dependencies": {
-    // 依赖项
-  }
+// 异步错误处理
+const result = await daoTryAsync(() => fetch('/api/data').then(r => r.json()));
+if (daoIsOk(result)) {
+  console.log(result.value);
+} else {
+  console.error(result.error.message);
 }
+
+// 可空值处理
+const opt = daoFromNullable(user?.profile);
+const name = daoUnwrapOr(opt, '匿名用户');
 ```
 
-## 7. 常见问题解答
+### 方式三：三大内置 Agent 协同
 
-### 7.1 安装依赖失败
+```typescript
+import { TaskAgent, ObserverAgent, CoordinatorAgent, daoAgentMessenger } from '@daomind/agents';
+import { daoNothingVoid } from '@daomind/nothing';
 
-**问题：** 运行 `pnpm install` 时失败
+// 清空事件总线（测试隔离）
+daoNothingVoid.void();
 
-**解决方案：**
-- 确保 pnpm 版本符合要求（6.0+）
-- 检查网络连接
-- 尝试清除 pnpm 缓存：`pnpm store prune`
+// TaskAgent —— 优先级任务队列
+const task = new TaskAgent('task-1');
+await task.initialize();
+await task.activate();
+await task.execute('enqueue', { id: 'job-1', action: 'render', priority: 5 });
+await task.execute('run-next');
 
-### 7.2 构建失败
+// ObserverAgent —— 系统事件监听
+const obs = new ObserverAgent('observer-1');
+await obs.initialize();  // 开始监听 daoNothingVoid
+const history = await obs.execute('get-history', { limit: 20 });
 
-**问题：** 运行 `pnpm run build` 时失败
-
-**解决方案：**
-- 检查 TypeScript 错误：`pnpm run typecheck`
-- 确保所有依赖项已正确安装
-- 检查代码中的语法错误
-
-### 7.3 测试失败
-
-**问题：** 运行 `pnpm run test` 时失败
-
-**解决方案：**
-- 检查测试代码中的错误
-- 确保测试环境配置正确
-- 查看详细的测试错误信息
-
-### 7.4 子包导入失败
-
-**问题：** 无法导入子包，提示模块未找到
-
-**解决方案：**
-- 确保已构建项目：`pnpm run build`
-- 检查导入路径是否正确
-- 确保 tsconfig.json 中的路径映射配置正确
-
-### 7.5 性能问题
-
-**问题：** 系统运行缓慢或内存使用过高
-
-**解决方案：**
-- 运行基准测试：`pnpm run benchmark`
-- 检查代码中的性能瓶颈
-- 参考 daoMonitor 包中的监控工具进行性能分析
-
-## 8. 贡献指南
-
-### 8.1 贡献流程
-
-1. **Fork 项目**：在 GitHub 上 Fork 项目到自己的账号
-
-2. **创建分支**：
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-3. **提交更改**：
-   ```bash
-   git add .
-   git commit -m "feat: add your feature"
-   ```
-
-4. **推送到远程**：
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-5. **创建 PR**：在 GitHub 上创建 Pull Request，描述你的更改
-
-### 8.2 代码风格要求
-
-- 遵循项目的 ESLint 和 Prettier 配置
-- 使用 TypeScript 类型定义
-- 保持代码简洁明了
-- 添加适当的注释
-
-### 8.3 测试要求
-
-- 为新功能添加测试用例
-- 确保所有测试通过
-- 运行基准测试确保性能不下降
-
-## 9. 道宇宙架构哲学深化
-
-### 9.1 核心哲学概念
-
-| 道家哲学概念 | 架构映射 | 技术实现 |
-|------------|---------|---------|
-| **道（Dao）** | `daoCollective` | 系统总入口，协调全局 |
-| **无（Wu）** | `daoNothing` | 潜在性空间，类型论根基 |
-| **有（You）** | `daoAnything` | 显化容器，实例化空间 |
-| **反者道之动** | 反馈回归机制 | 四阶段生命周期 |
-| **气（Qi）** | 消息总线/数据流 | 四通道系统（天/地/人/冲） |
-| **阴阳平衡** | 冲气调节机制 | 五组阴阳对偶矩阵 |
-| **自然无为** | 自适应策略 | 去中心化协调 |
-
-### 9.2 架构层级关系
-
-```
-daoCollective（道宇宙）
- ├── daoNothing（无）
- └── daoAnything（有）
-     ├── daoChronos（宙/时间之流）
-     ├── daotimes（时/离散时刻）
-     ├── daoSpaces（宇/空间组织）
-     └── daoAgents（行动者）
-         ├── daoSkilLs（技能库）
-         └── daoNexus（枢纽中心）
-             ├── daoApps（应用层/形）
-             ├── daoPages（页面层/象）
-             └── daoDocs（文档层/意）
+// CoordinatorAgent —— Agent 名册与任务分派
+const coord = new CoordinatorAgent('coord-1');
+await coord.initialize();
+await coord.activate();
+await coord.execute('add-agent', { agentId: 'task-1' });
+await coord.execute('assign', { agentId: 'task-1', action: 'enqueue', payload: { id: 'j2', action: 'cleanup' } });
 ```
 
-### 9.3 关键技术实现
+## 包生态（v2.6.0）
 
-- **daoNothing 类型虚空**：零运行时开销，打包仅 0.44KB
-- **混元气总线**：统一消息协议，双模式序列化，三类路由
-- **四气通道**：天气（下行）、地气（上行）、人气（横向）、冲气（调和）
-- **反馈回归四阶段**：感知 → 聚合 → 冲和 → 归元
-- **冲气调节**：阴阳平衡，信号生成，收敛验证
-- **气道图监控**：热力图，向量场，仪表盘，告警
+| 包名 | 层级 | 描述 |
+|------|------|------|
+| `@daomind/nothing` | 无（类型空间） | 类型契约、DaoOption、DaoResult、虚空事件总线 |
+| `@daomind/anything` | 有（值空间） | 模块容器、生命周期管理 |
+| `@daomind/agents` | 行动层 | DaoBaseAgent、TaskAgent、ObserverAgent、CoordinatorAgent |
+| `@daomind/apps` | 应用层 | DaoAppContainer、状态机驱动应用生命周期 |
+| `@daomind/collective` | 根节点 | DaoUniverse 门面、全系统再导出 |
+| `@modulux/qi` | 气（消息总线） | 四通道事件通信（天/地/人/冲） |
+| `@daomind/monitor` | 监控 | 阴阳仪表盘、热力图、向量场、告警引擎 |
+| `@daomind/verify` | 验证 | 数据校验与契约验证 |
+| `@daomind/chronos` | 时间 | 定时任务与时间管理 |
+| `@daomind/feedback` | 反馈 | 四阶段生命周期调节 |
+| `@daomind/nexus` | 连接 | 系统集成与负载均衡 |
+| `@daomind/spaces` | 空间 | 命名空间与隔离管理 |
+| `@daomind/skills` | 技能 | 能力组合与动态扩展 |
+| `@daomind/benchmark` | 基准测试 | 性能评估与优化指导 |
 
-### 9.4 验证与测试
+## 架构概览
 
-**哲学一致性检验：**
-- 综合得分：68/100（通过 4/6 项）
-- 哲学深度评估：82/100（六维加权）
+```
+daoNothing ─────── 无名层（类型契约 + DaoNothingVoid 事件总线 + DaoOption/DaoResult）
+    │
+daoAnything ─────── 有名层（DaoAnythingContainer 模块注册与生命周期）
+    │
+daoAgents ──────── 行动层（DaoBaseAgent + Messenger + Registry + Bridge）
+    │               ├── TaskAgent（优先级任务队列）
+    │               ├── ObserverAgent（事件监听与历史）
+    │               └── CoordinatorAgent（Agent 名册与任务分派）
+daoApps ─────────── 应用层（DaoAppContainer 状态机）
+    │
+daoCollective ───── 根节点（DaoUniverse 统一门面 + 全系统再导出）
+```
 
-**性能基准测试：**
-- 启动时间：1.2秒（< 2秒）
-- 内存占用：32MB（< 50MB）
-- 消息吞吐量：12,500 msg/s（> 10,000）
-- 反馈回路延迟（P99）：350ms（< 500ms）
-- 冲气收敛时间：15秒（< 30秒）
+## 开发环境
 
-### 9.5 未来扩展
+| 依赖 | 最低版本 |
+|------|---------|
+| Node.js | 18.0+ |
+| TypeScript | 5.9+ |
+| pnpm | 8.0+ |
+| Git | 2.20+ |
 
-- **短期**：五行引入，八卦映射，修炼体系
-- **中期**：德的量化，内丹/外丹隐喻，梦境机制
-- **长期**：齐物论引擎，逍遥游模式，道家知识图谱
+## 构建与测试
 
-## 10. 实施记录
+```bash
+# 安装所有工作区依赖
+pnpm install
 
-**详细实施记录**请查看：[.trae/specs/deepen-dao-collective-philosophy/implementation-record.md](.trae/specs/deepen-dao-collective-philosophy/implementation-record.md)
+# 构建所有包
+pnpm -r run build
 
-**规范文档**：
-- [spec.md](.trae/specs/deepen-dao-collective-philosophy/spec.md) - 核心规范
-- [tasks.md](.trae/specs/deepen-dao-collective-philosophy/tasks.md) - 任务分解
-- [checklist.md](.trae/specs/deepen-dao-collective-philosophy/checklist.md) - 验证清单
+# 运行全量测试（345 个，31 套件）
+pnpm test
 
----
+# 运行单包测试
+npx jest packages/daoCollective --no-coverage
+```
 
-*本项目基于帛书版《道德经》哲学思想设计，融合东方传统智慧与现代技术。*
+## 发布
+
+npm 发布通过 GitHub Actions 手动触发（`workflow_dispatch`），防止 2FA 阻断 CI：
+
+```bash
+# Actions → publish-npm → Run workflow
+```
+
+## 文档站
+
+- **指南**：https://xinetzone.github.io/DaoMind/guide/
+- **API 参考**：https://xinetzone.github.io/DaoMind/api/
+- **示例**：https://xinetzone.github.io/DaoMind/examples/
+
+## 版本历史
+
+| 版本 | 测试数 | 亮点 |
+|------|--------|------|
+| v2.6.0 | 345 | DaoUniverse 根节点门面、@daomind/collective 完整实装 |
+| v2.5.0 | 320 | DaoOption\<T\> + DaoResult\<T,E\> 函数式类型工具、CI 测试步骤 |
+| v2.4.0 | 281 | TaskAgent / ObserverAgent / CoordinatorAgent 三大内置 Agent |
+| v2.3.0 | 248 | DaoAgentContainerBridge 生命周期桥接 |
+| v2.2.0 | — | daoApps 应用层初版 |
+| v2.1.0 | — | daoAgents 智能体系统初版 |
+
+## License
+
+[MIT](LICENSE) © DaoMind Team
