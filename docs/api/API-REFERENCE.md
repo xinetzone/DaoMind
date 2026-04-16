@@ -1,27 +1,51 @@
 # DaoMind & Modulux - API 参考文档
 
-完整的 API 参考文档，涵盖所有核心包和接口。
+完整的 API 参考文档，涵盖所有核心包、功能包和 DaoUniverse* 桥接体系。
 
-> 📘 **版本**: 2.0.0  
-> 📅 **更新日期**: 2026-04-15
+> **版本**: 2.21.0  
+> **更新日期**: 2026-04-16  
+> **测试**: 817 个测试，46 个套件，全部通过
 
 ---
 
-## 📚 目录
+## 目录
 
 - [核心包](#核心包)
-  - [@daomind/nothing](#daomindnothing) - 类型定义（无名层）
-  - [@daomind/anything](#daomindanything) - 模块系统（有名层）
-  - [@daomind/agents](#daomindagents) - Agent 系统
+  - [@daomind/nothing](#daomindnothing) — 类型契约、函数式工具（无名层）
+  - [@daomind/anything](#daomindanything) — 模块容器（有名层）
+  - [@daomind/agents](#daomindagents) — Agent 系统（行动层）
+  - [@daomind/apps](#daomindapps) — 应用生命周期（应用层）
+  - [@daomind/times](#daomindtimes) — 定时器与调度（时序层）
+  - [@daomind/collective](#daomindcollective) — 根节点门面
 - [功能包](#功能包)
-  - [@daomind/chronos](#daomindchronos) - 时间管理
-  - [@daomind/spaces](#daomindspaces) - 空间组织
-  - [@modulux/qi](#moduluxqi) - 消息总线
-  - [@daomind/feedback](#daomindfeedback) - 反馈机制
-  - [@daomind/verify](#daomindverify) - 验证系统
-- [工具包](#工具包)
-  - [@daomind/monitor](#daomindmonitor) - 监控系统
-  - [@daomind/benchmark](#daomindbenchmark) - 性能测试
+  - [@modulux/qi](#moduluxqi) — 消息总线
+  - [@daomind/monitor](#daomindmonitor) — 监控系统
+  - [@daomind/chronos](#daomindchronos) — 时钟
+  - [@daomind/feedback](#daomindfeedback) — 反馈机制
+  - [@daomind/verify](#daomindverify) — 验证系统
+  - [@daomind/nexus](#daomindnexus) — 服务网格
+  - [@daomind/spaces](#daomindspaces) — 命名空间
+  - [@daomind/skills](#daomindskills) — 技能系统
+  - [@daomind/pages](#daomindpages) — 组件树
+  - [@daomind/docs](#daominddocs) — 知识图谱
+  - [@daomind/benchmark](#daomindbenchmark) — 性能测试
+- [DaoUniverse* 桥接体系](#daouniverse-桥接体系)
+  - [DaoUniverseMonitor](#daoUniverseMonitor)
+  - [DaoUniverseClock](#daouniverseclock)
+  - [DaoUniverseFeedback](#daouniversefeedback)
+  - [DaoUniverseAudit](#daouniverseaudit)
+  - [DaoUniverseScheduler](#daouniversescheduler)
+  - [DaoUniverseSkills](#daouniverseskills)
+  - [DaoUniverseNexus](#daouniversenexus)
+  - [DaoUniverseDocs](#daouniversedocs)
+  - [DaoUniverseSpaces](#daouniversespaces)
+  - [DaoUniversePages](#daouniversepages)
+  - [DaoUniverseAgents](#daouniverseagents)
+  - [DaoUniverseApps](#daouniverseapps)
+  - [DaoUniverseTimes](#daouniversetimes)
+  - [DaoUniverseModules](#daouniversemodules)
+- [类型工具](#类型工具)
+- [常见模式](#常见模式)
 
 ---
 
@@ -31,29 +55,26 @@
 
 **零运行时类型定义包**，实现"无名"（Nameless）哲学层。
 
-> 🎯 **设计理念**: 纯类型定义，编译后完全消失，零运行时开销。
-
-#### 安装
+> **设计理念**: 纯类型定义，编译后完全消失，零运行时开销。
 
 ```bash
-npm install @daomind/nothing
+pnpm add @daomind/nothing
 ```
-
-#### 导入
 
 ```typescript
 import type {
   ExistenceContract,
-  EmptyInterface,
-  MutabilityContract,
+  DaoOption,
+  DaoResult,
 } from '@daomind/nothing';
+import { daoNothingVoid, daoTryAsync, daoIsOk, daoFromNullable } from '@daomind/nothing';
 ```
 
 ---
 
 #### `ExistenceContract`
 
-**存在性契约** - 标记实体的存在状态。
+存在性契约，标记实体的存在状态。
 
 ```typescript
 interface ExistenceContract {
@@ -61,466 +82,420 @@ interface ExistenceContract {
 }
 ```
 
-**字段说明**:
+---
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `existentialType` | `'nothing' \| 'anything'` | 存在性类型标记 |
+#### `DaoOption<T>`
 
-**哲学含义**:
-- `'nothing'`: 处于"无名"状态（类型定义）
-- `'anything'`: 处于"有名"状态（实例化）
-
-**使用示例**:
+可选值包装，替代 `null/undefined`。
 
 ```typescript
-// 定义一个模块类型
-interface UserModule extends ExistenceContract {
-  readonly name: string;
-  readonly email: string;
-}
+type DaoOption<T> = DaoSome<T> | DaoNone;
 
-// 创建实例（从"无名"到"有名"）
-const user: UserModule = {
-  existentialType: 'anything',  // 标记为"有名"状态
-  name: 'Alice',
-  email: 'alice@example.com',
-};
+// 工具函数
+daoFromNullable<T>(value: T | null | undefined): DaoOption<T>
+daoIsSome<T>(opt: DaoOption<T>): opt is DaoSome<T>
+daoIsNone<T>(opt: DaoOption<T>): opt is DaoNone
+daoUnwrapOr<T>(opt: DaoOption<T>, fallback: T): T
+daoMapOption<T, U>(opt: DaoOption<T>, fn: (v: T) => U): DaoOption<U>
 ```
 
-**最佳实践**:
-- ✅ 所有自定义类型都应继承 `ExistenceContract`
-- ✅ 实例化时始终设置 `existentialType: 'anything'`
-- ✅ 使用 `type` 导入以确保零运行时
+**示例**:
+```typescript
+import { daoFromNullable, daoUnwrapOr } from '@daomind/nothing';
+
+const opt = daoFromNullable(user?.name);
+const name = daoUnwrapOr(opt, '匿名');
+```
 
 ---
 
-#### `EmptyInterface`
+#### `DaoResult<T, E>`
 
-**空接口** - 所有接口的原型，表示纯粹的"无"。
+操作结果包装，替代 `try/catch`。
 
 ```typescript
-interface EmptyInterface {
-  readonly [key: string]: never;
-}
+type DaoResult<T, E = Error> = DaoOk<T> | DaoErr<E>;
+
+// 工具函数
+daoTryAsync<T>(fn: () => Promise<T>): Promise<DaoResult<T, Error>>
+daoIsOk<T, E>(r: DaoResult<T, E>): r is DaoOk<T>
+daoIsErr<T, E>(r: DaoResult<T, E>): r is DaoErr<E>
+daoUnwrap<T, E>(r: DaoResult<T, E>): T  // 失败时抛出
 ```
 
-**使用场景**:
-- 表示完全空的对象
-- 作为泛型约束的基础
-- 哲学概念的技术映射
-
 **示例**:
-
 ```typescript
-// 空对象表示"无"的状态
-const nothingness: EmptyInterface = {};
+import { daoTryAsync, daoIsOk } from '@daomind/nothing';
 
-// 作为泛型约束
-function createEmpty<T extends EmptyInterface>(): T {
-  return {} as T;
+const result = await daoTryAsync(() => fetch('/api').then(r => r.json()));
+if (daoIsOk(result)) {
+  console.log(result.value);
+} else {
+  console.error(result.error);
 }
 ```
 
 ---
 
-#### `MutabilityContract<T>`
+#### `DaoNothingVoid` / `daoNothingVoid`
 
-**变易性契约** - 描述实体如何随时间变化。
-
-```typescript
-interface MutabilityContract<T> {
-  readonly from: T;
-  readonly to: T;
-  readonly transition: 'gradual' | 'sudden' | 'cyclic';
-}
-```
-
-**字段说明**:
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `from` | `T` | 变化前的状态 |
-| `to` | `T` | 变化后的状态 |
-| `transition` | `'gradual' \| 'sudden' \| 'cyclic'` | 变化方式 |
-
-**变化类型**:
-- `'gradual'`: 渐进式变化（如温度缓慢升高）
-- `'sudden'`: 突变（如状态切换）
-- `'cyclic'`: 循环往复（如昼夜交替）
-
-**示例**:
+全局虚空事件总线，所有消息的底层存储。
 
 ```typescript
-// 描述用户状态变化
-interface UserState {
-  status: 'active' | 'inactive';
-  lastLogin: number;
+class DaoNothingVoid {
+  emit(event: DaoNothingEvent): void
+  history(): ReadonlyArray<DaoNothingEvent>
+  void(): void      // 清空历史（测试隔离）
 }
 
-const stateChange: MutabilityContract<UserState> = {
-  from: { status: 'inactive', lastLogin: 0 },
-  to: { status: 'active', lastLogin: Date.now() },
-  transition: 'sudden',
-};
+const daoNothingVoid: DaoNothingVoid;
 ```
 
 ---
 
 ### @daomind/anything
 
-**模块系统包**，实现"有名"（Named）哲学层。
-
-> 🎯 **设计理念**: 具体实现，运行时实体，管理模块生命周期。
-
-#### 安装
+**模块容器包**，实现"有名"（Named）哲学层。
 
 ```bash
-npm install @daomind/anything
+pnpm add @daomind/anything
 ```
 
-#### 导入
-
 ```typescript
-import type {
-  DaoModuleMeta,
-  ModuleLifecycle,
-  DaoModuleRegistration,
-} from '@daomind/anything';
-
-import { DaoContainer } from '@daomind/anything';
-```
-
----
-
-#### `DaoModuleMeta`
-
-**模块元数据接口** - "有名"状态的标准实现。
-
-```typescript
-interface DaoModuleMeta extends ExistenceContract {
-  readonly id: string;
-  readonly name: string;
-  readonly lifecycle: ModuleLifecycle;
-  readonly createdAt: number;
-  readonly registeredAt: number;
-  readonly activatedAt?: number;
-}
-```
-
-**字段说明**:
-
-| 字段 | 类型 | 必需 | 说明 |
-|------|------|------|------|
-| `id` | `string` | ✅ | 唯一标识符（建议使用 UUID） |
-| `name` | `string` | ✅ | 模块名称 |
-| `lifecycle` | `ModuleLifecycle` | ✅ | 生命周期状态 |
-| `createdAt` | `number` | ✅ | 创建时间戳（毫秒） |
-| `registeredAt` | `number` | ✅ | 注册时间戳（毫秒） |
-| `activatedAt` | `number` | ❌ | 激活时间戳（可选） |
-
-**使用示例**:
-
-```typescript
-interface TodoModule extends DaoModuleMeta {
-  readonly title: string;
-  readonly completed: boolean;
-}
-
-function createTodo(title: string): TodoModule {
-  const now = Date.now();
-  return {
-    existentialType: 'anything',
-    id: crypto.randomUUID(),
-    name: `Todo:${title}`,
-    lifecycle: 'active',
-    createdAt: now,
-    registeredAt: now,
-    activatedAt: now,
-    title,
-    completed: false,
-  };
-}
+import type { DaoModuleRegistration, ModuleLifecycle, DaoModuleMeta } from '@daomind/anything';
+import { DaoAnythingContainer, daoContainer } from '@daomind/anything';
 ```
 
 ---
 
 #### `ModuleLifecycle`
 
-**模块生命周期状态枚举**。
-
 ```typescript
 type ModuleLifecycle =
-  | 'registered'    // 已注册
+  | 'registered'    // 已注册（初始状态）
   | 'initialized'   // 已初始化
   | 'active'        // 活跃中
   | 'suspending'    // 暂停中
-  | 'terminated';   // 已终止
+  | 'terminated';   // 已终止（终态）
 ```
 
-**状态流转图**:
-
-```
-registered → initialized → active → suspending → terminated
-    ↓            ↓           ↓          ↓           ↓
-  创建完成      初始化完成    正常运行    暂时挂起    彻底销毁
-```
-
-**状态说明**:
-
-| 状态 | 说明 | 可执行操作 |
-|------|------|-----------|
-| `registered` | 模块已创建，未初始化 | 初始化、注销 |
-| `initialized` | 初始化完成，未激活 | 激活、注销 |
-| `active` | 正常运行中 | 暂停、终止 |
-| `suspending` | 暂时挂起 | 恢复、终止 |
-| `terminated` | 已销毁 | 无（终态） |
+**状态流转**: `registered → initialized → active → suspending → terminated`
 
 ---
 
-#### `DaoContainer`
+#### `DaoAnythingContainer`
 
-**模块容器类** - 管理模块的注册、查找和生命周期。
+IoC 容器，管理模块的注册与生命周期。
 
 ```typescript
-class DaoContainer {
-  constructor();
-  
-  register<T extends DaoModuleMeta>(module: T): void;
-  get<T extends DaoModuleMeta>(id: string): T | undefined;
-  has(id: string): boolean;
-  remove(id: string): boolean;
-  clear(): void;
-  size(): number;
-  list(): DaoModuleMeta[];
+class DaoAnythingContainer {
+  register(module: DaoModuleRegistration): void
+  initialize(name: string): Promise<void>
+  activate(name: string): Promise<void>
+  deactivate(name: string): Promise<void>
+  terminate(name: string): Promise<void>
+  resolve<T>(name: string): Promise<T>        // 动态 import，需模块处于 active 状态
+  getModule(name: string): DaoModuleMeta | undefined
+  listModules(): ReadonlyArray<DaoModuleMeta>
 }
 ```
 
-**方法详解**:
-
-##### `register<T>(module: T): void`
-
-注册一个模块到容器。
-
-```typescript
-const container = new DaoContainer();
-const todo = createTodo('学习 DaoMind');
-
-container.register(todo);
-```
-
-**参数**:
-- `module`: 要注册的模块实例
-
-**异常**:
-- 如果 `id` 已存在，抛出错误
-
----
-
-##### `get<T>(id: string): T | undefined`
-
-根据 ID 获取模块。
-
-```typescript
-const todo = container.get<TodoModule>('todo-id-123');
-if (todo) {
-  console.log(todo.title);
-}
-```
-
-**参数**:
-- `id`: 模块唯一标识
-
-**返回**:
-- 模块实例，如果不存在返回 `undefined`
-
----
-
-##### `has(id: string): boolean`
-
-检查模块是否存在。
-
-```typescript
-if (container.has('todo-id-123')) {
-  console.log('模块存在');
-}
-```
-
----
-
-##### `remove(id: string): boolean`
-
-移除模块。
-
-```typescript
-const removed = container.remove('todo-id-123');
-console.log(removed ? '移除成功' : '模块不存在');
-```
-
-**返回**:
-- `true`: 移除成功
-- `false`: 模块不存在
-
----
-
-##### `clear(): void`
-
-清空容器。
-
-```typescript
-container.clear();
-console.log(container.size()); // 0
-```
-
----
-
-##### `size(): number`
-
-获取容器中模块数量。
-
-```typescript
-const count = container.size();
-console.log(`共有 ${count} 个模块`);
-```
-
----
-
-##### `list(): DaoModuleMeta[]`
-
-列出所有模块。
-
-```typescript
-const modules = container.list();
-modules.forEach(m => console.log(m.name));
-```
+> `daoContainer` 是全局单例。在 `DaoUniverseModules` 中使用独立 `new DaoAnythingContainer()` 以避免污染全局。
 
 ---
 
 ### @daomind/agents
 
-**Agent 系统包** - 自主行动实体。
-
-#### 安装
+**Agent 系统包**，自主行动实体。
 
 ```bash
-npm install @daomind/agents
+pnpm add @daomind/agents
 ```
 
-#### 导入
-
 ```typescript
-import type {
-  DaoAgent,
-  DaoAgentCapability,
-  AgentState,
+import type { DaoAgent, DaoAgentCapability, AgentState } from '@daomind/agents';
+import {
+  DaoBaseAgent,
+  TaskAgent,
+  ObserverAgent,
+  CoordinatorAgent,
+  DaoAgentRegistry,
+  daoAgentRegistry,
+  daoAgentMessenger,
 } from '@daomind/agents';
 ```
 
 ---
 
-#### `DaoAgent`
-
-**Agent 接口** - 具有自主行动能力的实体。
-
-```typescript
-interface DaoAgent extends ExistenceContract {
-  readonly id: string;
-  readonly agentType: string;
-  readonly state: AgentState;
-  readonly createdAt: number;
-  readonly capabilities: ReadonlyArray<DaoAgentCapability>;
-  
-  initialize(): Promise<void>;
-  activate(): Promise<void>;
-  rest(): Promise<void>;
-  terminate(): Promise<void>;
-  execute<T>(action: string, payload?: unknown): Promise<T>;
-}
-```
-
-**字段说明**:
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `id` | `string` | Agent 唯一标识 |
-| `agentType` | `string` | Agent 类型（如 'translator', 'analyzer'） |
-| `state` | `AgentState` | 当前状态 |
-| `createdAt` | `number` | 创建时间戳 |
-| `capabilities` | `ReadonlyArray<DaoAgentCapability>` | 能力列表 |
-
-**方法说明**:
-
-| 方法 | 说明 |
-|------|------|
-| `initialize()` | 初始化 Agent |
-| `activate()` | 激活 Agent |
-| `rest()` | 使 Agent 休眠 |
-| `terminate()` | 终止 Agent |
-| `execute<T>(action, payload?)` | 执行特定动作 |
-
----
-
 #### `AgentState`
-
-**Agent 状态枚举**。
 
 ```typescript
 type AgentState =
-  | 'dormant'     // 休眠
+  | 'dormant'     // 休眠（初始状态）
   | 'awakening'   // 唤醒中
   | 'active'      // 活跃
   | 'resting'     // 休息中
-  | 'deceased';   // 已终止
-```
-
-**状态流转**:
-
-```
-dormant → awakening → active → resting → deceased
-  ↓         ↓          ↓         ↓         ↓
- 休眠      正在启动    工作中    休息      终止
+  | 'deceased';   // 已终止（终态）
 ```
 
 ---
 
-#### `DaoAgentCapability`
+#### `DaoBaseAgent`
 
-**Agent 能力定义**。
+所有 Agent 的基类。
 
 ```typescript
-interface DaoAgentCapability {
-  readonly name: string;
-  readonly version: string;
-  readonly description?: string;
+abstract class DaoBaseAgent {
+  readonly id: string;
+  readonly agentType: string;
+  get state(): AgentState
+
+  initialize(): Promise<void>
+  activate(): Promise<void>
+  rest(): Promise<void>
+  terminate(): Promise<void>
+  execute<T>(action: string, payload?: unknown): Promise<T>
+  send(to: string | '*', action: string, payload?: unknown): void
 }
 ```
 
-**示例**:
+---
+
+#### `TaskAgent`
+
+优先级任务队列 Agent。
 
 ```typescript
-const translateCapability: DaoAgentCapability = {
-  name: 'translate',
-  version: '1.0.0',
-  description: '翻译文本的能力',
+class TaskAgent extends DaoBaseAgent {
+  // execute 支持的动作:
+  // 'enqueue' — 入队: { id, action, priority?, payload? }
+  // 'run-next' — 执行优先级最高的任务
+  // 'peek' — 查看队头任务（不执行）
+  // 'list' — 列出所有待处理任务
+  // 'clear' — 清空任务队列
+}
+```
+
+---
+
+#### `ObserverAgent`
+
+事件总线历史监听 Agent。
+
+```typescript
+class ObserverAgent extends DaoBaseAgent {
+  // execute 支持的动作:
+  // 'get-history' — 获取消息历史: { limit? }
+  // 'clear-history' — 清空历史
+}
+```
+
+---
+
+#### `CoordinatorAgent`
+
+Agent 名册与任务分派 Agent。
+
+```typescript
+class CoordinatorAgent extends DaoBaseAgent {
+  // execute 支持的动作:
+  // 'add-agent'    — 注册 Agent: { agentId }
+  // 'remove-agent' — 注销 Agent: { agentId }
+  // 'assign'       — 分派任务:   { agentId, action, payload? }
+  // 'list-agents'  — 列出所有 Agent
+}
+```
+
+---
+
+#### `daoAgentMessenger`
+
+全局消息总线（`DaoBaseAgent` 内部硬绑定此单例）。
+
+```typescript
+interface DaoAgentMessenger {
+  send(from: string, to: string | '*', action: string, payload?: unknown): void
+  history(filter?: MessageFilter): ReadonlyArray<AgentMessage>
+  subscriberCount(): number
+}
+```
+
+---
+
+### @daomind/apps
+
+**应用生命周期包**，状态机驱动。
+
+```bash
+pnpm add @daomind/apps
+```
+
+```typescript
+import type { AppState, DaoAppDefinition, DaoAppInstance } from '@daomind/apps';
+import { DaoAppContainer, daoAppContainer, DaoLifecycleManager, daoLifecycleManager } from '@daomind/apps';
+```
+
+---
+
+#### `AppState`
+
+```typescript
+type AppState =
+  | 'registered'   // 已注册
+  | 'starting'     // 启动中
+  | 'running'      // 运行中
+  | 'stopping'     // 停止中
+  | 'stopped'      // 已停止
+  | 'error';       // 错误
+```
+
+---
+
+#### `DaoAppContainer`
+
+```typescript
+class DaoAppContainer {
+  register(def: DaoAppDefinition): void
+  unregister(id: string): boolean
+  start(id: string): Promise<void>      // 检查 dependencies 是否全部 running
+  stop(id: string): Promise<void>
+  restart(id: string): Promise<void>
+  get(id: string): DaoAppInstance | undefined
+  listAll(): ReadonlyArray<DaoAppInstance>
+  listByState(state: AppState): ReadonlyArray<DaoAppInstance>
+}
+```
+
+---
+
+#### `DaoLifecycleManager`
+
+```typescript
+class DaoLifecycleManager {
+  emit(appId: string, from: AppState, to: AppState): void
+  onStateChange(appId: string, cb: (from: AppState, to: AppState) => void): () => void
+  getHistory(appId: string, limit?: number): ReadonlyArray<{ from, to, timestamp }>
+}
+```
+
+---
+
+### @daomind/times
+
+**定时器与调度包**，时序层。
+
+```bash
+pnpm add @daomind/times
+```
+
+```typescript
+import type { DaoTimerHandle, DaoTimerOptions, DaoScheduledTask, DaoTimeWindow } from '@daomind/times';
+import { DaoTimer, DaoScheduler, daoTimer, daoScheduler, daoTimeWindow } from '@daomind/times';
+```
+
+---
+
+#### `DaoTimer`
+
+```typescript
+class DaoTimer {
+  setInterval(callback: () => void, options: DaoTimerOptions): DaoTimerHandle
+  setTimeout(callback: () => void, delay: number): DaoTimerHandle
+  clearInterval(handle: DaoTimerHandle): void
+  clearTimeout(handle: DaoTimerHandle): void
+}
+
+interface DaoTimerOptions {
+  interval:    number        // 间隔毫秒
+  immediate?:  boolean       // 立即触发一次（默认 false）
+  maxFires?:   number        // 最大触发次数（默认无限）
+}
+```
+
+---
+
+#### `DaoScheduler`
+
+```typescript
+class DaoScheduler {
+  schedule<T>(task: Omit<DaoScheduledTask<T>, 'id'>): string  // 返回 taskId
+  cancel(taskId: string): boolean
+  pending(): number  // 返回 executeAt <= Date.now() 的任务数
+  flush(): void      // 执行所有已到期任务
+}
+
+interface DaoScheduledTask<T> {
+  id:         string
+  executeAt:  number    // 执行时间戳
+  handler:    () => T
+  priority:   number    // 数字越大优先级越高
+}
+```
+
+---
+
+#### `daoTimeWindow`
+
+时间窗口工具（全局无状态对象）。
+
+```typescript
+const daoTimeWindow = {
+  now(duration: number): DaoTimeWindow          // 以当前时间为起点
+  contains(win: DaoTimeWindow, ts: number): boolean
+  overlaps(a: DaoTimeWindow, b: DaoTimeWindow): boolean
 };
 
-const agent: DaoAgent = {
-  id: crypto.randomUUID(),
-  existentialType: 'anything',
-  agentType: 'translator',
-  state: 'active',
-  createdAt: Date.now(),
-  capabilities: [translateCapability],
-  
-  async initialize() { /* ... */ },
-  async activate() { /* ... */ },
-  async rest() { /* ... */ },
-  async terminate() { /* ... */ },
-  async execute<T>(action: string, payload?: unknown): Promise<T> {
-    // 执行逻辑
-    return {} as T;
-  },
-};
+interface DaoTimeWindow {
+  start:    number
+  end:      number
+  duration: number
+}
+```
+
+---
+
+### @daomind/collective
+
+**根节点包**，再导出所有子包并提供 `DaoUniverse` 门面与全系列 `DaoUniverse*` 桥接器。
+
+```bash
+pnpm add @daomind/collective
+```
+
+```typescript
+import {
+  DaoUniverse, daoUniverse,
+  DaoUniverseMonitor,
+  DaoUniverseClock,
+  DaoUniverseFeedback,
+  DaoUniverseAudit,
+  DaoUniverseScheduler,
+  DaoUniverseSkills,
+  DaoUniverseNexus,
+  DaoUniverseDocs,
+  DaoUniverseSpaces,
+  DaoUniversePages,
+  DaoUniverseAgents,
+  DaoUniverseApps,
+  DaoUniverseTimes,
+  DaoUniverseModules,
+  // ... 所有子包的再导出
+} from '@daomind/collective';
+```
+
+---
+
+#### `DaoUniverse`
+
+全局宇宙快照，基础门面。
+
+```typescript
+class DaoUniverse {
+  snapshot(): DaoSystemSnapshot
+  // DaoSystemSnapshot 包含 agents / apps / monitor 等子系统快照
+}
+
+const daoUniverse: DaoUniverse;  // 全局单例
 ```
 
 ---
@@ -529,121 +504,515 @@ const agent: DaoAgent = {
 
 ### @modulux/qi
 
-**消息总线** - 事件驱动通信。
-
-#### 安装
+**消息总线**，四通道事件通信（天/地/人/冲）。
 
 ```bash
-npm install @modulux/qi
+pnpm add @modulux/qi
 ```
 
-#### `QiBus`
-
-**消息总线类**。
-
 ```typescript
-class QiBus {
-  constructor();
-  
-  publish(message: QiMessage): void;
-  subscribe(type: string, handler: (msg: QiMessage) => void): () => void;
-  unsubscribe(type: string, handler: (msg: QiMessage) => void): void;
-}
+import { DaoQi, daoQi } from '@modulux/qi';
+import type { DaoMessage, QiChannelType } from '@modulux/qi';
+
+type QiChannelType = 'heaven' | 'earth' | 'human' | 'void';
 ```
 
-**使用示例**:
+---
+
+### @daomind/monitor
+
+**监控系统**，阴阳仪表盘、热力图、向量场、告警引擎（基于中医经络理论）。
+
+```bash
+pnpm add @daomind/monitor
+```
 
 ```typescript
-import { QiBus } from '@modulux/qi';
+import { daoMonitor, DaoHeatmapEngine } from '@daomind/monitor';
 
-const bus = new QiBus();
+// 核心：heatmap 记录
+daoMonitor.heatmapEngine.record(channel, type, category, { rate, latency, errorRate });
+```
 
-// 订阅消息
-const unsubscribe = bus.subscribe('user.created', (msg) => {
-  console.log('新用户:', msg.payload);
-});
+---
 
-// 发布消息
-bus.publish({
-  type: 'user.created',
-  payload: { userId: '001', username: 'Alice' },
-  source: 'user-service',
-});
+### @daomind/chronos
 
-// 取消订阅
-unsubscribe();
+**高精度时钟**，DaoChronos 时间源。
+
+```bash
+pnpm add @daomind/chronos
+```
+
+```typescript
+import { DaoChronos, daoGetChronos } from '@daomind/chronos';
+
+const clock = daoGetChronos();
+clock.now()    // 当前时间戳
+clock.tick()   // 手动触发一个心跳
+```
+
+---
+
+### @daomind/feedback
+
+**闭环反馈调节**，四阶段生命周期。
+
+```bash
+pnpm add @daomind/feedback
+```
+
+```typescript
+import { DaoFeedbackRegulator, DaoFeedbackLifecycle } from '@daomind/feedback';
+import type { FeedbackRegulatorConfig, RegulationResult } from '@daomind/feedback';
 ```
 
 ---
 
 ### @daomind/verify
 
-**验证系统** - 基于道家哲学的代码检查。
-
-#### 安装
+**哲学契约验证**，wu-you-balance / yin-yang-balance / naming-convention 等检查。
 
 ```bash
-npm install @daomind/verify
+pnpm add @daomind/verify
 ```
 
-#### 检查项
+```typescript
+import { DaoVerificationReporter, DAO_VERIFICATION_CATEGORY_LABELS } from '@daomind/verify';
 
-| 检查 | 说明 | 哲学依据 |
-|------|------|----------|
-| `wu-you-balance` | 检查"无"与"有"的平衡 | 无名与有名 |
-| `yin-yang-balance` | 检查阴阳平衡 | 阴阳调和 |
-| `qi-fluency` | 检查"气"的流动性 | 气的畅通 |
-| `wu-wei-verification` | 检查"无为"原则 | 无为而治 |
-| `naming-convention` | 检查命名规范 | 正名 |
-
-#### 使用
-
-```bash
-# 运行所有检查
-npx dao-verify
-
-# 运行特定检查
-npx dao-verify --check wu-you-balance
+// 检查项
+// 'wu-you-balance'     — 无/有平衡
+// 'yin-yang-balance'   — 阴阳平衡
+// 'qi-fluency'         — 气的流动性
+// 'wu-wei-verification'— 无为原则
+// 'naming-convention'  — 命名规范
 ```
 
 ---
 
-## 工具包
+### @daomind/nexus
 
-### @daomind/monitor
-
-**监控系统** - 系统健康监测（基于中医经络理论）。
-
-#### 安装
+**服务网格**，服务发现、负载均衡、路由。
 
 ```bash
-npm install @daomind/monitor
+pnpm add @daomind/nexus
+```
+
+```typescript
+import {
+  DaoServiceDiscovery, daoServiceDiscovery,
+  DaoNexusRouter,      daoNexusRouter,
+  DaoLoadBalancer,     daoLoadBalancer,
+} from '@daomind/nexus';
+```
+
+---
+
+### @daomind/spaces
+
+**命名空间管理**，隔离与组织。
+
+```bash
+pnpm add @daomind/spaces
+```
+
+```typescript
+import { DaoNamespaceManager, daoNamespace } from '@daomind/spaces';
+import type { DaoSpaceId, DaoSpace } from '@daomind/spaces';
+```
+
+---
+
+### @daomind/skills
+
+**技能系统**，能力组合与动态扩展。
+
+```bash
+pnpm add @daomind/skills
+```
+
+```typescript
+import {
+  DaoSkillRegistry,  daoSkillRegistry,
+  DaoSkillActivator, daoSkillActivator,
+  DaoSkillScorer,    daoSkillScorer,
+  DaoSkillCombiner,  daoSkillCombiner,
+} from '@daomind/skills';
+import type { SkillId, SkillState, DaoSkillDefinition } from '@daomind/skills';
+```
+
+---
+
+### @daomind/pages
+
+**组件树与状态绑定**。
+
+```bash
+pnpm add @daomind/pages
+```
+
+```typescript
+import {
+  DaoComponentTree, daoComponentTree,
+  DaoStateBinding,  daoStateBinding,
+} from '@daomind/pages';
+import type { DaoComponent, DaoViewSnapshot, BindingPath } from '@daomind/pages';
+```
+
+---
+
+### @daomind/docs
+
+**知识图谱与 API 文档追踪**。
+
+```bash
+pnpm add @daomind/docs
+```
+
+```typescript
+import {
+  daoDocStore,       DaoDocStore,
+  daoApiDocs,        DaoApiDocs,
+  daoVersionTracker, DaoVersionTracker,
+  daoKnowledgeGraph, DaoKnowledgeGraph,
+} from '@daomind/docs';
+import type { DocType, DaoDocEntry, DaoKnowledgeNode } from '@daomind/docs';
 ```
 
 ---
 
 ### @daomind/benchmark
 
-**性能测试** - 基准测试工具。
-
-#### 安装
+**性能基准测试**，评估与优化指导。
 
 ```bash
-npm install @daomind/benchmark
+pnpm add @daomind/benchmark
 ```
 
-#### 测试套件
+```typescript
+// 测试套件: nothing-size / startup / latency / throughput / memory
+// CLI: npx dao-benchmark
+```
 
-- `nothing-size`: 零运行时验证
-- `startup`: 启动性能
-- `latency`: 延迟测试
-- `throughput`: 吞吐量测试
-- `memory`: 内存使用
+---
 
-#### 使用
+## DaoUniverse* 桥接体系
 
-```bash
-npx dao-benchmark
+所有桥接器均由 `@daomind/collective` 导出，遵循统一设计原则：
+- 构造函数接受上层桥接器引用（或 DaoUniverse 根节点）
+- 内部创建**独立的子系统实例**（不污染全局单例）
+- 暴露 `snapshot()` 方法
+- 对外暴露底层资源的 getter（`monitor`, `agents`, `container` 等）
+
+---
+
+### DaoUniverseMonitor
+
+**v2.8.0** — `DaoUniverse × @daomind/monitor` 监控桥接。
+
+```typescript
+import { DaoUniverseMonitor } from '@daomind/collective';
+
+const monitor = new DaoUniverseMonitor(universe);
+
+monitor.feed()                     // 触发一次监控数据采集
+monitor.capture(): MonitorSnapshot // 获取快照
+monitor.heatmapEngine              // 直接访问 heatmap 引擎
+monitor.monitor                    // 底层 daoMonitor 实例
+monitor.universe                   // 上层 DaoUniverse
+```
+
+---
+
+### DaoUniverseClock
+
+**v2.9.0** — `DaoUniverseMonitor × @daomind/chronos` 时序心跳。
+
+```typescript
+const clock = new DaoUniverseClock(monitor);
+
+clock.tick(count?: number): void    // 手动触发心跳
+clock.onTick(cb: ClockTickCallback): () => void  // 注册心跳回调
+clock.snapshot(): ClockSnapshot
+clock.monitor                        // 上层 DaoUniverseMonitor
+```
+
+---
+
+### DaoUniverseFeedback
+
+**v2.10.0** — `DaoUniverseClock × @daomind/feedback` 闭环反馈。
+
+```typescript
+const feedback = new DaoUniverseFeedback(clock);
+
+feedback.regulate(signal: number): RegulationResult
+feedback.snapshot(): FeedbackSnapshot
+feedback.clock                       // 上层 DaoUniverseClock
+feedback.regulator                   // 底层 DaoFeedbackRegulator
+```
+
+---
+
+### DaoUniverseAudit
+
+**v2.11.0** — `DaoUniverse × @daomind/verify` 哲学契约审查。
+
+```typescript
+const audit = new DaoUniverseAudit(universe);
+
+audit.run(): AuditSnapshot          // 执行全量哲学审查
+audit.snapshot(): AuditSnapshot
+audit.universe                       // 上层 DaoUniverse
+audit.reporter                       // 底层 DaoVerificationReporter
+```
+
+---
+
+### DaoUniverseScheduler
+
+**v2.12.0** — `DaoUniverseClock × @daomind/times` 时序任务调度。
+
+```typescript
+const scheduler = new DaoUniverseScheduler(clock);
+
+scheduler.schedule(task): string         // 返回 taskId
+scheduler.cancel(taskId): boolean
+scheduler.flush(): number                // 执行所有到期任务，返回执行数量
+scheduler.snapshot(): SchedulerSnapshot
+scheduler.clock                          // 上层 DaoUniverseClock
+
+interface ExecutionRecord {
+  taskId:    string
+  executedAt: number
+  result:    unknown
+  duration:  number
+}
+```
+
+---
+
+### DaoUniverseSkills
+
+**v2.13.0** — `DaoUniverseScheduler × @daomind/skills` 时序技能生命周期。
+
+```typescript
+const skills = new DaoUniverseSkills(scheduler);
+
+skills.register(def): void
+skills.activate(id): Promise<void>
+skills.deactivate(id): Promise<void>
+skills.snapshot(): SkillsSnapshot
+skills.scheduler                         // 上层 DaoUniverseScheduler
+skills.registry                          // 底层 DaoSkillRegistry
+```
+
+---
+
+### DaoUniverseNexus
+
+**v2.14.0** — `DaoUniverseMonitor × @daomind/nexus` 服务网格 × 宇宙健康。
+
+```typescript
+const nexus = new DaoUniverseNexus(monitor);
+
+nexus.register(service): void
+nexus.dispatch(req): Promise<NexusDispatchResult>
+nexus.snapshot(): NexusMetrics
+nexus.monitor                             // 上层 DaoUniverseMonitor
+nexus.router                              // 底层 DaoNexusRouter
+```
+
+---
+
+### DaoUniverseDocs
+
+**v2.15.0** — `DaoUniverseAudit × @daomind/docs` 知识图谱 × 哲学文档管理。
+
+```typescript
+const docs = new DaoUniverseDocs(audit);
+
+docs.addDoc(entry): void
+docs.addNode(node): void
+docs.snapshot(): DocsSnapshot
+docs.audit                                // 上层 DaoUniverseAudit
+docs.docStore                             // 底层 DaoDocStore
+docs.knowledgeGraph                       // 底层 DaoKnowledgeGraph
+```
+
+---
+
+### DaoUniverseSpaces
+
+**v2.16.0** — `DaoUniverseNexus × @daomind/spaces` 命名空间 × 服务网格路由。
+
+```typescript
+const spaces = new DaoUniverseSpaces(nexus);
+
+spaces.create(id, config?): DaoSpace
+spaces.resolve(locator): DaoSpace | undefined
+spaces.snapshot(): SpacesSnapshot
+spaces.nexus                              // 上层 DaoUniverseNexus
+spaces.namespace                          // 底层 DaoNamespaceManager
+```
+
+---
+
+### DaoUniversePages
+
+**v2.17.0** — `DaoUniverseScheduler × @daomind/pages` 组件树 × 时序驱动刷新。
+
+```typescript
+const pages = new DaoUniversePages(scheduler);
+
+pages.mount(component): void
+pages.bind(path, updater): () => void     // 返回 dispose 函数
+pages.snapshot(): PagesSnapshot
+pages.scheduler                           // 上层 DaoUniverseScheduler
+pages.componentTree                       // 底层 DaoComponentTree
+pages.stateBinding                        // 底层 DaoStateBinding
+```
+
+---
+
+### DaoUniverseAgents
+
+**v2.18.0** — `DaoUniverseMonitor × @daomind/agents` Agent 生命周期 × 监控健康反馈。
+
+```typescript
+const agents = new DaoUniverseAgents(monitor);
+
+agents.spawn<T extends DaoBaseAgent>(AgentClass, id): T
+  // 创建 Agent + 注册到独立 registry + heatmapEngine.record()
+
+agents.terminate(id): Promise<boolean>
+agents.activate(id): Promise<boolean>
+agents.rest(id): Promise<boolean>
+agents.getAgent(id): DaoBaseAgent | undefined
+agents.listAll(): ReadonlyArray<DaoBaseAgent>
+agents.findByCapability(cap): ReadonlyArray<DaoBaseAgent>
+agents.findByType(type): ReadonlyArray<DaoBaseAgent>
+agents.send(from, to, action, payload?): void  // 代理 daoAgentMessenger
+agents.history(filter?): ReadonlyArray<AgentMessage>
+agents.snapshot(): AgentsSnapshot
+
+interface AgentsSnapshot {
+  timestamp:   number
+  total:       number
+  active:      number
+  dormant:     number
+  byType:      Record<string, number>
+  subscribers: number
+}
+```
+
+> **注意**: `DaoUniverseAgents` 内部使用独立的 `DaoAgentRegistry`（与全局 `daoAgentRegistry` 隔离），但 `send/history` 代理全局 `daoAgentMessenger`（因为 `DaoBaseAgent` 硬绑定该单例）。
+
+---
+
+### DaoUniverseApps
+
+**v2.19.0** — `DaoUniverseAgents × @daomind/apps` 应用状态机 × Agent 生命周期广播。
+
+```typescript
+const apps = new DaoUniverseApps(agents);
+
+apps.register(def): void
+apps.unregister(id): boolean
+apps.start(id): Promise<void>    // 成功后广播 'app:started'
+apps.stop(id): Promise<void>     // 成功后广播 'app:stopped'
+apps.restart(id): Promise<void>  // 成功后广播 'app:restarted'
+apps.getApp(id): DaoAppInstance | undefined
+apps.listAll(): ReadonlyArray<DaoAppInstance>
+apps.listByState(state): ReadonlyArray<DaoAppInstance>
+apps.onStateChange(appId, cb): () => void   // 返回 dispose 函数
+apps.getHistory(appId, limit?): ReadonlyArray<{ from, to, timestamp }>
+apps.snapshot(): AppsSnapshot
+
+interface AppsSnapshot {
+  timestamp:   number
+  total:       number
+  running:     number
+  registered:  number
+  stopped:     number
+  byState:     Partial<Record<AppState, number>>
+}
+```
+
+---
+
+### DaoUniverseTimes
+
+**v2.20.0** — `DaoUniverseApps × @daomind/times` per-app 定时器追踪 × 时间窗口工具。
+
+```typescript
+const times = new DaoUniverseTimes(apps);
+
+// 间隔定时器（绑定到 appId）
+times.setInterval(appId, callback, options): DaoTimerHandle
+times.setTimeout(appId, callback, delay): DaoTimerHandle
+times.clearTimer(handle): void          // 自动识别 interval/timeout，幂等
+
+// 一键清理
+times.clearAllForApp(appId): number     // 返回已清除的资源总数
+
+// 调度任务（绑定到 appId）
+times.scheduleTask<T>(appId, task): string     // 返回 taskId
+times.cancelTask(taskId): boolean
+
+// 时间窗口工具
+times.window(duration): DaoTimeWindow
+times.windowContains(win, ts): boolean
+times.windowOverlaps(a, b): boolean
+
+times.snapshot(): TimesSnapshot
+
+interface TimesSnapshot {
+  timestamp:    number
+  totalTimers:  number   // interval + timeout 句柄总数
+  pendingTasks: number   // 已到期待执行任务数
+  byApp: Record<string, { timers: number; tasks: number }>
+}
+
+// Getters
+times.apps       // 上层 DaoUniverseApps
+times.timer      // 底层 DaoTimer（独立实例）
+times.scheduler  // 底层 DaoScheduler（独立实例）
+```
+
+---
+
+### DaoUniverseModules
+
+**v2.21.0** — `DaoUniverseApps × @daomind/anything` IoC 容器 × Agent 生命周期广播。
+
+```typescript
+const modules = new DaoUniverseModules(apps);
+
+modules.register(module): void
+modules.initialize(name): Promise<void>
+modules.activate(name): Promise<void>    // 成功后广播 'module:activated'
+modules.deactivate(name): Promise<void>
+modules.terminate(name): Promise<void>   // 成功后广播 'module:terminated'
+modules.getModule(name): DaoModuleMeta | undefined
+modules.listModules(): ReadonlyArray<DaoModuleMeta>
+modules.listByLifecycle(lifecycle): ReadonlyArray<DaoModuleMeta>
+modules.resolve<T>(name): Promise<T>     // 需模块处于 active 状态
+
+modules.snapshot(): ModulesSnapshot
+
+interface ModulesSnapshot {
+  timestamp:   number
+  total:       number
+  active:      number
+  registered:  number
+  terminated:  number
+  byLifecycle: Partial<Record<ModuleLifecycle, number>>
+}
+
+// Getters
+modules.apps       // 上层 DaoUniverseApps
+modules.container  // 底层 DaoAnythingContainer（独立实例）
 ```
 
 ---
@@ -653,137 +1022,98 @@ npx dao-benchmark
 ### 类型守卫
 
 ```typescript
-import {
-  isExistenceContract,
-  isDaoModuleMeta,
-  isDaoAgent,
-} from '@daomind/nothing';
+import { daoIsOk, daoIsErr, daoIsSome, daoIsNone } from '@daomind/nothing';
 
-// 运行时类型检查
-if (isExistenceContract(obj)) {
-  console.log(obj.existentialType);
-}
+// DaoResult 守卫
+if (daoIsOk(result))  { /* result.value 可用 */ }
+if (daoIsErr(result)) { /* result.error 可用 */ }
+
+// DaoOption 守卫
+if (daoIsSome(opt)) { /* opt.value 可用 */ }
+if (daoIsNone(opt)) { /* 无值 */ }
 ```
 
 ---
 
 ## 常见模式
 
-### 模式 1: 创建模块工厂函数
+### 模式 1：完整 DaoUniverse* 层次构建
 
 ```typescript
-import type { DaoModuleMeta } from '@daomind/anything';
+import {
+  DaoUniverse, DaoUniverseMonitor, DaoUniverseAgents,
+  DaoUniverseApps, DaoUniverseTimes, DaoUniverseModules,
+} from '@daomind/collective';
 
-interface MyModule extends DaoModuleMeta {
-  readonly data: string;
-}
-
-function createMyModule(data: string): MyModule {
-  const now = Date.now();
-  return {
-    existentialType: 'anything',
-    id: crypto.randomUUID(),
-    name: `MyModule:${data}`,
-    lifecycle: 'active',
-    createdAt: now,
-    registeredAt: now,
-    activatedAt: now,
-    data,
-  };
-}
+const universe = new DaoUniverse();
+const monitor  = new DaoUniverseMonitor(universe);
+const agents   = new DaoUniverseAgents(monitor);
+const apps     = new DaoUniverseApps(agents);
+const times    = new DaoUniverseTimes(apps);
+const modules  = new DaoUniverseModules(apps);
 ```
 
-### 模式 2: 实现 Agent
+### 模式 2：应用启动 + 定时器 + 停止清理
 
 ```typescript
-import type { DaoAgent, DaoAgentCapability } from '@daomind/agents';
+apps.register({ id: 'worker', name: 'Worker', version: '1.0.0', entry: './worker' });
+await apps.start('worker');
 
-class MyAgent implements DaoAgent {
-  readonly id: string;
-  readonly existentialType = 'anything' as const;
-  readonly agentType = 'custom';
-  readonly createdAt: number;
-  readonly capabilities: ReadonlyArray<DaoAgentCapability>;
-  state: AgentState = 'dormant';
-  
-  constructor(capabilities: DaoAgentCapability[]) {
-    this.id = crypto.randomUUID();
-    this.createdAt = Date.now();
-    this.capabilities = capabilities;
-  }
-  
-  async initialize(): Promise<void> {
-    this.state = 'awakening';
-    // 初始化逻辑
-    this.state = 'active';
-  }
-  
-  async activate(): Promise<void> {
-    this.state = 'active';
-  }
-  
-  async rest(): Promise<void> {
-    this.state = 'resting';
-  }
-  
-  async terminate(): Promise<void> {
-    this.state = 'deceased';
-  }
-  
-  async execute<T>(action: string, payload?: unknown): Promise<T> {
-    // 执行逻辑
-    return {} as T;
-  }
-}
+// 绑定时序资源
+const h = times.setInterval('worker', () => poll(), { interval: 1000 });
+const taskId = times.scheduleTask('worker', { executeAt: Date.now() + 5000, handler: report, priority: 1 });
+
+// 停止时一键清理
+await apps.stop('worker');
+times.clearAllForApp('worker'); // 清除 h + taskId
 ```
 
-### 模式 3: 使用消息总线
+### 模式 3：模块生命周期 + Agent 广播监听
 
 ```typescript
-import { QiBus } from '@modulux/qi';
+modules.register({ name: 'auth', version: '1.0.0', path: './auth' });
+await modules.initialize('auth');
+await modules.activate('auth');
 
-class EventDrivenSystem {
-  private bus = new QiBus();
-  
-  setupHandlers(): void {
-    this.bus.subscribe('event.type', this.handleEvent.bind(this));
-  }
-  
-  private handleEvent(msg: QiMessage): void {
-    console.log('收到事件:', msg);
-  }
-  
-  publishEvent(data: unknown): void {
-    this.bus.publish({
-      type: 'event.type',
-      payload: data,
-      source: 'system',
-    });
-  }
-}
+// 验证广播
+const hist = agents.history({ action: 'module:activated' });
+console.log(hist.at(-1)?.payload); // { name: 'auth' }
+```
+
+### 模式 4：时间窗口检测
+
+```typescript
+const win = times.window(30_000); // 30 秒窗口
+const isRecent = times.windowContains(win, someTimestamp);
+
+const winA = times.window(10_000);
+const winB = { start: Date.now() + 5000, end: Date.now() + 15000, duration: 10000 };
+console.log(times.windowOverlaps(winA, winB)); // true（重叠）
 ```
 
 ---
 
 ## 版本兼容性
 
-| 包版本 | TypeScript | Node.js |
-|--------|-----------|---------|
-| 2.x | >=5.0.0 | >=18.0.0 |
-| 1.x | >=4.5.0 | >=16.0.0 |
+| 版本 | TypeScript | Node.js | 测试数 |
+|------|-----------|---------|--------|
+| v2.21.0 | >=5.9.0 | >=18.0.0 | 817 |
+| v2.18.0 | >=5.9.0 | >=18.0.0 | 723 |
+| v2.6.0  | >=5.0.0 | >=18.0.0 | 345 |
+| v2.x    | >=5.0.0 | >=18.0.0 | — |
+| v1.x    | >=4.5.0 | >=16.0.0 | — |
 
 ---
 
 ## 相关资源
 
 - [快速开始](../GETTING-STARTED.md)
-- [交互式教程](../tutorials/INTERACTIVE-TUTORIAL.md)
-- [FAQ](../FAQ.md)
 - [最佳实践](./BEST-PRACTICES.md)
+- [FAQ](../FAQ.md)
 - [示例代码](../examples/)
 
 ---
 
-**文档版本**: 2.0.0  
-**最后更新**: 2026-04-15  
+**文档版本**: 2.21.0  
+**最后更新**: 2026-04-16  
 **维护者**: DaoMind Team
