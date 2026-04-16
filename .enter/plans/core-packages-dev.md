@@ -1,204 +1,187 @@
-# DaoMind v2.22.0 开发计划 — DaoUniverseQi
+# v2.23.0 — DaoUniverseBenchmark 开发计划
 
 ## Context
 
-v2.21.0 完成 `DaoUniverseModules`（@daomind/anything × DaoUniverseApps），DaoUniverse* 桥接树在 `DaoUniverseApps` 分支下已有 Times + Modules 两个子节点。
+当前状态：v2.22.0，847 测试，47 套件。
 
-`@modulux/qi` 是 DaoMind 最核心的消息传输基础设施，实现了帛书道德经四十二章"天地人冲"四通道通信模型，但尚未融入 DaoUniverse* 树。
-最自然的接入点是 `DaoUniverseNexus`（服务网格层），因为 Qi 的 `DaoRouter` 与 Nexus 的路由层在职责上高度对齐：
-- Nexus 管理**服务级**路由（DaoServiceDiscovery + DaoNexusRouter）
-- Qi 管理**消息级**路由（HunyuanBus + DaoRouter）
+DaoUniverse* 桥接体系仍有两个未桥接包：
+- `@daomind/benchmark` — 性能基准测试工具
+- `@daomind/verify` — 已通过 DaoUniverseAudit 桥接（v2.11.0）
 
-将两者结合，形成"消息总线 × 服务网格"的完整传输层。
+v2.22.0 的关键发现：TianQiChannel 签名时使用两次独立的 `Date.now()`，
+导致 `JSON.stringify(message.header)` 与签名 payload 永远不匹配，消息必被 drop。
+DaoUniverseQi.broadcast() 已绕过此问题。
 
 ---
 
-## 目标版本
+## v2.23.0：DaoUniverseBenchmark（@daomind/benchmark × DaoUniverseMonitor）
 
-**v2.22.0**：`DaoUniverseQi` — `@modulux/qi × DaoUniverseNexus`
+### 架构位置
 
-新增位置：
 ```
 DaoUniverse
   └── DaoUniverseMonitor (v2.8.0)
-          └── DaoUniverseNexus (v2.14.0)
-                  ├── DaoUniverseSpaces (v2.16.0)
-                  └── DaoUniverseQi (v2.22.0)  ← 新建
+          ├── DaoUniverseClock → ...
+          ├── DaoUniverseNexus → ...
+          ├── DaoUniverseAgents → ...
+          └── DaoUniverseBenchmark (v2.23.0) ← 性能基准 × 宇宙健康感知
 ```
 
----
+### 哲学依据
 
-## 执行步骤（严格顺序）
+帛书《道德经》：
+- "为学日益，为道日损"（德经·四十八章）— 测量即学习，损益见道
+- "知人者智，自知者明"（德经·三十三章）— 自知性能，知常曰明
 
-### Step 0：复盘 v2.21.0
-创建 `retrospectives/2026-04-16-daomind-v2.21.0.md`，覆盖：
-- 目标：DaoUniverseModules IoC 容器 × Agent 广播
-- 核心设计：独立 DaoAnythingContainer / activate 广播 / terminate 广播
-- 关键发现：resolve() 的文件系统平台依赖 → 仅测错误路径
-- 已知限制：动态 import 在非 Node.js 平台的行为差异
-- 测试覆盖：29 个测试（构建/register/initialize/activate/deactivate/terminate/查询/resolve/snapshot/E2E）
+### 类接口设计
 
----
-
-### Step 1：实现 universe-qi.ts
-
-**文件**：`packages/daoCollective/src/universe-qi.ts`
-
-**依赖**：
 ```typescript
-import {
-  HunyuanBus,
-  TianQiChannel, DiQiChannel, RenQiChannel,
-  ChongQiRegulator, daoCreateChongQiRegulator,
-  DaoSerializer, DaoRouter, DaoSigner, DaoBackpressure,
-} from '@modulux/qi';
-import type { DaoMessage, QiChannelType } from '@modulux/qi';
-import type { DaoUniverseNexus } from './universe-nexus';
-```
+/** 单次基准测试运行记录（含 Universe 健康感知） */
+export interface BenchmarkRunRecord {
+  readonly timestamp:    number;
+  readonly healthBefore: number;  // _monitor.health() before run
+  readonly healthAfter:  number;  // _monitor.health() after run
+  readonly report:       DaoPerformanceReport;
+}
 
-**快照类型**：
-```typescript
-export interface QiSnapshot {
-  readonly timestamp:       number;
-  readonly totalEmitted:    number;
-  readonly totalDropped:    number;
-  readonly channelsStats:   Record<string, number>;
-  readonly registeredNodes: number;
+/** 基准测试系统快照 */
+export interface BenchmarkSnapshot {
+  readonly timestamp:   number;
+  readonly totalRuns:   number;
+  readonly lastRunAt:   number | null;
+  readonly lastHealth:  number | undefined;
+  readonly historySize: number;
+}
+
+export class DaoUniverseBenchmark {
+  private readonly _runner: DaoBenchmarkRunner;
+  private readonly _history: BenchmarkRunRecord[] = [];
+
+  constructor(private readonly _monitor: DaoUniverseMonitor) {
+    this._runner = new DaoBenchmarkRunner();
+  }
+
+  // 执行基准测试
+  async runQuick(): Promise<BenchmarkRunRecord>           // 3 个快速套件 + 健康感知
+  async runAll():  Promise<BenchmarkRunRecord>            // 全部 6 个套件 + 健康感知
+  async runSuite(name: string): Promise<DaoBenchmarkResult>  // 单套件（不计入 history）
+
+  // 报告
+  generateReport(format?: 'text' | 'json' | 'markdown'): string  // 委托 runner.daoGenerateReport()
+
+  // 历史管理
+  history(): ReadonlyArray<BenchmarkRunRecord>
+  clearHistory(): void
+
+  // 快照
+  snapshot(): BenchmarkSnapshot
+
+  // Getters
+  get monitor(): DaoUniverseMonitor
+  get runner(): DaoBenchmarkRunner
 }
 ```
 
-**内部状态**：
-```typescript
-private readonly _bus:    HunyuanBus;   // HunyuanBus(serializer, router, signer, backpressure, 'dao-universe-secret')
-private readonly _tian:   TianQiChannel;
-private readonly _di:     DiQiChannel;
-private readonly _ren:    RenQiChannel;
-private readonly _chong:  ChongQiRegulator;
-private readonly _router: DaoRouter;    // 独立保存（DaoRouter 实例）
-private readonly _nodes:  Set<string>;  // 追踪已注册节点 id，用于 registeredNodes 快照
-```
-
-**公开 API**：
-```typescript
-constructor(nexus: DaoUniverseNexus)
-addNode(nodeId: string, target?: string): void
-  // _router.addRoute(target ?? nodeId, nodeId) + _nodes.add(nodeId)
-removeNode(nodeId: string, target?: string): void
-  // _router.removeRoute(target ?? nodeId, nodeId) + _nodes.delete(nodeId)
-broadcast(messageType: string, body: Record<string, unknown>): Promise<void>
-  // 委托 _tian.broadcast(messageType, body)
-report(sourceId: string, messageType: string, metrics: Record<string, number>): Promise<void>
-  // 委托 _di.report(sourceId, messageType, metrics)
-subscribe(channelType: QiChannelType, handler: (msg: DaoMessage) => void): () => void
-  // 委托 _bus.subscribe(channelType, handler)
-probe(target: string): Promise<number>
-  // 委托 _bus.probe(target)
-snapshot(): QiSnapshot
-  // { timestamp: Date.now(), ...bus.getStats(), registeredNodes: _nodes.size }
-get nexus(): DaoUniverseNexus
-get bus(): HunyuanBus
-get tian(): TianQiChannel
-get di(): DiQiChannel
-get ren(): RenQiChannel
-get chong(): ChongQiRegulator
-```
-
-**帛书依据**（顶部注释）：
-- "万物负阴而抱阳，冲气以为和"（德经·四十二章）
-- "为学日益，为道日损"（德经·四十八章）
-
 ---
 
-### Step 2：测试 universe-qi.test.ts
+## 执行步骤
 
-**文件**：`packages/daoCollective/src/__tests__/universe-qi.test.ts`
+### Step 1：复盘 v2.22.0
 
-**makeStack helper**：
-```typescript
-function makeStack(intervalMs = 100) {
+创建 `retrospectives/2026-04-16-daomind-v2.22.0.md`，记录：
+- DaoUniverseQi 设计亮点（四气通道暴露、_nodes Set、无签名广播）
+- TianQiChannel 签名 Bug 发现与 DaoUniverseQi.broadcast() 绕过方案
+- subscribe/unsubscribe 设计（委托 HunyuanBus.subscribe()）
+- DiQiChannel 聚合缓冲机制（window-based buffering）
+
+### Step 2：添加 @daomind/benchmark 依赖
+
+在 `packages/daoCollective/package.json` 的 `dependencies` 中添加：
+```json
+"@daomind/benchmark": "workspace:^"
+```
+
+### Step 3：实现 universe-benchmark.ts
+
+新建 `packages/daoCollective/src/universe-benchmark.ts`：
+- constructor(monitor): 独立 new DaoBenchmarkRunner()，不污染全局
+- runQuick(): 捕获 healthBefore → runner.daoRunQuick() → 捕获 healthAfter → push BenchmarkRunRecord
+- runAll(): 同上，但调用 runner.daoRunAll()
+- runSuite(name): 委托 runner.daoRunSuite(name)（单次运行，不追加 history）
+- generateReport(format?): 委托 runner.daoGenerateReport(format)
+- history(): 返回 _history（readonly copy）
+- clearHistory(): _history.length = 0
+- snapshot(): 从 _history 推断 totalRuns / lastRunAt / lastHealth
+
+### Step 4：测试 universe-benchmark.test.ts
+
+新建 `packages/daoCollective/src/__tests__/universe-benchmark.test.ts`，目标 30 个测试：
+
+```
+makeStack() helper：
   const universe = new DaoUniverse();
   const monitor  = new DaoUniverseMonitor(universe);
-  const clock    = new DaoUniverseClock(monitor, intervalMs);
-  const nexus    = new DaoUniverseNexus(monitor, clock);
-  const qi       = new DaoUniverseQi(nexus);
-  return { universe, monitor, clock, nexus, qi };
-}
+  const bench    = new DaoUniverseBenchmark(monitor);
 ```
 
-**30 个测试分组**：
+| 分组 | 数量 | 关键覆盖 |
+|------|------|---------|
+| 构建 | 5 | create / monitor getter / runner getter / snapshot 初始 / history 初始为空 |
+| runSuite | 4 | 消息吞吐量测试 / 内存占用测试 / 未知套件抛出 / 返回 DaoBenchmarkResult |
+| runQuick | 5 | 返回 BenchmarkRunRecord / healthBefore≥0 / healthAfter≥0 / report.benchmarks 非空 / history 增长 |
+| history | 3 | 初始为空 / runQuick 后 length=1 / clearHistory 后为空 |
+| generateReport | 3 | text 格式字符串 / json 格式字符串 / markdown 格式字符串 |
+| snapshot | 5 | totalRuns=0 / lastRunAt=null / 运行后 totalRuns=1 / historySize 同步 / lastHealth 有值 |
+| E2E | 5 | 完整栈 / health 关联 / 多次运行 history 累积 / clearHistory 后重新累积 / generateReport 非空 |
 
-| 分组 | 数量 | 测试点 |
-|------|------|--------|
-| 构建 | 5 | 可构建 / nexus getter / bus/tian/di/ren/chong getter 均已初始化 / snapshot 初始值（0 emitted/dropped/nodes）|
-| addNode / removeNode | 4 | addNode 后 _nodes.size=1 / removeNode 后 size=0 / 重复 addNode 幂等（Set 去重）/ 不存在的 remove 不抛出 |
-| broadcast | 5 | 无节点 → totalDropped+1 / addNode 后 → totalEmitted+1 / broadcast 返回 Promise<void> / 正确传入 messageType / getStats 增长 |
-| report | 3 | 调用 di.report 不抛出 / report 后 totalDropped 不增长（backpressure 未触发）/ 返回 Promise<void> |
-| subscribe | 4 | 返回 unsubscribe 函数 / unsubscribe 后不再接收 / 订阅后 bus 有 listener / channelType 参数传递 |
-| probe | 2 | 返回 number / 返回非负值 |
-| snapshot | 4 | 初始 totalEmitted=0 / broadcast(有节点)后 totalEmitted>0 / dropped 计数反映无路由消息 / registeredNodes 随 addNode 增长 |
-| E2E | 3 | 完整栈构建并取 snapshot / addNode→broadcast→getStats 验证消息流 / removeNode 后 registeredNodes=0 |
+**注意**：`generateReport` 在 runner 无 results 时返回空字符串；须先 `runSuite` 或 `runQuick` 才能产生报告。
 
-总计 = **30 个测试** → 测试总数：817 + 30 = **847**
-
-**关键 mock 策略**：
-- 在需要路由 `broadcast` 的测试中，先 `addNode` 注册节点，确保 `DaoRouter.route()` 返回非空数组
-- `DaoBackpressure` 默认 `allow()` 返回 true（maxRatePerNode=100，不超出）
-- 不用 jest.spyOn，依赖真实实现以验证集成正确性（与 DaoUniverseModules 策略一致）
-
----
-
-### Step 3：注册到 index.ts
+### Step 5：更新 index.ts
 
 在 `packages/daoCollective/src/index.ts` 末尾追加：
 ```typescript
-// DaoUniverseQi — 混元气总线 × 宇宙服务网格（@modulux/qi × DaoUniverseNexus）
-export type { QiSnapshot } from './universe-qi';
-export { DaoUniverseQi } from './universe-qi';
+// DaoUniverseBenchmark — 性能基准 × 宇宙健康感知（@daomind/benchmark × DaoUniverseMonitor）
+export type { BenchmarkRunRecord, BenchmarkSnapshot } from './universe-benchmark';
+export { DaoUniverseBenchmark } from './universe-benchmark';
 ```
 
----
+### Step 6：更新 App.tsx
 
-### Step 4：更新 App.tsx
+- 测试数：847 → 877（+30）
+- 版本：v2.22.0 → v2.23.0
 
-- 版本：`v2.21.0` → `v2.22.0`
-- 测试数：`817` → `847`
-
----
-
-### Step 5：验证 + commit + push
+### Step 7：验证
 
 ```bash
-# 全量测试（预期：847 tests passed, 47 suites）
-npx jest --no-coverage 2>&1 | tail -5
+npx jest packages/daoCollective/src/__tests__/universe-benchmark.test.ts --no-coverage
+npx jest --no-coverage   # 全量验证：847+30=877 tests, 48 suites
+pnpm -r run build        # 全量构建
+```
 
-# 全量构建
-pnpm -r run build 2>&1 | grep -E "Done|error"
+### Step 8：提交 & 推送
 
-# 单步 commit（v2.22.0）
-git add -A && git commit -m "feat(qi): v2.22.0 — ..."
-git tag v2.22.0
+```bash
+git add -A
+git commit -m "feat(benchmark): v2.23.0 — DaoUniverseBenchmark（@daomind/benchmark × DaoUniverseMonitor 性能基准 × 宇宙健康感知）"
+git tag v2.23.0
 git push origin main --tags
-git push github main --tags
 ```
 
 ---
 
-## 关键文件
+## 关键文件路径
 
 | 文件 | 操作 |
 |------|------|
-| `packages/daoCollective/src/universe-qi.ts` | 新建 |
-| `packages/daoCollective/src/__tests__/universe-qi.test.ts` | 新建 |
-| `packages/daoCollective/src/index.ts` | 追加 2 行导出 |
-| `retrospectives/2026-04-16-daomind-v2.21.0.md` | 新建 |
-| `src/App.tsx` | 817→847, v2.21.0→v2.22.0 |
+| `packages/daoCollective/src/universe-benchmark.ts` | NEW |
+| `packages/daoCollective/src/__tests__/universe-benchmark.test.ts` | NEW |
+| `packages/daoCollective/src/index.ts` | APPEND |
+| `packages/daoCollective/package.json` | ADD dep |
+| `retrospectives/2026-04-16-daomind-v2.22.0.md` | NEW |
+| `src/App.tsx` | 847→877, v2.22.0→v2.23.0 |
 
----
+## 复用的现有工具
 
-## 验证
-
-- `pnpm test` 全部通过，预期 **847 个测试，47 个套件**
-- `pnpm -r run build` 所有包输出 Done，无 error
-- `packages/daoCollective` 构建无 TypeScript 报错（@modulux/qi 类型已在 daoCollective 的 peerDeps 中）
-- `git log --oneline -1` 显示 v2.22.0 commit
-- `git tag | grep v2.22.0` 确认 tag 存在
+- `DaoBenchmarkRunner` from `@daomind/benchmark`（runner.daoRunAll/Quick/Suite/GenerateReport）
+- `DaoUniverseMonitor.health()` — 运行时健康分数（0-100）
+- 既有 makeStack 测试模式（DaoUniverse + DaoUniverseMonitor）
