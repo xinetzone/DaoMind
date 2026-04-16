@@ -12,6 +12,14 @@
     }
   },
   "scripts": {
-    "build": "tsc"
-  }
+    "build": "tsc",
+    "prepublishOnly": "pnpm build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
 }

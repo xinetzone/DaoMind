@@ -1,1 +1,25 @@
-{"name": "@daomind/nexus", "version": "2.0.0", "type": "module", "description": "DaoMind Nexus — 连接与协调的核心", "main": "./dist/index.js", "types": "./dist/index.d.ts", "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}}, "scripts": {"build": "tsc"}}
+{
+  "name": "@daomind/nexus",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "DaoMind Nexus — 连接与协调的核心",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "pnpm build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}

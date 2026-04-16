@@ -1,1 +1,30 @@
-{"name": "@daomind/benchmark", "version": "2.0.0", "type": "module", "description": "DaoMind Benchmark — 性能基准测试与优化工具", "main": "./dist/index.js", "types": "./dist/index.d.ts", "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}}, "scripts": {"build": "tsc"}, "dependencies": {"@daomind/nexus": "workspace:*", "@daomind/feedback": "workspace:*", "@modulux/qi": "workspace:*"}}
+{
+  "name": "@daomind/benchmark",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "DaoMind Benchmark — 性能基准测试与优化工具",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "@daomind/nexus": "workspace:*",
+    "@daomind/feedback": "workspace:*",
+    "@modulux/qi": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}

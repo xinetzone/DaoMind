@@ -1,1 +1,25 @@
-{"name": "@daomind/pages", "version": "2.0.0", "type": "module", "description": "DaoMind Pages — 页面层 — 用户界面展示", "main": "./dist/index.js", "types": "./dist/index.d.ts", "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}}, "scripts": {"build": "tsc"}}
+{
+  "name": "@daomind/pages",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "DaoMind Pages — 页面层 — 用户界面展示",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "pnpm build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}
