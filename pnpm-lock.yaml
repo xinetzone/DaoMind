@@ -138,6 +138,9 @@ importers:
       '@daomind/chronos':
         specifier: workspace:^
         version: link:../daoChronos
+      '@daomind/docs':
+        specifier: workspace:^
+        version: link:../daoDocs
       '@daomind/feedback':
         specifier: workspace:^
         version: link:../daoFeedback

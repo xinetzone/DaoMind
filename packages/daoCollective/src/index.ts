@@ -155,3 +155,13 @@ export { DaoServiceDiscovery, daoServiceDiscovery, DaoNexusRouter, daoNexusRoute
 // DaoUniverseNexus — 服务网格 × 宇宙健康（daoNexus × DaoUniverseMonitor）
 export type { NexusHealthRecord, NexusDispatchResult, NexusMetrics } from './universe-nexus';
 export { DaoUniverseNexus } from './universe-nexus';
+
+// ============================================================
+// @daomind/docs — 文档层（知识图谱 + 版本追踪 + API 文档）
+// ============================================================
+export type { DocType, DaoDocEntry, DaoApiDescription, DaoVersionRecord, DaoKnowledgeNode } from '@daomind/docs';
+export { daoDocStore, DaoDocStore, daoApiDocs, DaoApiDocs, daoVersionTracker, DaoVersionTracker, daoKnowledgeGraph, DaoKnowledgeGraph } from '@daomind/docs';
+
+// DaoUniverseDocs — 知识图谱 × 哲学文档管理（daoDocs × DaoUniverseAudit）
+export type { DocAuditResult, DocsSnapshot } from './universe-docs';
+export { DaoUniverseDocs } from './universe-docs';

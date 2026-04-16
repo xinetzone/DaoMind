@@ -18,7 +18,8 @@
     { "path": "../daoVerify" },
     { "path": "../daotimes" },
     { "path": "../daoSkilLs" },
-    { "path": "../daoNexus" }
+    { "path": "../daoNexus" },
+    { "path": "../daoDocs" }
   ],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "src/__tests__/**"]
