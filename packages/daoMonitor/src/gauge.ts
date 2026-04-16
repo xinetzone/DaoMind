@@ -62,7 +62,7 @@ export class DaoYinYangGaugeEngine {
   }
 
   getAllGauges(): ReadonlyArray<YinYangGauge> {
-    return Array.from(this.pairs.entries()).map(([, s]) => this.buildGauge(s));
+    return Array.from(this.pairs.entries()).map(([pairId, s]) => this.buildGauge(pairId, s));
   }
 
   getImbalancedPairs(): ReadonlyArray<YinYangGauge> {
@@ -73,7 +73,7 @@ export class DaoYinYangGaugeEngine {
     return this.getAllGauges().filter((g) => g.status === 'critical');
   }
 
-  private buildGauge(state: PairState): YinYangGauge {
+  private buildGauge(pairId: string, state: PairState): YinYangGauge {
     const ratio =
       state.yangValue > 0 ? state.yinValue / state.yangValue : Infinity;
     const deviation = Math.min(
@@ -88,7 +88,7 @@ export class DaoYinYangGaugeEngine {
     else status = 'balanced';
 
     return {
-      pairId: '',
+      pairId,
       yinNode: state.yinNode,
       yangNode: state.yangNode,
       yinValue: state.yinValue,

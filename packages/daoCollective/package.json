@@ -20,7 +20,8 @@
     "@daomind/anything": "workspace:^",
     "@daomind/agents":   "workspace:^",
     "@daomind/apps":     "workspace:^",
-    "@modulux/qi":       "workspace:^"
+    "@modulux/qi":       "workspace:^",
+    "@daomind/monitor":  "workspace:^"
   },
   "publishConfig": {
     "access": "public"

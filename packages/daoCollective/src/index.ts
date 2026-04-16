@@ -76,3 +76,18 @@ export {
 
 // DaoQiAgentBridge — 气 × Agent 桥接器
 export { DaoQiAgentBridge } from './qi-bridge';
+
+// ============================================================
+// @daomind/monitor — 监控层（五感引擎 + 快照聚合）
+// ============================================================
+export type {
+  HeatmapPoint, FlowVector, YinYangGauge,
+  MeridianAlert, QiDiagnosis, MonitorSnapshot,
+} from '@daomind/monitor';
+export {
+  DaoHeatmapEngine, DaoVectorField, DaoYinYangGaugeEngine,
+  DaoAlertEngine, DaoDiagnosisEngine, DaoSnapshotAggregator,
+} from '@daomind/monitor';
+
+// DaoUniverseMonitor — DaoUniverse × daoMonitor 集成桥接器
+export { DaoUniverseMonitor } from './universe-monitor';
