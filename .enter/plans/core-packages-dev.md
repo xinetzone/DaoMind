@@ -1,198 +1,196 @@
-# v2.16.0 开发计划 — DaoUniverseSpaces（daoSpaces × DaoUniverseNexus）
+# v2.17.0 开发计划 — DaoUniversePages
 
 ## 当前状态
 
-- v2.15.0 已发布：627 tests / 40 suites，全绿
-- 未集成包：`@daomind/spaces`、`@daomind/pages`
-- `tsconfig.base.json` 路径映射已完整（v2.15.0 修复）
+- 654 tests / 41 suites（全绿）
+- 已完成 v2.16.0 DaoUniverseSpaces
+- 剩余最后一个待集成包：`@daomind/pages`（DaoComponentTree + DaoStateBinding）
 
 ---
 
-## 帛书依据
+## 目标
 
-"知足者富，强行者有志"（德经·三十三章）  
-空间是资源归属的容器；服务网格是调度的枢纽。  
-让每个空间拥有自己的服务标识，通过网格路由归位，是"知足"的架构表达。
+**v2.17.0 — `daoPages × DaoUniverseScheduler → DaoUniversePages`**
 
----
+帛书依据："致虚极，守静笃；万物并作，吾以观复"（道经·十六章）
 
-## Step 1 — 写 v2.15.0 复盘
-
-文件：`retrospectives/2026-04-16-daomind-v2.15.0.md`
-
-内容：
-- 目标：daoDocs × DaoUniverseAudit
-- 核心设计决策（addDoc 双写 / publishDoc 哲学门控 / 纯同步 snapshot）
-- tsconfig.base.json 路径修复（根因 + 影响 + 经验）
-- 新类型：DocAuditResult / DocsSnapshot
-- 指标：595 → 627 tests（+32），40 suites
+组件树 × 状态绑定 × 时序驱动刷新：组件在调度器心跳下保持与数据的动态一致。
 
 ---
 
-## Step 2 — 实现 DaoUniverseSpaces（v2.16.0）
+## 执行步骤
 
-### 新文件：`packages/daoCollective/src/universe-spaces.ts`
+### Step 1：写 v2.16.0 复盘
+- 文件：`retrospectives/2026-04-16-daomind-v2.16.0.md`
+- 内容：设计决策 / DaoNamespaceManager 适配 / DaoRouteRule weight 字段 / 测试策略 / 指标
+
+### Step 2：实现 DaoUniversePages
+
+**文件**：`packages/daoCollective/src/universe-pages.ts`
 
 ```typescript
-// 帛书依据："知足者富"（德经·三十三章）
-// 架构：DaoUniverseNexus → DaoUniverseSpaces（命名空间 × 服务网格路由归位）
+import { DaoComponentTree, DaoStateBinding } from '@daomind/pages';
+import type { DaoComponent, DaoViewSnapshot, BindingPath } from '@daomind/pages';
+import type { DaoUniverseScheduler } from './universe-scheduler';
 
-import { DaoNamespaceManager } from '@daomind/spaces';
-import type { DaoSpace, DaoSpaceId, DaoResourceLocator } from '@daomind/spaces';
-import type { DaoUniverseNexus } from './universe-nexus';
-
-export interface SpacesSnapshot {
-  readonly timestamp:         number;
-  readonly totalSpaces:       number;
-  readonly rootCount:         number;
-  readonly nexusServiceCount: number;  // 来自 nexus.healthCheck().length
+export interface PagesSnapshot {
+  readonly timestamp:       number;
+  readonly totalMounted:    number;
+  readonly totalBindings:   number;
+  readonly pendingRefreshes: number;
+  readonly viewVersion:     number | null;
 }
 
-export class DaoUniverseSpaces {
-  private readonly _namespace: DaoNamespaceManager;
+export class DaoUniversePages {
+  private readonly _tree:    DaoComponentTree;
+  private readonly _binding: DaoStateBinding;
+  // componentId → taskId（待执行的刷新任务）
+  private readonly _refreshTasks = new Map<string, string>();
 
-  constructor(private readonly _nexus: DaoUniverseNexus)
-  // 全新独立 DaoNamespaceManager，不污染全局 daoNamespace 单例
+  constructor(private readonly _scheduler: DaoUniverseScheduler) {
+    this._tree    = new DaoComponentTree();
+    this._binding = new DaoStateBinding();
+    // 绑定 updater：状态变更 → tree.update()
+    this._binding.setUpdater((componentId, property, value) => {
+      this._tree.update(componentId, { [property]: value });
+    });
+  }
 
-  // 空间管理（namespace + 同步注册 nexus 服务）
-  createSpace(name: string, parent?: DaoSpaceId): DaoSpaceId
-  // → 创建 namespace 空间 + nexus.register({ id: spaceId, name, version: '1.0.0', endpoint: `space://${spaceId}` })
-  // → 自动 nexus.markHealthy(spaceId, true)
+  // ── 组件生命周期 ──
+  mount(component: Omit<DaoComponent, 'state'>): string { ... }
+  unmount(id: string): boolean { ... }
+  update(id: string, props: Record<string, unknown>): boolean { ... }
+  getComponent(id: string): DaoComponent | undefined { ... }
 
-  removeSpace(id: DaoSpaceId): boolean
-  // → namespace.removeSpace(id)（如有子空间自动抛出） + nexus.deregister(id)
+  // ── 状态绑定 ──
+  bind(path: BindingPath, componentId: string, property: string,
+       transform?: (v: unknown) => unknown): void { ... }
+  unbind(path: BindingPath, componentId: string): boolean { ... }
+  notify(path: BindingPath, value: unknown): void { ... }
 
-  getSpace(id: DaoSpaceId): DaoSpace | undefined
-  getChildren(parentId: DaoSpaceId): ReadonlyArray<DaoSpace>
-  getRootSpaces(): ReadonlyArray<DaoSpace>
+  // ── 时序驱动刷新 ──
+  scheduleRefresh(
+    componentId: string,
+    delayMs: number,
+    propsFactory: () => Record<string, unknown>,
+  ): string {
+    // 取消旧任务（若存在）
+    const oldTaskId = this._refreshTasks.get(componentId);
+    if (oldTaskId) this._scheduler.cancel(oldTaskId);
+    const taskId = this._scheduler.schedule(() => {
+      this._tree.update(componentId, propsFactory());
+      this._refreshTasks.delete(componentId);   // 执行后自动清除
+    }, delayMs);
+    this._refreshTasks.set(componentId, taskId);
+    return taskId;
+  }
 
-  // 路径解析（纯 namespace 操作）
-  resolve(locator: DaoResourceLocator): string[]
-  // 委托 namespace.resolvePath(locator)
+  cancelRefresh(componentId: string): boolean {
+    const taskId = this._refreshTasks.get(componentId);
+    if (!taskId) return false;
+    this._scheduler.cancel(taskId);
+    this._refreshTasks.delete(componentId);
+    return true;
+  }
 
-  // 空间路由（将 pattern 路由到 spaceId 对应的服务 endpoint）
-  routeSpace(pattern: string, spaceId: DaoSpaceId): void
-  // → nexus.addRoute({ pattern, target: `space://${spaceId}`, priority: 1 })
+  // ── 视图快照 & 综合快照 ──
+  viewSnapshot(): DaoViewSnapshot | null { return this._tree.getSnapshot(); }
 
-  // 快照
-  snapshot(): SpacesSnapshot
-  // { timestamp, totalSpaces: getAllSpaces().length, rootCount: getRootSpaces().length, nexusServiceCount: nexus.healthCheck().length }
+  snapshot(): PagesSnapshot {
+    let totalMounted = 0;
+    this._tree.traverse(() => { totalMounted++; });
+    return {
+      timestamp:        Date.now(),
+      totalMounted,
+      totalBindings:    this._binding.getBindings().length,
+      pendingRefreshes: this._refreshTasks.size,
+      viewVersion:      this._tree.getSnapshot()?.version ?? null,
+    };
+  }
 
-  // Getters
-  get nexus(): DaoUniverseNexus
-  get namespace(): DaoNamespaceManager
+  // ── Getters ──
+  get scheduler(): DaoUniverseScheduler { return this._scheduler; }
+  get tree():      DaoComponentTree      { return this._tree;      }
+  get binding():   DaoStateBinding       { return this._binding;   }
 }
 ```
 
-**关键设计决策：**
-- `createSpace()` 同步注册 nexus 服务：每个 space 有唯一 endpoint `space://${id}`，可被路由层寻址
-- `removeSpace()` 双清：先调用 namespace（可能抛异常），再 nexus.deregister()
-- `routeSpace()` 建立 pattern → space 的路由映射，dispatch 请求即可找到对应 space 的 endpoint
-- `snapshot()` 中 nexusServiceCount 来自 `nexus.healthCheck().length`（所有服务，含 space 外注册的）
+### Step 3：基础设施更新
 
-### 更新 `packages/daoCollective/package.json`
-```diff
-+ "@daomind/spaces":  "workspace:^"
-```
+| 文件 | 变更 |
+|------|------|
+| `packages/daoCollective/package.json` | `@daomind/pages: workspace:^` |
+| `packages/daoCollective/tsconfig.json` | `../daoPages` 引用 |
+| `packages/daoCollective/src/index.ts` | DaoUniversePages + PagesSnapshot + @daomind/pages 再导出 |
 
-### 更新 `packages/daoCollective/tsconfig.json`
-```diff
-+ { "path": "../daoSpaces" }
-```
-
-### 更新 `packages/daoCollective/src/index.ts`
-新增末尾：
+**注意**：`@daomind/pages` 再导出：
 ```typescript
-// @daomind/spaces — 空间层
-export type { DaoSpaceId, DaoSpace, DaoResourceLocator, PartitionStrategy } from '@daomind/spaces';
-export { daoNamespace, DaoNamespaceManager } from '@daomind/spaces';
-
-// DaoUniverseSpaces — 命名空间 × 服务网格（daoSpaces × DaoUniverseNexus）
-export type { SpacesSnapshot } from './universe-spaces';
-export { DaoUniverseSpaces } from './universe-spaces';
+export type { ComponentState, DaoComponent, DaoViewSnapshot, BindingPath, DaoBinding } from '@daomind/pages';
+export { daoComponentTree, DaoComponentTree, daoStateBinding, DaoStateBinding } from '@daomind/pages';
+export type { PagesSnapshot } from './universe-pages';
+export { DaoUniversePages } from './universe-pages';
 ```
 
----
+### Step 4：测试文件（~34 tests）
 
-## Step 3 — 测试文件
+**文件**：`packages/daoCollective/src/__tests__/universe-pages.test.ts`
 
-文件：`packages/daoCollective/src/__tests__/universe-spaces.test.ts`  
-目标：**30 个测试**
-
-```
-构建（4）：
-  - 可构建 DaoUniverseSpaces
-  - nexus getter 返回传入的 DaoUniverseNexus
-  - namespace getter 已初始化（独立实例）
-  - 初始 snapshot().totalSpaces = 0
-
-createSpace / removeSpace（5）：
-  - createSpace 返回 DaoSpaceId 字符串
-  - createSpace 后 getSpace 可取回
-  - createSpace 自动在 nexus 注册对应服务
-  - removeSpace 返回 true，getSpace 返回 undefined
-  - removeSpace 同步从 nexus 注销服务
-
-getChildren / getRootSpaces（4）：
-  - createSpace 无 parent → 出现在 getRootSpaces()
-  - createSpace 有 parent → 出现在 getChildren()
-  - 子空间不出现在 getRootSpaces()
-  - removeSpace 有子空间时抛出异常
-
-resolve（3）：
-  - 单层空间 resolve 返回 [spaceName, ...path]
-  - 嵌套空间 resolve 返回完整层级路径
-  - resolve 不存在的 space 抛出异常
-
-routeSpace（3）：
-  - routeSpace 添加 nexus 路由规则
-  - dispatch 到已路由 space 返回 dispatched
-  - dispatch 到未路由 space 返回 no-service（nexus 无对应服务名）
-
-snapshot（4）：
-  - totalSpaces 随 createSpace 增长
-  - rootCount 只统计根空间
-  - removeSpace 后 totalSpaces 减少
-  - nexusServiceCount 包含 space 注册的服务
-
-E2E（4）：
-  - 完整 Universe→Monitor→Nexus→Spaces 流程
-  - DaoUniverseSpaces 可从 @daomind/collective 导入
-  - 多层嵌套空间（3层深度）路径解析正确
-  - space 注册的 nexus 服务可被 healthCheck() 检测到
+```typescript
+// makeStack: universe → monitor → clock → scheduler → pages
+function makeStack() {
+  const universe  = new DaoUniverse();
+  const monitor   = new DaoUniverseMonitor(universe);
+  const clock     = new DaoUniverseClock(monitor);
+  const scheduler = new DaoUniverseScheduler(clock);
+  const pages     = new DaoUniversePages(scheduler);
+  return { universe, monitor, clock, scheduler, pages };
+}
 ```
 
----
+**测试分组**：
+1. **构建**（4）：pages 已创建 / scheduler getter / tree getter / binding getter
+2. **mount/unmount**（4）：mount → getComponent / version 增长 / unmount → undefined / 重复 mount 抛出
+3. **update**（3）：更新 props / unmounted 组件 update 返回 false / 不存在 ID 返回 false
+4. **bind/unbind/notify**（5）：bind → getBindings() / notify → tree.update（通过 binding updater）/ unbind 返回 true / 不存在 unbind 返回 false / transform 函数
+5. **scheduleRefresh/cancelRefresh**（5）：注册 task / flush → props 更新 / cancelRefresh 取消 / 旧 task 自动取消 / pendingRefreshes 计数
+6. **viewSnapshot**（3）：初始为 null / mount 后有 snapshot / update 后 version 增长
+7. **snapshot()**（5）：totalMounted / totalBindings / pendingRefreshes / viewVersion / 全为0时
+8. **E2E**（5）：完整 Universe→Scheduler→Pages / 导入测试 / notify→组件prop更新 / scheduler.flush → refresh 执行 / traverse 计数
 
-## Step 4 — 更新 src/App.tsx
+总计：~34 tests → 654 + 34 = **688 tests**
 
-- 版本：v2.14.0 → v2.16.0
-- 测试数：595 → 657（估算：627 + 30）
-
----
-
-## Step 5 — 验证
+### Step 5：全量验证
 
 ```bash
-pnpm -r run build          # 全部 Done
-npx jest --no-coverage     # 657 tests, 41 suites
+pnpm install && pnpm -r run build
+npx jest --no-coverage  # 目标：688 tests，42 suites，0 FAIL
 ```
 
----
+### Step 6：更新 homepage
 
-## Step 6 — 提交 + 打标签 + 推送
+`src/App.tsx`：
+- 版本徽章：v2.16.0 → **v2.17.0**
+- 测试数：654 → **688**
+- footer 版本：v2.16.0 → **v2.17.0**
+
+### Step 7：Git commit + tag + push
 
 ```bash
 git add -A
-git commit -m "feat(spaces): v2.16.0 — DaoUniverseSpaces..."
-git tag -a v2.16.0 -m "release: v2.16.0 — DaoUniverseSpaces"
-git push github main:main && git push github v2.16.0
-git push origin main && git push origin v2.16.0
+git commit -m "feat(pages): v2.17.0 — DaoUniversePages..."
+git tag -a v2.17.0 -m "release: v2.17.0 — DaoUniversePages"
+git push github main:main && git push github v2.17.0
+git push origin main && git push origin v2.17.0
 ```
+
+### Step 8：task-execution-summary（技能触发）
+
+使用 `task-execution-summary-skill` 生成本次 DaoMind v2.8.0→v2.17.0 完整开发会话总结报告，
+保存到 `retrospectives/2026-04-16-daomind-session-summary.md`
 
 ---
 
-## 架构（v2.16.0 后完整）
+## 最终架构（v2.17.0 完成后）
 
 ```
 DaoUniverse
@@ -200,14 +198,24 @@ DaoUniverse
   │       ├── DaoUniverseClock (v2.9.0)
   │       │       ├── DaoUniverseFeedback (v2.10.0)
   │       │       └── DaoUniverseScheduler (v2.12.0)
-  │       │               └── DaoUniverseSkills (v2.13.0)
+  │       │               ├── DaoUniverseSkills (v2.13.0)
+  │       │               └── DaoUniversePages  (v2.17.0) ← 新
   │       └── DaoUniverseNexus (v2.14.0)
-  │               └── DaoUniverseSpaces (v2.16.0) ← 命名空间 × 服务网格路由归位
+  │               └── DaoUniverseSpaces (v2.16.0)
   └── DaoUniverseAudit (v2.11.0)
           └── DaoUniverseDocs (v2.15.0)
 ```
 
-## 剩余包（v2.17.0 预留）
+所有 `@daomind/*` 包（daoPages 包含）完成集成，daoCollective 达到最终形态。
 
-`@daomind/pages`（DaoComponentTree + DaoStateBinding）→ 计划挂在 DaoUniverseScheduler 下  
-→ `DaoUniversePages`：时序驱动组件生命周期 × 状态绑定
+---
+
+## 关键注意事项
+
+1. **DaoComponentTree.mount()** 签名：`Omit<DaoComponent, 'state'>` — `state` 自动设为 `'mounted'`
+2. **DaoStateBinding.setUpdater()** 必须在构造时调用，使 notify → tree.update 自动生效
+3. **scheduleRefresh()** 任务执行后需从 `_refreshTasks` 删除（避免 cancelRefresh 误报 true）
+4. **snapshot().totalMounted** 用 `traverse()` 计数（DaoComponentTree 无 size API）
+5. **测试中** 调用 `scheduler.flush()` 触发 scheduleRefresh 任务执行
+</content>
+</invoke>
