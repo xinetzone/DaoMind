@@ -1,127 +1,126 @@
-# 核心包开发计划：daoAnything + daoAgents 完善
+# 具体 Agent 实现计划
 
 ## Context
 
-三个核心包已有基础骨架，但存在明显缺口：
-- `daoAnything`：容器逻辑完整但**零测试**，与 `daoNothingVoid` 事件总线未集成
-- `daoAgents`：Agent 生命周期完整但 **Agent 之间无通信机制**，也未与 daoAnything 容器打通
+daoAgents 已有 DaoBaseAgent 抽象类、DaoAgentRegistry、DaoAgentMessenger、DaoAgentContainerBridge。
+当前缺少具体的可运行 Agent 实例，用户无法直接看到系统能力。
 
-目标：按顺序完成三个里程碑，使三包形成完整的"无名→有名→行动"闭环。
-
----
-
-## 里程碑一：daoAnything 测试
-
-### 新增文件
-`packages/daoAnything/src/__tests__/container.test.ts`
-
-### 测试覆盖范围
-1. `register` — 正常注册、重复注册抛错
-2. `initialize` → `activate` → `deactivate` → `terminate` 正常流转
-3. 非法状态转换（如 registered → active）应抛错
-4. `getModule` / `listModules` 返回正确数据
-5. `resolve` — 未激活时抛错
+本次目标：在 `packages/daoAgents/src/agents/` 下实现三个具体 Agent，
+覆盖"任务管理"、"系统观察"、"多 Agent 协调"三种典型场景。
 
 ---
 
-## 里程碑二：Agent 间消息通信
+## 实现范围
 
-### 设计原则
-复用 `daoNothingVoid`（`DaoNothingVoid` 事件总线）作为底层传输，Agent 通过它发布/订阅消息，体现"虚空观照"哲学。
+### 目录结构（新增）
 
-### 新增文件
-`packages/daoAgents/src/messaging.ts`
+```
+packages/daoAgents/src/
+  agents/
+    task-agent.ts        # 任务队列 Agent
+    observer-agent.ts    # 系统观察 Agent  
+    coordinator-agent.ts # 协调调度 Agent
+    index.ts             # 统一导出
+  index.ts               # 更新：添加 agents 导出
+  __tests__/
+    task-agent.test.ts
+    observer-agent.test.ts
+    coordinator-agent.test.ts
+```
 
-```ts
-// 核心接口
-interface AgentMessage {
-  id: string;           // 消息唯一 ID
-  from: string;         // 发送者 agentId
-  to: string | '*';     // 接收者 agentId 或广播
-  action: string;       // 消息类型
+---
+
+## 三个 Agent 设计
+
+### 1. TaskAgent（任务队列 Agent）
+
+**职责**：管理带优先级的任务队列，顺序执行，广播完成通知。
+
+```typescript
+interface DaoTask {
+  id: string;
+  action: string;
   payload?: unknown;
-  timestamp: number;
+  priority?: number;  // 数值越大越先执行
 }
 
-// DaoAgentMessenger
-// - send(msg): 通过 daoNothingVoid 发布，同时写入 daoNothingVoid.observe()
-// - subscribe(agentId, handler): 订阅发给自己（或广播）的消息
-// - unsubscribe(agentId)
-// - history(filter?): 从 daoNothingVoid.reflect() 中筛选消息历史
+// 支持的 execute() actions:
+// - 'enqueue'       payload: DaoTask      → { queued: true, position: number }
+// - 'run-next'      payload: none         → { taskId, completedAt } | { executed: false }
+// - 'run-all'       payload: none         → { executed: number, results: [...] }
+// - 'queue-status'  payload: none         → { pending: number, completed: number }
+// - 'clear-queue'   payload: none         → { cleared: number }
 ```
 
-### 修改文件
-`packages/daoAgents/src/base.ts`
-- `DaoBaseAgent` 增加 `send(to, action, payload)` 方法
-- `DaoBaseAgent` 增加 `onMessage(handler)` 注册监听
+**关键行为**：
+- 优先级队列（高优先级先执行）
+- 每次 `run-next`/`run-all` 完成后，向 `'*'` 广播 `task:completed`
+- `execute` 不关心具体业务逻辑，只管理调度
 
-`packages/daoAgents/src/index.ts`
-- 导出 `AgentMessage`、`DaoAgentMessenger`、`daoAgentMessenger` 单例
+### 2. ObserverAgent（系统观察 Agent）
 
-### 新增测试
-`packages/daoAgents/src/__tests__/messaging.test.ts`
-- Agent 点对点发送、接收
-- 广播消息（to: '*'）所有活跃 Agent 都能收到
-- 消息历史可从 daoNothingVoid 查询
+**职责**：监听 `daoNothingVoid` 事件，记录系统快照，提供历史查询。
+
+```typescript
+// 支持的 execute() actions:
+// - 'get-snapshot'  → { totalObservations, lifecycleEvents, messageEvents, lastObservedAt }
+// - 'get-history'   payload: { limit?: number }  → DaoNothingEvent[]
+// - 'clear'         → { cleared: number }
+```
+
+**关键行为**：
+- `initialize()` 时订阅 `daoNothingVoid.on('observed', ...)`
+- `terminate()` 时移除监听
+- 过滤 `type === 'agent:lifecycle'` 和 `type === 'agent:message'` 事件
+
+### 3. CoordinatorAgent（协调 Agent）
+
+**职责**：管理多个下属 Agent，分发任务，聚合结果。
+
+```typescript
+interface DaoCoordinatorTask {
+  targetAgentId: string;
+  action: string;
+  payload?: unknown;
+}
+
+// 支持的 execute() actions:
+// - 'assign'        payload: DaoCoordinatorTask   → { sent: true }
+// - 'broadcast'     payload: { action, payload }  → { sent: number, targetIds: string[] }
+// - 'get-roster'    payload: none                 → string[]  (已注册的下属 agent IDs)
+// - 'add-agent'     payload: { agentId: string }  → { added: boolean }
+// - 'remove-agent'  payload: { agentId: string }  → { removed: boolean }
+```
+
+**关键行为**：
+- 使用 `daoAgentMessenger.send()` 分发任务
+- `broadcast` 向所有已注册下属广播
+- 自身也订阅 `onMessage` 接收响应
 
 ---
 
-## 里程碑三：Agent-Container 集成
-
-### 设计原则
-`DaoBaseAgent` 生命周期（dormant→awakening→active→resting→deceased）
-映射到 `DaoAnythingContainer` 模块生命周期（registered→initialized→active→suspending→terminated）
-
-### 新增文件
-`packages/daoAgents/src/container-bridge.ts`
-
-```ts
-// DaoAgentContainerBridge
-// - mount(agent, container): 将 agent 注册进容器，并双向同步生命周期
-//   • agent.initialize() → container.initialize(agentId)
-//   • agent.activate()   → container.activate(agentId)
-//   • agent.rest()       → container.deactivate(agentId)
-//   • agent.terminate()  → container.terminate(agentId)
-// - unmount(agentId, container): 解除绑定
-```
-
-### 修改文件
-`packages/daoAgents/src/index.ts`
-- 导出 `DaoAgentContainerBridge`、`daoAgentContainerBridge` 单例
-
-### 依赖关系
-`daoAgents` 已有 `@daomind/nothing` 依赖。
-需要在 `packages/daoAgents/package.json` 添加 `"@daomind/anything": "workspace:^"`，
-并在 `packages/daoAgents/tsconfig.json` 的 `references` 中添加 `{"path": "../daoAnything"}`。
-
-### 新增测试
-`packages/daoAgents/src/__tests__/container-bridge.test.ts`
-- mount 后 agent 状态变更自动同步到容器
-- unmount 后独立运行
-- 容器中可通过 getModule 查到 agent 的元数据
-
----
-
-## 文件变更清单
+## 修改文件列表
 
 | 文件 | 操作 |
 |------|------|
-| `packages/daoAnything/src/__tests__/container.test.ts` | 新增 |
-| `packages/daoAgents/src/messaging.ts` | 新增 |
-| `packages/daoAgents/src/__tests__/messaging.test.ts` | 新增 |
-| `packages/daoAgents/src/container-bridge.ts` | 新增 |
-| `packages/daoAgents/src/__tests__/container-bridge.test.ts` | 新增 |
-| `packages/daoAgents/src/base.ts` | 修改（增加 send/onMessage） |
-| `packages/daoAgents/src/index.ts` | 修改（导出新模块） |
-| `packages/daoAgents/package.json` | 修改（添加 @daomind/anything 依赖） |
-| `packages/daoAgents/tsconfig.json` | 修改（添加 references） |
+| `packages/daoAgents/src/agents/task-agent.ts` | 新增 |
+| `packages/daoAgents/src/agents/observer-agent.ts` | 新增 |
+| `packages/daoAgents/src/agents/coordinator-agent.ts` | 新增 |
+| `packages/daoAgents/src/agents/index.ts` | 新增 |
+| `packages/daoAgents/src/index.ts` | 修改：添加 agents 导出 |
+| `packages/daoAgents/src/__tests__/task-agent.test.ts` | 新增 |
+| `packages/daoAgents/src/__tests__/observer-agent.test.ts` | 新增 |
+| `packages/daoAgents/src/__tests__/coordinator-agent.test.ts` | 新增 |
+
+**无需新增包依赖**：所有实现只用 `@daomind/nothing`（已有）和包内现有模块。
 
 ---
 
 ## 验证
 
 ```bash
-pnpm --filter @daomind/anything test      # 里程碑一
-pnpm --filter @daomind/agents test        # 里程碑二 + 三
-pnpm -r run build                         # 全局构建无报错
+npx jest packages/daoAgents --no-coverage
+# 目标：新增约 60 个测试，全部通过
+pnpm -r run build
+# 目标：全部 Done，无 Error
 ```
