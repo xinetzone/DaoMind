@@ -80,7 +80,7 @@ const packages = [
 
 const stats = [
   { number: '19+', label: '核心包' },
-  { number: '345', label: '测试用例' },
+  { number: '595', label: '测试用例' },
   { number: '100%', label: '类型安全' },
   { number: 'MIT', label: '开源协议' },
 ];
@@ -114,7 +114,7 @@ export default function App(): React.JSX.Element {
         <div className="hero-content">
           <div className="hero-badge">
             <span className="hero-badge-dot" />
-            v2.6.0 · TypeScript 5.9 · MIT License
+            v2.14.0 · TypeScript 5.9 · MIT License
           </div>
           <h1 className="hero-title">DaoMind & Modulux</h1>
           <p className="hero-subtitle">道家哲学遇见现代 TypeScript</p>
@@ -219,7 +219,6 @@ export default function App(): React.JSX.Element {
               <span className="code-lang">bash</span>
             </div>
             <pre className="code-block">
-{`\u001b[0m`}
 <span className="code-comment"># 1. 使用脚手架创建项目</span>
 {`
 `}<span className="code-fn">pnpx</span>{` `}<span className="code-string">create-daomind</span>{` my-app
@@ -262,7 +261,7 @@ export default function App(): React.JSX.Element {
           <a href="https://github.com/xinetzone/DaoMind" target="_blank" rel="noreferrer">
             DaoMind Team
           </a>
-          {' '}· v2.6.0 · MIT License
+          {' '}· v2.14.0 · MIT License
         </p>
         <div className="footer-links">
           <a href="https://xinetzone.github.io/DaoMind/" target="_blank" rel="noreferrer">文档站</a>
