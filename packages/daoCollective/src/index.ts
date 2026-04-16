@@ -221,3 +221,9 @@ export { DaoUniverseQi } from './universe-qi';
 // ============================================================
 export type { BenchmarkRunRecord, BenchmarkSnapshot } from './universe-benchmark';
 export { DaoUniverseBenchmark } from './universe-benchmark';
+
+// ============================================================
+// DaoUniverseDiagnostic — 宇宙综合诊断（DaoUniverseAudit × DaoUniverseBenchmark）
+// ============================================================
+export type { DiagnosticRecord, DiagnosticSnapshot } from './universe-diagnostic';
+export { DaoUniverseDiagnostic } from './universe-diagnostic';
