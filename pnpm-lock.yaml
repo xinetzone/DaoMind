@@ -147,6 +147,9 @@ importers:
       '@daomind/nothing':
         specifier: workspace:^
         version: link:../daoNothing
+      '@daomind/verify':
+        specifier: workspace:^
+        version: link:../daoVerify
       '@modulux/qi':
         specifier: workspace:^
         version: link:../daoQi

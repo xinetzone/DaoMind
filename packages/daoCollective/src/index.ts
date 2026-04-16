@@ -112,3 +112,16 @@ export { DaoFeedbackRegulator, DaoFeedbackLifecycle } from '@daomind/feedback';
 // DaoUniverseFeedback — 闭环反馈（daoFeedback × DaoUniverseClock）
 export type { FeedbackEntry } from './universe-feedback';
 export { DaoUniverseFeedback } from './universe-feedback';
+
+// ============================================================
+// @daomind/verify — 哲学核查层
+// ============================================================
+export type {
+  DaoVerificationResult, DaoVerificationCategory,
+  DaoVerificationReport, DaoPhilosophyAssessment,
+} from '@daomind/verify';
+export { DaoVerificationReporter, DAO_VERIFICATION_CATEGORY_LABELS } from '@daomind/verify';
+
+// DaoUniverseAudit — 哲学自我审查（daoVerify × DaoUniverse）
+export type { AuditSnapshot } from './universe-audit';
+export { DaoUniverseAudit } from './universe-audit';

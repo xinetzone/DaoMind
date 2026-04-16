@@ -23,7 +23,8 @@
     "@modulux/qi":       "workspace:^",
     "@daomind/monitor":  "workspace:^",
     "@daomind/chronos":  "workspace:^",
-    "@daomind/feedback": "workspace:^"
+    "@daomind/feedback": "workspace:^",
+    "@daomind/verify":   "workspace:^"
   },
   "publishConfig": {
     "access": "public"

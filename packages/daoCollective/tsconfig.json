@@ -14,7 +14,8 @@
     { "path": "../daoQi" },
     { "path": "../daoMonitor" },
     { "path": "../daoChronos" },
-    { "path": "../daoFeedback" }
+    { "path": "../daoFeedback" },
+    { "path": "../daoVerify" }
   ],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "src/__tests__/**"]
