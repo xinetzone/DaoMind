@@ -3,7 +3,7 @@
 > 道家哲学遇见现代 TypeScript —— "无名，万物之始也；有名，万物之母也。" — 帛书《道德经》
 
 [![npm](https://img.shields.io/npm/v/@daomind/nothing?label=%40daomind%2Fnothing)](https://www.npmjs.com/package/@daomind/nothing)
-[![Tests](https://img.shields.io/badge/tests-817%20passed-brightgreen)](https://github.com/xinetzone/DaoMind)
+[![Tests](https://img.shields.io/badge/tests-908%20passed-brightgreen)](https://github.com/xinetzone/DaoMind)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
 
@@ -21,11 +21,11 @@
 ## 特性
 
 - **20+ 独立包**，从基础契约到完整生态，按需引入零冗余
-- **817 测试用例**（46 套件），TypeScript 5.9 严格模式，100% 类型安全
+- **908 测试用例**（49 套件），TypeScript 5.9 严格模式，100% 类型安全
 - **零运行时开销**：类型定义编译后完全消失
 - **哲学一致**：每一个 API 命名都有对应的道家哲学根据
 - **DaoOption\<T\> + DaoResult\<T,E\>**：函数式错误处理，无 null/undefined 异常
-- **DaoUniverse* 桥接体系**：14 个分层桥接器，将所有子包统一融入宇宙门面
+- **DaoUniverse* 桥接体系**：17 个分层桥接器，将所有子包统一融入宇宙门面
 
 ## 快速开始
 
@@ -178,7 +178,7 @@ console.log(times.snapshot());
 times.clearAllForApp('worker'); // → 返回 3（已清除数量）
 ```
 
-## 包生态（v2.21.0）
+## 包生态（v2.24.0）
 
 ### 核心包
 
@@ -225,6 +225,9 @@ times.clearAllForApp('worker'); // → 返回 3（已清除数量）
 | `DaoUniverseApps` | v2.19.0 | `DaoUniverseAgents × @daomind/apps` |
 | `DaoUniverseTimes` | v2.20.0 | `DaoUniverseApps × @daomind/times`（per-app 定时器） |
 | `DaoUniverseModules` | v2.21.0 | `DaoUniverseApps × @daomind/anything`（IoC × Agent 广播） |
+| `DaoUniverseQi` | v2.22.0 | `DaoUniverseNexus × @modulux/qi`（混元气总线 × 服务网格） |
+| `DaoUniverseBenchmark` | v2.23.0 | `DaoUniverseMonitor × @daomind/benchmark`（性能基准 × 宇宙健康感知） |
+| `DaoUniverseDiagnostic` | v2.24.0 | `DaoUniverseAudit × DaoUniverseBenchmark`（宇宙综合诊断） |
 
 ## 架构概览
 
@@ -254,10 +257,13 @@ daoCollective ───── 根节点（DaoUniverse 统一门面 + DaoUniverse
           │       │       ├── DaoUniverseScheduler (v2.12.0)
           │       │       │       ├── DaoUniverseSkills (v2.13.0)
           │       │       │       └── DaoUniversePages  (v2.17.0)
-          │       └── DaoUniverseNexus (v2.14.0)
-          │               └── DaoUniverseSpaces (v2.16.0)
-          └── DaoUniverseAudit (v2.11.0)
-                  └── DaoUniverseDocs (v2.15.0)
+          │       ├── DaoUniverseNexus (v2.14.0)
+          │       │       ├── DaoUniverseSpaces (v2.16.0)
+          │       │       └── DaoUniverseQi     (v2.22.0) ← @modulux/qi × 混元气总线
+          │       └── DaoUniverseBenchmark (v2.23.0) ← @daomind/benchmark × 性能基准
+          ├── DaoUniverseAudit (v2.11.0)
+          │       └── DaoUniverseDocs (v2.15.0)
+          └─────── DaoUniverseDiagnostic (v2.24.0) ← Audit × Benchmark 综合诊断
 ```
 
 ## 开发环境
@@ -278,7 +284,7 @@ pnpm install
 # 构建所有包
 pnpm -r run build
 
-# 运行全量测试（817 个，46 套件）
+# 运行全量测试（908 个，49 套件）
 pnpm test
 
 # 运行单包测试
@@ -306,6 +312,9 @@ npm 发布通过 GitHub Actions 手动触发（`workflow_dispatch`），防止 2
 
 | 版本 | 测试数 | 亮点 |
 |------|--------|------|
+| v2.24.0 | 908 | DaoUniverseDiagnostic — DaoUniverseAudit × DaoUniverseBenchmark 宇宙综合诊断 |
+| v2.23.0 | 877 | DaoUniverseBenchmark — @daomind/benchmark × DaoUniverseMonitor 性能基准 |
+| v2.22.0 | 847 | DaoUniverseQi — @modulux/qi × DaoUniverseNexus 混元气总线 × 服务网格 |
 | v2.21.0 | 817 | DaoUniverseModules — @daomind/anything × DaoUniverseApps IoC 容器 × Agent 广播 |
 | v2.20.0 | 788 | DaoUniverseTimes — @daomind/times × DaoUniverseApps per-app 定时器追踪 |
 | v2.19.0 | 756 | DaoUniverseApps — @daomind/apps × DaoUniverseAgents 应用状态机 × Agent 广播 |

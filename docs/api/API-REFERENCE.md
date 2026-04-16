@@ -2,7 +2,7 @@
 
 完整的 API 参考文档，涵盖所有核心包、功能包和 DaoUniverse* 桥接体系。
 
-> **版本**: 2.21.0  
+> **版本**: 2.24.0  
 > **更新日期**: 2026-04-16  
 > **测试**: 817 个测试，46 个套件，全部通过
 
@@ -44,6 +44,9 @@
   - [DaoUniverseApps](#daouniverseapps)
   - [DaoUniverseTimes](#daouniversetimes)
   - [DaoUniverseModules](#daouniversemodules)
+  - [DaoUniverseQi](#daouniverseqi)
+  - [DaoUniverseBenchmark](#daouniversebenchmark)
+  - [DaoUniverseDiagnostic](#daouniversediagnostic)
 - [类型工具](#类型工具)
 - [常见模式](#常见模式)
 
@@ -984,7 +987,7 @@ times.scheduler  // 底层 DaoScheduler（独立实例）
 
 ### DaoUniverseModules
 
-**v2.21.0** — `DaoUniverseApps × @daomind/anything` IoC 容器 × Agent 生命周期广播。
+**v2.24.0** — `DaoUniverseApps × @daomind/anything` IoC 容器 × Agent 生命周期广播。
 
 ```typescript
 const modules = new DaoUniverseModules(apps);
@@ -1017,6 +1020,122 @@ modules.container  // 底层 DaoAnythingContainer（独立实例）
 
 ---
 
+### DaoUniverseQi
+
+**v2.22.0** — `DaoUniverseNexus × @modulux/qi` 混元气总线 × 服务网格路由融合。
+
+```typescript
+const qi = new DaoUniverseQi(nexus);
+
+qi.addNode(nodeId: string, target?: string): void    // 注册路由节点
+qi.removeNode(nodeId: string, target?: string): void // 移除路由节点（幂等）
+qi.broadcast(messageType, body): Promise<void>       // 无签名广播（绕过 TianQiChannel 时间戳 Bug）
+qi.report(sourceId, messageType, metrics): Promise<void>  // 地气度量上报
+qi.subscribe(channelType, handler): () => void       // 订阅特定通道，返回取消订阅函数
+qi.probe(target): Promise<number>                    // 探测目标往返延迟（ms）
+qi.snapshot(): QiSnapshot
+
+interface QiSnapshot {
+  timestamp:       number
+  totalEmitted:    number  // 已发送消息总数
+  totalDropped:    number  // 被丢弃消息总数
+  channelsStats:   Record<string, number>
+  registeredNodes: number
+}
+
+// Getters
+qi.nexus   // 上层 DaoUniverseNexus
+qi.bus     // 底层 HunyuanBus
+qi.tian    // TianQiChannel（天气广播，注意签名 Bug 已在 broadcast() 绕过）
+qi.di      // DiQiChannel（地气度量聚合缓冲）
+qi.ren     // RenQiChannel（人气 P2P 通信）
+qi.chong   // ChongQiRegulator（冲气调控器）
+```
+
+---
+
+### DaoUniverseBenchmark
+
+**v2.23.0** — `DaoUniverseMonitor × @daomind/benchmark` 性能基准测试 × 宇宙健康感知。
+
+```typescript
+const bench = new DaoUniverseBenchmark(monitor);
+
+bench.runQuick(): Promise<BenchmarkRunRecord>         // 3 快速套件 + 前后 health() 采集
+bench.runAll(): Promise<BenchmarkRunRecord>           // 6 完整套件 + 前后 health() 采集
+bench.runSuite(name: string): Promise<DaoBenchmarkResult>  // 单套件（不追加 history）
+bench.generateReport(format?: 'text'|'json'|'markdown'): string
+bench.history(): ReadonlyArray<BenchmarkRunRecord>
+bench.clearHistory(): void
+bench.snapshot(): BenchmarkSnapshot
+
+interface BenchmarkRunRecord {
+  timestamp:    number
+  healthBefore: number  // monitor.health() before run
+  healthAfter:  number  // monitor.health() after run
+  report:       DaoPerformanceReport
+}
+
+interface BenchmarkSnapshot {
+  timestamp:   number
+  totalRuns:   number
+  lastRunAt:   number | null
+  lastHealth:  number | undefined
+  historySize: number
+}
+
+// Getters
+bench.monitor  // 上层 DaoUniverseMonitor
+bench.runner   // 底层 DaoBenchmarkRunner（独立实例）
+```
+
+---
+
+### DaoUniverseDiagnostic
+
+**v2.24.0** — `DaoUniverseAudit × DaoUniverseBenchmark` 宇宙综合诊断，并行双轴执行。
+
+```typescript
+const diag = new DaoUniverseDiagnostic(audit, benchmark);
+
+diag.diagnose(): Promise<DiagnosticRecord>           // Promise.all 并行：哲学审查 + 性能基准
+diag.generateReport(record, format?: 'text'|'json'|'markdown'): string
+diag.history(): ReadonlyArray<DiagnosticRecord>
+diag.clearHistory(): void
+diag.snapshot(): DiagnosticSnapshot
+
+interface DiagnosticRecord {
+  timestamp:     number
+  auditReport:   DaoVerificationReport   // 哲学一致性六维报告
+  benchRecord:   BenchmarkRunRecord      // 性能基准 + 宇宙健康前后值
+  runtimeHealth: number                  // = benchRecord.healthAfter
+}
+
+interface DiagnosticSnapshot {
+  timestamp:        number
+  totalDiagnoses:   number
+  lastDiagnosisAt:  number | null
+  lastAuditScore:   number | undefined   // DaoVerificationReport.overallScore
+  lastBenchHealth:  number | undefined   // BenchmarkRunRecord.healthAfter
+  historySize:      number
+}
+
+// Getters
+diag.audit      // 关联的 DaoUniverseAudit
+diag.benchmark  // 关联的 DaoUniverseBenchmark
+
+// 典型用法
+const record = await diag.diagnose();
+// → auditReport.overallScore: 哲学得分
+// → benchRecord.report.summary: 性能套件摘要
+// → runtimeHealth: 宇宙当前健康分数
+
+const md = diag.generateReport(record, 'markdown');
+// → 生成含 摘要卡片 + 哲学六维表 + 性能套件表 + 建议列表 的完整 Markdown
+```
+
+---
+
 ## 类型工具
 
 ### 类型守卫
@@ -1043,14 +1162,36 @@ if (daoIsNone(opt)) { /* 无值 */ }
 import {
   DaoUniverse, DaoUniverseMonitor, DaoUniverseAgents,
   DaoUniverseApps, DaoUniverseTimes, DaoUniverseModules,
+  DaoUniverseNexus, DaoUniverseQi, DaoUniverseAudit,
+  DaoUniverseBenchmark, DaoUniverseDiagnostic,
 } from '@daomind/collective';
 
-const universe = new DaoUniverse();
-const monitor  = new DaoUniverseMonitor(universe);
-const agents   = new DaoUniverseAgents(monitor);
-const apps     = new DaoUniverseApps(agents);
-const times    = new DaoUniverseTimes(apps);
-const modules  = new DaoUniverseModules(apps);
+const universe   = new DaoUniverse();
+const monitor    = new DaoUniverseMonitor(universe);
+const agents     = new DaoUniverseAgents(monitor);
+const apps       = new DaoUniverseApps(agents);
+const times      = new DaoUniverseTimes(apps);
+const modules    = new DaoUniverseModules(apps);
+const nexus      = new DaoUniverseNexus(monitor);
+const qi         = new DaoUniverseQi(nexus);
+const audit      = new DaoUniverseAudit(universe);
+const benchmark  = new DaoUniverseBenchmark(monitor);
+const diagnostic = new DaoUniverseDiagnostic(audit, benchmark);
+```
+
+### 模式 5：宇宙综合诊断
+
+```typescript
+const diag = new DaoUniverseDiagnostic(audit, benchmark);
+
+// 并行运行哲学审查 + 性能基准（Promise.all）
+const record = await diag.diagnose();
+console.log(`哲学得分: ${record.auditReport.overallScore}`);
+console.log(`宇宙健康: ${record.runtimeHealth}`);
+console.log(`性能套件: ${record.benchRecord.report.summary.totalSuites}`);
+
+const md = diag.generateReport(record, 'markdown');
+// 生成包含摘要卡片 + 哲学六维 + 性能套件表的完整报告
 ```
 
 ### 模式 2：应用启动 + 定时器 + 停止清理
@@ -1097,6 +1238,9 @@ console.log(times.windowOverlaps(winA, winB)); // true（重叠）
 
 | 版本 | TypeScript | Node.js | 测试数 |
 |------|-----------|---------|--------|
+| v2.24.0 | >=5.9.0 | >=18.0.0 | 908 |
+| v2.23.0 | >=5.9.0 | >=18.0.0 | 877 |
+| v2.22.0 | >=5.9.0 | >=18.0.0 | 847 |
 | v2.21.0 | >=5.9.0 | >=18.0.0 | 817 |
 | v2.18.0 | >=5.9.0 | >=18.0.0 | 723 |
 | v2.6.0  | >=5.0.0 | >=18.0.0 | 345 |
@@ -1114,6 +1258,6 @@ console.log(times.windowOverlaps(winA, winB)); // true（重叠）
 
 ---
 
-**文档版本**: 2.21.0  
+**文档版本**: 2.24.0  
 **最后更新**: 2026-04-16  
 **维护者**: DaoMind Team

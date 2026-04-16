@@ -297,7 +297,7 @@ await modules.terminate('payments');
 
 ## DaoUniverse* 桥接体系
 
-DaoMind v2.21.0 的核心是 **14 个分层桥接器**，将所有功能包统一融入宇宙层次。每个桥接器：
+DaoMind v2.24.0 的核心是 **17 个分层桥接器**，将所有功能包统一融入宇宙层次。每个桥接器：
 
 - 创建独立的子系统实例（不污染全局单例）
 - 通过构造参数接收上层桥接器引用
@@ -316,10 +316,13 @@ DaoUniverse（全局宇宙）
   │       │       └── DaoUniverseScheduler — 时序调度
   │       │               ├── DaoUniverseSkills — 技能生命周期
   │       │               └── DaoUniversePages  — 组件树 × 刷新
-  │       └── DaoUniverseNexus     — 服务网格
-  │               └── DaoUniverseSpaces    — 命名空间
-  └── DaoUniverseAudit       — 哲学契约审查
-          └── DaoUniverseDocs      — 知识图谱
+  │       ├── DaoUniverseNexus     — 服务网格
+  │       │       ├── DaoUniverseSpaces    — 命名空间
+  │       │       └── DaoUniverseQi        — 混元气总线 × 路由
+  │       └── DaoUniverseBenchmark — 性能基准 × 宇宙健康感知
+  ├── DaoUniverseAudit       — 哲学契约审查
+  │       └── DaoUniverseDocs      — 知识图谱
+  └─────── DaoUniverseDiagnostic — 综合诊断（Audit × Benchmark）
 ```
 
 ### 构建完整宇宙
@@ -341,24 +344,30 @@ import {
   DaoUniverseApps,
   DaoUniverseTimes,
   DaoUniverseModules,
+  DaoUniverseQi,
+  DaoUniverseBenchmark,
+  DaoUniverseDiagnostic,
 } from '@daomind/collective';
 
 // 从根节点开始，逐层构建
-const universe  = new DaoUniverse();
-const monitor   = new DaoUniverseMonitor(universe);
-const clock     = new DaoUniverseClock(monitor);
-const feedback  = new DaoUniverseFeedback(clock);
-const audit     = new DaoUniverseAudit(universe);
-const scheduler = new DaoUniverseScheduler(clock);
-const nexus     = new DaoUniverseNexus(monitor);
-const docs      = new DaoUniverseDocs(audit);
-const spaces    = new DaoUniverseSpaces(nexus);
-const skills    = new DaoUniverseSkills(scheduler);
-const pages     = new DaoUniversePages(scheduler);
-const agents    = new DaoUniverseAgents(monitor);
-const apps      = new DaoUniverseApps(agents);
-const times     = new DaoUniverseTimes(apps);
-const modules   = new DaoUniverseModules(apps);
+const universe    = new DaoUniverse();
+const monitor     = new DaoUniverseMonitor(universe);
+const clock       = new DaoUniverseClock(monitor);
+const feedback    = new DaoUniverseFeedback(clock);
+const audit       = new DaoUniverseAudit(universe);
+const scheduler   = new DaoUniverseScheduler(clock);
+const nexus       = new DaoUniverseNexus(monitor);
+const docs        = new DaoUniverseDocs(audit);
+const spaces      = new DaoUniverseSpaces(nexus);
+const qi          = new DaoUniverseQi(nexus);
+const skills      = new DaoUniverseSkills(scheduler);
+const pages       = new DaoUniversePages(scheduler);
+const agents      = new DaoUniverseAgents(monitor);
+const apps        = new DaoUniverseApps(agents);
+const times       = new DaoUniverseTimes(apps);
+const modules     = new DaoUniverseModules(apps);
+const benchmark   = new DaoUniverseBenchmark(monitor);
+const diagnostic  = new DaoUniverseDiagnostic(audit, benchmark);
 ```
 
 ---
@@ -386,10 +395,11 @@ const modules   = new DaoUniverseModules(apps);
 
 1. **"无名"** = TypeScript 类型 = 零运行时 = 潜在可能
 2. **"有名"** = TypeScript 值 = 运行时实体 = 显化实现
-3. **DaoUniverse*** = 14 个分层桥接器，统一管理所有子系统
+3. **DaoUniverse*** = 17 个分层桥接器，统一管理所有子系统
 4. **per-app 资源追踪** = DaoUniverseTimes 将定时器绑定到应用 ID
 5. **Agent 广播** = DaoUniverseApps/Modules 的状态变化自动通知 Agent 系统
 6. **哲学一致** = 每个设计都有帛书《道德经》依据
+7. **宇宙综合诊断** = DaoUniverseDiagnostic 并行运行哲学审查 + 性能基准
 
 ---
 
