@@ -191,3 +191,9 @@ export { DaoUniversePages } from './universe-pages';
 // ============================================================
 export type { AgentsSnapshot } from './universe-agents';
 export { DaoUniverseAgents } from './universe-agents';
+
+// ============================================================
+// DaoUniverseApps — 应用状态机 × Agent 广播（@daomind/apps × DaoUniverseAgents）
+// ============================================================
+export type { AppsSnapshot } from './universe-apps';
+export { DaoUniverseApps } from './universe-apps';
