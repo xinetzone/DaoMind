@@ -1,138 +1,144 @@
-# v2.11.0 — DaoUniverseAudit（daoVerify × DaoUniverse）
+# v2.12.0 Plan — DaoUniverseScheduler（daotimes × DaoUniverseClock）
 
 ## Context
 
-v2.10.0 完成了 `DaoUniverseFeedback` 闭环反馈层（468 tests, v2.10.0 已推送）。
-
-本次目标：
-1. **复盘** → `retrospectives/2026-04-16-daomind-v2.10.0.md`
-2. **DaoUniverseAudit** → `daoVerify` 哲学验证层集成进 `daoCollective`
-3. 测试 → 全量通过，commit + tag v2.11.0 + push
-
-帛书依据：**"知人者智，自知者明"**（乙本·三十三章）
+v2.11.0 已完成 DaoUniverseAudit（496 tests, 36 suites）。
+v2.12.0 目标：将 `@daomind/times` 的 `DaoScheduler` 接入 `DaoUniverseClock.onTick()`，
+实现"待时而动"——任务按延迟时间注册，每次心跳触发 `flush()` 执行所有到期任务。
 
 ---
 
-## 架构层次（执行后）
+## 架构
 
 ```
 DaoUniverse
-  └── DaoUniverseMonitor  (v2.8.0 — 五感健康快照)
-          └── DaoUniverseClock  (v2.9.0 — 时序心跳)
-                  └── DaoUniverseFeedback  (v2.10.0 — S型曲线反馈)
-          └── DaoUniverseAudit  (v2.11.0) ← daoVerify 哲学自我审查
+  ├── DaoUniverseMonitor (v2.8.0)
+  │       ├── DaoUniverseClock (v2.9.0)
+  │       │       ├── DaoUniverseFeedback (v2.10.0)
+  │       │       └── DaoUniverseScheduler (v2.12.0) ← 时序驱动调度
+  │       └── ↑ runtimeHealth
+  └── DaoUniverseAudit (v2.11.0)
 ```
 
 ---
 
-## 1. DaoUniverseAudit 设计
+## 核心设计
 
-### 新增类型
+### 类型
 
 ```typescript
-/** 静态哲学审查 + 运行时健康的综合快照 */
-export interface AuditSnapshot {
-  readonly report: DaoVerificationReport;      // daoVerify 静态分析
-  readonly runtimeHealth: number | undefined;  // Monitor 当前健康分数（可选）
-  readonly timestamp: number;
+export interface ExecutionRecord {
+  readonly taskId: string;
+  readonly executedAt: number;
+  readonly status: 'success' | 'error';
 }
 ```
 
-### DaoUniverseAudit
+### DaoUniverseScheduler API
 
 ```typescript
-export class DaoUniverseAudit {
-  private readonly _reporter: DaoVerificationReporter;
+class DaoUniverseScheduler {
+  constructor(clock: DaoUniverseClock)          // 内部 new DaoScheduler()（非全局单例）
 
-  constructor(
-    private readonly _universe: DaoUniverse,
-    private readonly _projectRoot: string = process.cwd(),
-  ) {
-    this._reporter = new DaoVerificationReporter();
+  attach(): void                                 // 订阅 clock.onTick() → flush()（幂等）
+  detach(): void                                 // 取消订阅（幂等）
+
+  schedule<T>(handler, delayMs=0, priority=1): string  // 注册任务，返回 taskId
+  cancel(taskId: string): boolean                // 取消任务
+  async flush(): Promise<number>                 // 执行所有到期任务，返回执行数量
+
+  pending(): number                              // 当前到期待执行任务数
+  executions(limit?: number): ReadonlyArray<ExecutionRecord>
+
+  get isAttached(): boolean
+  get clock(): DaoUniverseClock
+  get scheduler(): DaoScheduler
+}
+```
+
+### schedule() 实现要点
+
+用闭包捕获 id（handler 被调用时 id 已赋值）：
+```typescript
+let capturedId = '';
+const wrapped = async () => {
+  try {
+    const r = await Promise.resolve(handler());
+    this._executions.push({ taskId: capturedId, executedAt: Date.now(), status: 'success' });
+    return r;
+  } catch (err) {
+    this._executions.push({ taskId: capturedId, executedAt: Date.now(), status: 'error' });
+    throw err;
   }
+};
+capturedId = this._scheduler.schedule({ executeAt: Date.now() + delayMs, handler: wrapped, priority });
+return capturedId;
+```
 
-  /** 运行全部 6 项哲学检查 → DaoVerificationReport */
-  async audit(): Promise<DaoVerificationReport>
+### flush() 实现
 
-  /** 单类别检查 */
-  async auditCategory(category: DaoVerificationCategory): Promise<DaoVerificationReport>
-
-  /**
-   * 综合快照：静态 audit() + 可选运行时 Monitor 健康分数
-   * @param monitor 若传入则附带 monitor.health()（触发一次 capture()）
-   */
-  async snapshot(monitor?: DaoUniverseMonitor): Promise<AuditSnapshot>
-
-  get reporter(): DaoVerificationReporter
-  get projectRoot(): string
-  get universe(): DaoUniverse
+DaoScheduler.pending() > 0 时 next() 不等待，可安全循环：
+```typescript
+async flush(): Promise<number> {
+  let count = 0;
+  while (this._scheduler.pending() > 0) {
+    await this._scheduler.next();
+    count++;
+  }
+  return count;
 }
 ```
 
 ---
 
-## 2. 文件变更清单
+## 文件
 
-| 文件 | 操作 |
+| 操作 | 路径 |
 |------|------|
-| `retrospectives/2026-04-16-daomind-v2.10.0.md` | **新建** — v2.10.0 复盘 |
-| `packages/daoCollective/src/universe-audit.ts` | **新建** |
-| `packages/daoCollective/src/__tests__/universe-audit.test.ts` | **新建** (~28 tests) |
-| `packages/daoCollective/package.json` | 添加 `@daomind/verify: workspace:^` |
-| `packages/daoCollective/tsconfig.json` | 添加 `{ "path": "../daoVerify" }` |
-| `packages/daoCollective/src/index.ts` | 添加 `DaoUniverseAudit` + verify 再导出 |
+| 新建 | `retrospectives/2026-04-16-daomind-v2.11.0.md` |
+| 新建 | `packages/daoCollective/src/universe-scheduler.ts` |
+| 修改 | `packages/daoCollective/package.json` — 添加 `@daomind/times: workspace:^` |
+| 修改 | `packages/daoCollective/tsconfig.json` — 添加 `../daotimes` |
+| 修改 | `packages/daoCollective/src/index.ts` — 导出 DaoUniverseScheduler + daotimes 再导出 |
+| 新建 | `packages/daoCollective/src/__tests__/universe-scheduler.test.ts` |
 
 ---
 
-## 3. 测试分组（~28 个）
+## 测试设计（~30 个）
 
-| 分组 | 数量 | 内容 |
-|------|------|------|
-| 构建 | 5 | construct / reporter getter / projectRoot getter / universe getter / 自定义 root |
-| audit() | 5 | 返回 DaoVerificationReport / overallScore 在 [0,100] / results 数组非空 / passedCount+failedCount / philosophyDepth |
-| auditCategory | 4 | wu-you-balance / yin-yang-balance / naming-convention / unknown 类别不崩溃 |
-| snapshot() | 5 | 无 monitor / 有 monitor → runtimeHealth 非 undefined / timestamp / report 完整 / snapshot 结构正确 |
-| 再导出 | 3 | DaoUniverseAudit 可从 index 导入 / DaoVerificationReporter / AuditSnapshot 类型 |
-| E2E | 3 | Universe→Audit 全栈 / 有 Monitor 的综合快照 / overallScore > 0 |
-
-使用 `jest.setTimeout(30_000)` — 检查会实际读取项目文件。
+| 分组 | 测试数 |
+|------|--------|
+| 构建（isAttached=false / scheduler/clock getter / pending=0 / executions=[]）| 6 |
+| attach / detach（+ 幂等）| 4 |
+| schedule（返回 id / pending 增加 / cancel / delayMs / priority）| 5 |
+| flush()（执行到期任务 / 计数 / 无任务返回 0 / 错误不崩溃 / 连续调用）| 5 |
+| attach + fake timers（onTick → flush / 执行积累 / detach 后冻结）| 4 |
+| executions()（limit / success/error status / 顺序）| 3 |
+| E2E（Universe→Clock→Scheduler / 延迟任务 / 与 Feedback 共存）| 3 |
 
 ---
 
-## 4. index.ts 新增再导出
+## 再导出（index.ts 新增）
 
 ```typescript
-// @daomind/verify — 哲学核查层
-export type { DaoVerificationResult, DaoVerificationCategory,
-              DaoVerificationReport, DaoPhilosophyAssessment } from '@daomind/verify';
-export { DaoVerificationReporter, DAO_VERIFICATION_CATEGORY_LABELS } from '@daomind/verify';
+// @daomind/times
+export type { DaoTimerHandle, DaoTimerOptions, DaoScheduledTask, DaoTimeWindow } from '@daomind/times';
+export { DaoTimer, DaoScheduler, daoTimer, daoScheduler, daoTimeWindow } from '@daomind/times';
 
-// DaoUniverseAudit — 自我审查（daoVerify × DaoUniverse）
-export type { AuditSnapshot } from './universe-audit';
-export { DaoUniverseAudit } from './universe-audit';
+// DaoUniverseScheduler
+export type { ExecutionRecord } from './universe-scheduler';
+export { DaoUniverseScheduler } from './universe-scheduler';
 ```
 
 ---
 
-## 5. 验证
+## 验证
 
 ```bash
 pnpm install
-npx tsc --build packages/daoCollective/tsconfig.json   # no error TS
-npx jest packages/daoCollective --no-coverage           # 全部通过
-pnpm -r run build                                       # all Done
-git add -A && git commit -m "feat(audit): v2.11.0 — DaoUniverseAudit..."
-git tag v2.11.0 && git push
-```
-
----
-
-## 6. GitHub push 模式（标准）
-
-```bash
-ANON_KEY="eyJ0eXAi..."
-GITHUB_PAT=$(curl -s ... get-secrets edge fn ...)
-git remote add github "https://x-access-token:${GITHUB_PAT}@github.com/xinetzone/DaoMind.git"
-git push github main:main && git tag -a v2.11.0 && git push github v2.11.0
-git push origin main && git push origin v2.11.0
+npx tsc --build packages/daoCollective/tsconfig.json    # 无 error TS
+npx jest packages/daoCollective --no-coverage            # 全部通过
+npx jest --no-coverage                                   # 全量 ≥ 526 tests
+pnpm -r run build                                        # 全部 Done
+git commit + git tag v2.12.0 + push origin + push github
 ```
