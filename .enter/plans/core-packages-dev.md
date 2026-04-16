@@ -1,210 +1,218 @@
-# v2.14.0 — DaoUniverseNexus 实现计划
+# DaoMind v2.15.0 开发计划
 
-## Context
+## 当前状态
 
-v2.13.0 完成（563 tests / 38 suites）。
-本轮工作流：
-1. 写 v2.13.0 复盘（retrospectives/2026-04-16-daomind-v2.13.0.md）
-2. 验证全量 tests（已 563）
-3. git commit + tag v2.14.0 + push origin & github
-4. 实现 v2.14.0：daoNexus × DaoUniverseMonitor — DaoUniverseNexus
-
-帛书依据："万物负阴而抱阳，冲气以为和"（德经·四十二章）
-集成意图：Clock 心跳驱动 Nexus 服务健康快照录制，
-         Universe 健康分数与 Nexus 服务网格状态双向可观测。
+- **已完成**：v2.14.0 DaoUniverseNexus（daoNexus × DaoUniverseMonitor）
+- **当前 commit**：`9f0cbbf` chore(homepage): update version and test case count
+- **测试**：39 suites 中 12 个失败（303/595 tests）← 关键 Bug 需先修复
 
 ---
 
-## 关键 API 确认
+## Step 0：关键 Bug 修复 — tsconfig.base.json 缺少路径映射
 
-### @daomind/nexus（所有类均可独立实例化）
+### 根因
 
-```
-DaoServiceDiscovery — register/deregister/discover/healthCheck/markHealthy
-DaoNexusRouter      — addRule/removeRule/resolve
-DaoLoadBalancer     — setStrategy/select（round-robin / least-connections / weighted）
-DaoConnectionManager— constructor(maxConn?, idleTimeout?) — 可选用
-DaoNexusRequest     — { path: string, payload: unknown }
-DaoNexusMetrics     — { totalRequests, successCount, failureCount, avgLatencyMs }
-```
+`tsconfig.base.json` 的 `"paths"` 字段缺少以下包的映射，导致 ts-jest TypeScript 编译阶段找不到模块：
 
-### DaoUniverseMonitor（已有）
-```
-monitor.health()               → number (0-100)
-monitor.capture()              → MonitorSnapshot
-monitor.history(limit?)        → ReadonlyArray<MonitorSnapshot>
-```
+| 缺失映射 | 实际路径 |
+|---------|---------|
+| `@daomind/anything` | `./packages/daoAnything/src` |
+| `@daomind/chronos` | `./packages/daoChronos/src` |
+| `@daomind/feedback` | `./packages/daoFeedback/src` |
+| `@daomind/skills` | `./packages/daoSkilLs/src` |
+| `@daomind/pages` | `./packages/daoPages/src` |
+| `@daomind/spaces` | `./packages/daoSpaces/src` |
+| `@daomind/docs` | `./packages/daoDocs/src` |
+| `@daomind/times` | `./packages/daotimes/src` |
+| `@daomind/collective` | `./packages/daoCollective/src` |
 
-### DaoUniverseClock（已有）
-```
-clock.onTick(cb)               → unsubscribe fn
-```
+### 修复方式
+
+直接编辑 `tsconfig.base.json`，在现有 `"paths"` 对象中追加上述 9 条映射。
+
+**注意**：`@daomind/skills` 的包目录是 `daoSkilLs`（大写 L），`@daomind/times` 的包目录是 `daotimes`（小写 t）。
+
+### 失败的 12 个 suite
+
+- `packages/daoCollective/src/__tests__/universe*.test.ts`（9 个）
+- `packages/daoCollective/src/__tests__/qi-bridge.test.ts`（1 个）
+- `src/__tests__/integration/agents-apps-integration.test.ts`
+- `src/__tests__/e2e/full-system.test.ts`
+- `packages/daoAgents/src/__tests__/container-bridge.test.ts`
 
 ---
 
-## DaoUniverseNexus 设计
+## Step 1：v2.14.0 复盘文档
 
-### 构造函数
-```typescript
-constructor(monitor: DaoUniverseMonitor, clock: DaoUniverseClock)
+**文件**：`retrospectives/2026-04-16-daomind-v2.14.0.md`（新建）
+
+**内容要点**：
+- DaoUniverseNexus 架构（Monitor + Clock 订阅）
+- 三个关键决策：纯路由层 / 独立 Discovery 实例 / syncHealthNow 测试钩子
+- 测试 32 条全部通过
+- v2.13.0→v2.14.0 指标表
+- 下一步：v2.15.0 DaoUniverseDocs
+
+---
+
+## Step 2：v2.15.0 — DaoUniverseDocs（daoDocs × DaoUniverseAudit）
+
+**帛书依据**："知常曰明，不知常，妄作凶"（德经·十六章）
+**架构定位**：DaoUniverseAudit 的知识体系层，文档通过哲学验证门控后方可发布
+
 ```
-持有独立实例（不污染全局单例）：
-```typescript
-private readonly _discovery    = new DaoServiceDiscovery();
-private readonly _router       = new DaoNexusRouter();
-private readonly _loadBalancer = new DaoLoadBalancer();
+DaoUniverse
+  ├── DaoUniverseMonitor (v2.8.0)
+  │       ├── DaoUniverseClock (v2.9.0)
+  │       │       ├── DaoUniverseFeedback (v2.10.0)
+  │       │       └── DaoUniverseScheduler (v2.12.0)
+  │       │               └── DaoUniverseSkills (v2.13.0)
+  │       └── DaoUniverseNexus (v2.14.0)
+  └── DaoUniverseAudit (v2.11.0)
+          └── DaoUniverseDocs (v2.15.0) ← 知识图谱 × 哲学文档管理
 ```
 
-### 新类型
+### 新类型（universe-docs.ts 顶部）
 
 ```typescript
-export interface NexusHealthRecord {
+export interface DocAuditResult {
+  readonly docId: string;
+  readonly passed: boolean;
+  readonly issues: readonly string[];
+  readonly timestamp: number;
+}
+
+export interface DocsSnapshot {
   readonly timestamp:       number;
-  readonly systemHealth:    number;   // from monitor.health()
-  readonly totalServices:   number;
-  readonly healthyServices: number;
-  readonly totalRequests:   number;
-  readonly successRate:     number;
-}
-
-export interface NexusDispatchResult {
-  readonly status:    'dispatched' | 'no-service' | 'no-target';
-  readonly target:    string | null;
-  readonly latencyMs: number;
+  readonly totalDocs:       number;
+  readonly knowledgeNodes:  number;
+  readonly currentVersion:  string | null;
+  readonly publishedCount:  number;
+  readonly recentAudit:     DocAuditResult | null;
 }
 ```
 
-### 方法
+### DaoUniverseDocs 类
+
+```typescript
+export class DaoUniverseDocs {
+  private readonly _docStore:       DaoDocStore;
+  private readonly _knowledgeGraph: DaoKnowledgeGraph;
+  private readonly _versionTracker: DaoVersionTracker;
+  private readonly _apiDocs:        DaoApiDocs;
+  private readonly _published = new Set<string>();   // 已通过验证发布的 doc id
+  private _lastAuditResult: DocAuditResult | null = null;
+
+  constructor(private readonly _audit: DaoUniverseAudit) {
+    // 全新独立实例，不污染全局单例
+    this._docStore       = new DaoDocStore();
+    this._knowledgeGraph = new DaoKnowledgeGraph();
+    this._versionTracker = new DaoVersionTracker();
+    this._apiDocs        = new DaoApiDocs();
+  }
+```
+
+### 公开 API
 
 | 方法 | 说明 |
 |------|------|
-| `attach()` | 订阅 `clock.onTick() → _syncHealth()`，幂等 |
-| `detach()` | 取消订阅，幂等 |
-| `register(svc)` | 注册服务（id/name/version/endpoint）|
-| `deregister(id)` | 注销服务 |
-| `discover(name)` | 发现健康服务 |
-| `markHealthy(id, healthy)` | 手动设置服务健康状态 |
-| `healthCheck()` | 所有服务健康状态列表 |
-| `addRoute(rule)` | 添加路由规则 |
-| `removeRoute(pattern)` | 删除路由规则 |
-| `dispatch(request)` | 服务发现 → 路由 → 负载均衡 → NexusDispatchResult |
-| `metrics()` | 请求统计（totalRequests/successCount/failureCount/successRate）|
-| `healthHistory(limit?)` | 历史健康快照（MAX 100 条）|
-| `get isAttached` | 是否已订阅 |
-| `get monitor` | DaoUniverseMonitor |
-| `get discovery` | DaoServiceDiscovery |
-| `get router` | DaoNexusRouter |
-| `get loadBalancer` | DaoLoadBalancer |
+| `addDoc(entry)` | 存入 docStore + 自动添加到 knowledge graph 节点 |
+| `removeDoc(id)` | 从 docStore 和 knowledge graph 同时移除 |
+| `getDoc(id)` | 读取文档 |
+| `searchDocs(query)` | 全文搜索 |
+| `connect(fromId, toId, relation, weight?)` | 建立知识图谱连接 |
+| `knowledgeStats()` | `{ nodeCount, edgeCount }` |
+| `recordVersion(record)` | 版本历史追踪 |
+| `currentVersion()` | 当前版本字符串 |
+| `versionHistory(limit?)` | 版本历史列表 |
+| `generateChangelog(sinceVersion?)` | 生成变更日志字符串 |
+| `addApi(api)` | 添加 API 文档 |
+| `getApi(path)` | 获取 API 描述 |
+| `verifyDoc(id)` | 内联哲学验证（标题/内容/版本/长度检查） |
+| `publishDoc(id)` | verifyDoc → 若通过则加入 _published，返回 DocAuditResult |
+| `getPublished()` | 已发布的 doc id 列表 |
+| `isPublished(id)` | 检查是否已发布 |
+| `snapshot()` | DocsSnapshot（无需文件系统扫描） |
+| `get audit` | DaoUniverseAudit 引用 |
+| `get docStore` | DaoDocStore 引用 |
+| `get knowledgeGraph` | DaoKnowledgeGraph 引用 |
+| `get versionTracker` | DaoVersionTracker 引用 |
 
-### _syncHealth() 逻辑（内部）
+### verifyDoc 内联检查逻辑
+
 ```typescript
-private _syncHealth(): void {
-  const systemHealth    = this._monitor.health();
-  const checks          = this._discovery.healthCheck();
-  const totalServices   = checks.length;
-  const healthyServices = checks.filter(c => c.healthy).length;
-  const m               = this.metrics();
-  this._healthHistory.push({
-    timestamp: Date.now(), systemHealth,
-    totalServices, healthyServices,
-    totalRequests: m.totalRequests, successRate: m.successRate,
-  });
-  if (this._healthHistory.length > MAX_HEALTH_RECORDS) this._healthHistory.shift();
+verifyDoc(id: string): DocAuditResult {
+  const doc = this._docStore.get(id);
+  const timestamp = Date.now();
+  if (!doc) return { docId: id, passed: false, issues: ['文档不存在'], timestamp };
+
+  const issues: string[] = [];
+  if (!doc.title.trim())                       issues.push('标题不能为空');
+  if (!doc.content.trim())                     issues.push('内容不能为空');
+  if (doc.content.length < 10)                 issues.push('内容过短（< 10 字符）');
+  if (!/^\d+\.\d+\.\d+/.test(doc.version))    issues.push('版本号不符合语义版本规范');
+
+  this._lastAuditResult = { docId: id, passed: issues.length === 0, issues, timestamp };
+  return this._lastAuditResult;
 }
 ```
 
-### dispatch() 逻辑
+### publishDoc 逻辑
+
 ```typescript
-async dispatch(request: DaoNexusRequest): Promise<NexusDispatchResult> {
-  const start = Date.now();
-  this._totalRequests++;
-  const svcName   = request.path.split('/')[0] ?? '';
-  const candidates = this._discovery.discover(svcName);
-  if (candidates.length === 0) {
-    this._failCount++;
-    return { status: 'no-service', target: null, latencyMs: Date.now() - start };
-  }
-  const rules = candidates.map(c => ({ pattern: request.path, target: c.endpoint, weight: 1, priority: 1 }));
-  const resolved = this._router.resolve(request.path);
-  const effectiveRules = resolved.length > 0 ? resolved : rules;
-  const selected = this._loadBalancer.select(effectiveRules);
-  if (!selected) {
-    this._failCount++;
-    return { status: 'no-target', target: null, latencyMs: Date.now() - start };
-  }
-  this._successCount++;
-  return { status: 'dispatched', target: selected.target, latencyMs: Date.now() - start };
+publishDoc(id: string): DocAuditResult {
+  const result = this.verifyDoc(id);
+  if (result.passed) this._published.add(id);
+  return result;
 }
 ```
+
+---
+
+## 需要修改的文件
+
+| 文件 | 操作 |
+|------|------|
+| `tsconfig.base.json` | 追加 9 条缺失路径映射（edit_file） |
+| `retrospectives/2026-04-16-daomind-v2.14.0.md` | 新建 |
+| `packages/daoCollective/src/universe-docs.ts` | 新建 |
+| `packages/daoCollective/package.json` | 追加 `"@daomind/docs": "workspace:^"` |
+| `packages/daoCollective/tsconfig.json` | 追加 `{ "path": "../daoDocs" }` 到 references |
+| `packages/daoCollective/src/index.ts` | 追加 DaoUniverseDocs + @daomind/docs 再导出 |
+| `packages/daoCollective/src/__tests__/universe-docs.test.ts` | 新建（~30 tests） |
 
 ---
 
 ## 测试计划（~30 tests）
 
-| 分组 | 数量 | 内容 |
-|------|------|------|
-| 构建 | 5 | construct / isAttached=false / monitor getter / discovery getter / loadBalancer getter |
-| attach/detach | 4 | attach→isAttached / detach→false / 幂等 attach / 幂等 detach |
-| register/deregister | 4 | register / duplicate throws / deregister / discover |
-| markHealthy/healthCheck | 3 | markHealthy false / healthCheck list / discover only healthy |
-| dispatch() | 6 | 基本 dispatch / no-service / no-target / 路由规则 / load balance / metrics 更新 |
-| healthHistory | 3 | syncHealth 记录 / limit / systemHealth 来自 monitor |
-| Clock 驱动 | 3 | attach+tick→record / health grows / detach 停止 |
-| E2E | 3 | 全栈 / @daomind/collective 导入 / 与 Feedback/Skills 共存 |
+| 分组 | 数量 | 覆盖点 |
+|------|------|--------|
+| 构建 | 5 | construct / getters / audit 引用 |
+| addDoc / removeDoc / searchDocs | 5 | CRUD / 自动 graph 节点 |
+| knowledge graph | 3 | connect / knowledgeStats / removeDoc 同步删图节点 |
+| version tracking | 3 | recordVersion / currentVersion / generateChangelog |
+| addApi / getApi | 2 | API 文档管理 |
+| verifyDoc | 4 | passed / 空标题 / 内容过短 / 版本号格式 |
+| publishDoc | 4 | 发布成功 / 验证失败不发布 / getPublished / isPublished |
+| snapshot | 2 | totalDocs / publishedCount |
+| E2E | 3 | 全栈 / @daomind/collective 导入 / 与 DaoUniverseAudit 共存 |
 
 ---
 
-## 架构层次（v2.14.0 后完整）
+## 执行顺序
 
-```
-DaoUniverse
-  ├── DaoUniverseMonitor  (v2.8.0)
-  │       ├── DaoUniverseClock  (v2.9.0)
-  │       │       ├── DaoUniverseFeedback   (v2.10.0)
-  │       │       └── DaoUniverseScheduler  (v2.12.0)
-  │       │               └── DaoUniverseSkills  (v2.13.0)
-  │       └── DaoUniverseNexus  (v2.14.0) ← 服务网格 × 宇宙健康
-  └── DaoUniverseAudit  (v2.11.0)
-```
+1. 修复 `tsconfig.base.json`（立即验证 595 tests 全通过）
+2. 写 `retrospectives/2026-04-16-daomind-v2.14.0.md`
+3. 写 `universe-docs.ts`
+4. 更新 package.json + tsconfig.json + index.ts
+5. 写 `universe-docs.test.ts`
+6. `pnpm install && pnpm -r run build && npx jest --no-coverage`（目标 625+ tests）
+7. Git commit + tag v2.15.0 + push origin + push github
 
 ---
 
-## 修改文件清单
+## 验证标准
 
-| 文件 | 操作 |
-|------|------|
-| `retrospectives/2026-04-16-daomind-v2.13.0.md` | 新建（v2.13.0 复盘）|
-| `packages/daoCollective/src/universe-nexus.ts` | 新建（DaoUniverseNexus 实现）|
-| `packages/daoCollective/package.json` | 添加 `@daomind/nexus: workspace:^` |
-| `packages/daoCollective/tsconfig.json` | 添加 `../daoNexus` 引用 |
-| `packages/daoCollective/src/index.ts` | 导出 DaoUniverseNexus + NexusHealthRecord + NexusDispatchResult + @daomind/nexus 全量再导出 |
-| `packages/daoCollective/src/__tests__/universe-nexus.test.ts` | 新建（~30 tests）|
-
----
-
-## 基础设施变更
-
-```
-package.json:  "@daomind/nexus": "workspace:^"
-tsconfig.json: { "path": "../daoNexus" }
-index.ts:      // @daomind/nexus 再导出
-               export type { ConnectionType, ConnectionState, ConnectionHandle, DaoConnection,
-                 DaoRouteRule, LoadBalanceStrategy, DaoServiceInstance, DaoNexusRequest, DaoNexusMetrics }
-               export { DaoServiceDiscovery, daoServiceDiscovery, DaoNexusRouter, daoNexusRouter,
-                 DaoLoadBalancer, daoLoadBalancer }
-               // DaoUniverseNexus
-               export type { NexusHealthRecord, NexusDispatchResult }
-               export { DaoUniverseNexus }
-```
-
----
-
-## 验证
-
-```bash
-pnpm install && tsc --build packages/daoCollective/tsconfig.json
-npx jest packages/daoCollective/src/__tests__/universe-nexus.test.ts --no-coverage
-npx jest --no-coverage   # 全量，期望 563+30 ≈ 593+ tests
-pnpm -r run build
-git add -A && git commit && git tag v2.14.0 && git push
-```
+- `npx jest --no-coverage`：39+1=40 suites，全部通过，Tests ≥ 625（595 + ~30 new）
+- `pnpm -r run build`：全部 Done
+- `git tag v2.15.0` 推送成功
