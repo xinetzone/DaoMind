@@ -1,230 +1,292 @@
-# DaoMind v2.18.0 & v2.19.0 开发计划
+# DaoMind 开发计划 — v2.20.0 + v2.21.0
 
-## 当前状态
-- v2.17.0 已完成：DaoUniversePages（daoPages × DaoUniverseScheduler）
-- 691 tests，42 suites，全绿
-- 已 push 到 origin + github，已打 tag v2.17.0
+## Context
 
-## 未集成包分析
+v2.19.0（DaoUniverseApps）已完成，756 tests / 44 suites 全绿，双远端已推送。
 
-daoCollective `package.json` 包含 15 个依赖，其中仍无 `DaoUniverse*` 类的包：
+本轮目标：继续向 `@daomind/collective` 集成剩余包。
 
-| 包 | 待集成原因 |
-|---|---|
-| `@daomind/agents` | DaoAgentRegistry + DaoAgentMessenger + agent lifecycle，无 DaoUniverseAgents |
-| `@daomind/apps` | DaoAppContainer + DaoLifecycleManager，无 DaoUniverseApps |
+已集成但无 DaoUniverse* bridge 的包：
+- `@daomind/times` — DaoTimer / DaoScheduler / daoTimeWindow（已在 index.ts 再导出）
+- `@daomind/anything` — DaoAnythingContainer（已在 index.ts 再导出）
 
-其余已集成：`nothing / anything / qi(bridge) / monitor / chronos / feedback / verify / times / skills / nexus / docs / spaces / pages`
+本轮扩展两个新 bridge 类（紧接 DaoUniverseApps 分叉）：
+```
+DaoUniverseApps (v2.19.0)
+  ├── DaoUniverseTimes   (v2.20.0) ← @daomind/times × DaoUniverseApps
+  └── DaoUniverseModules (v2.21.0) ← @daomind/anything × DaoUniverseApps
+```
 
 ---
 
-## v2.18.0 计划：DaoUniverseAgents（agents × DaoUniverseMonitor）
+## 已知约束
 
-### 帛书：「知人者智，自知者明；胜人者有力，自胜者强」（道经·三十三章）
-
-### 架构位置
-
-```
-DaoUniverse
-  ├── DaoUniverseMonitor (v2.8.0)
-  │       ├── DaoUniverseAgents (v2.18.0) ← NEW: agents × 监控健康反馈
-  │       ├── DaoUniverseNexus (v2.14.0) → DaoUniverseSpaces (v2.16.0)
-  │       └── DaoUniverseClock → DaoUniverseFeedback / DaoUniverseScheduler
-  │               └── DaoUniverseSkills / DaoUniversePages
-  └── DaoUniverseAudit → DaoUniverseDocs
-```
-
-### 关键设计约束（来自代码分析）
-
-1. **DaoBaseAgent 硬绑定全局 messenger**：
-   - `DaoBaseAgent.send()` 内部调用 `daoAgentMessenger`（全局单例），不可注入替换
-   - 因此 `DaoUniverseAgents` 使用全局 `daoAgentMessenger` 做消息代理
-   - 独立 `DaoAgentRegistry` 实例跟踪本 universe 的 agents
-
-2. **monitor 集成方式**：
-   - `DaoUniverseMonitor.feed()` 读取 `_universe.snapshot()`（非本 registry）
-   - 本类通过直接调用 `monitor.heatmapEngine.record()` 向 monitor 输入数据
-   - `snapshot()` 调用时同步向 heatmap 注入当前 agent 分布
-
-### API 设计
-
-```typescript
-// packages/daoCollective/src/universe-agents.ts
-
-export interface AgentsSnapshot {
-  readonly timestamp:   number;
-  readonly total:       number;
-  readonly active:      number;    // byState['active'] ?? 0
-  readonly dormant:     number;    // byState['dormant'] ?? 0
-  readonly byType:      Record<string, number>;
-  readonly subscribers: number;    // daoAgentMessenger.subscriberCount()
-}
-
-export class DaoUniverseAgents {
-  private readonly _registry: DaoAgentRegistry;
-
-  constructor(private readonly _monitor: DaoUniverseMonitor) {
-    this._registry = new DaoAgentRegistry();
-  }
-
-  // 生命周期
-  spawn<T extends DaoBaseAgent>(AgentClass: new (id: string) => T, id: string): T
-  //  → new AgentClass(id) + _registry.register(agent) + heatmap.record(...)
-  terminate(id: string): Promise<boolean>
-  //  → agent.terminate() + _registry.unregister(id)
-  activate(id: string): Promise<boolean>
-  //  → agent.activate()；不存在返回 false
-  rest(id: string): Promise<boolean>
-  //  → agent.rest()；不存在返回 false
-
-  // 查询
-  getAgent(id: string): DaoAgent | undefined
-  listAll(): ReadonlyArray<DaoAgent>
-  findByCapability(cap: string): ReadonlyArray<DaoAgent>
-  findByType(type: string): ReadonlyArray<DaoAgent>
-
-  // 消息（代理全局 daoAgentMessenger）
-  send(from: string, to: string | '*', action: string, payload?: unknown): void
-  history(filter?: MessageFilter): ReadonlyArray<AgentMessage>
-
-  // 快照（同时向 monitor.heatmapEngine 注入 agent 分布数据）
-  snapshot(): AgentsSnapshot
-
-  // Getters
-  get monitor(): DaoUniverseMonitor
-  get registry(): DaoAgentRegistry
-}
-```
-
-### 测试规划（~32 测试）
-
-| 分组 | 数量 |
+| 约束 | 说明 |
 |------|------|
-| 构建 | 4 |
-| spawn（创建+注册+heatmap）| 4 |
-| terminate（卸载+注销）| 3 |
-| activate/rest（状态机）| 5 |
-| 查询（getAgent/listAll/findBy*）| 5 |
-| 消息（send/history）| 4 |
-| snapshot（计数/byType/subscribers）| 4 |
-| E2E | 3 |
-
-### 需要创建/修改的文件
-
-| 文件 | 操作 |
-|------|------|
-| `retrospectives/2026-04-16-daomind-v2.17.0.md` | 新建（v2.17.0 复盘） |
-| `packages/daoCollective/src/universe-agents.ts` | 新建 |
-| `packages/daoCollective/src/__tests__/universe-agents.test.ts` | 新建 |
-| `packages/daoCollective/src/index.ts` | 追加 DaoUniverseAgents 导出 |
-| `src/App.tsx` | 版本 v2.17.0 → v2.18.0，测试数 691 → ~723 |
-
-> **注意**：`packages/daoCollective/package.json` 和 `tsconfig.json` 中 `@daomind/agents` 已存在，无需修改。
+| DaoTimer | 独立实例（`new DaoTimer()`），不污染全局 `daoTimer` 单例 |
+| DaoScheduler | 独立实例（`new DaoScheduler()`），不污染全局 `daoScheduler` 单例 |
+| DaoScheduler.next() | 异步等待最近任务，测试中只用 `pending()` 验证任务数量 |
+| DaoAnythingContainer | 独立实例（`new DaoAnythingContainer()`），不污染全局 `daoContainer` 单例 |
+| DaoAnythingContainer.resolve() | 内部 `import(path)` 文件系统，测试中只测"未激活抛出"路径 |
+| beforeEach | 始终调用 `daoNothingVoid.void()` 重置全局状态 |
 
 ---
 
-## v2.19.0 计划：DaoUniverseApps（apps × DaoUniverseAgents）
+## v2.20.0 — DaoUniverseTimes
 
-### 帛书：「为之于未有，治之于未乱」（道经·六十四章）
+**帛书依据**："曲则全，枉则直，洼则盈，弊则新"（道经·二十二章）
+**文件**：`packages/daoCollective/src/universe-times.ts`
 
-### 架构位置（追加到 v2.18.0 之后）
-
-```
-DaoUniverse
-  ├── DaoUniverseMonitor
-  │       ├── DaoUniverseAgents (v2.18.0)
-  │       │       └── DaoUniverseApps (v2.19.0) ← NEW: apps × agent lifecycle 广播
-  ...
-```
-
-### API 设计
+### 接口
 
 ```typescript
-export interface AppsSnapshot {
+export interface TimesSnapshot {
+  readonly timestamp:    number;
+  readonly totalTimers:  number;          // _intervalHandles.size + _timeoutHandles.size
+  readonly pendingTasks: number;          // _scheduler.pending()
+  readonly byApp:        Record<string, { timers: number; tasks: number }>;
+}
+
+export class DaoUniverseTimes {
+  private readonly _timer:    DaoTimer;
+  private readonly _scheduler: DaoScheduler;
+  // per-app 追踪（用于 clearAllForApp）
+  private readonly _appIntervals = new Map<string, Set<DaoTimerHandle>>();
+  private readonly _appTimeouts  = new Map<string, Set<DaoTimerHandle>>();
+  private readonly _appTasks     = new Map<string, Set<string>>();
+  // 全量句柄集（区分类型，用于 clearTimer）
+  private readonly _intervalHandles = new Map<DaoTimerHandle, string>(); // handle→appId
+  private readonly _timeoutHandles  = new Map<DaoTimerHandle, string>(); // handle→appId
+
+  constructor(private readonly _apps: DaoUniverseApps)
+
+  // ── 间隔定时器 ──────────────────────────────────
+  setInterval(appId: string, cb: () => void, options: DaoTimerOptions): DaoTimerHandle
+  // ── 单次定时器 ──────────────────────────────────
+  setTimeout(appId: string, cb: () => void, delay: number): DaoTimerHandle
+  // ── 取消定时器（interval / timeout 均可）────────
+  clearTimer(handle: DaoTimerHandle): void
+  // ── 清除某应用全部定时器+任务 ──────────────────
+  clearAllForApp(appId: string): number  // 返回已清除数量
+  // ── 任务调度 ─────────────────────────────────────
+  scheduleTask<T>(appId: string, task: Omit<DaoScheduledTask<T>, 'id'>): string
+  cancelTask(taskId: string): boolean
+  // ── 时间窗口工具 ─────────────────────────────────
+  window(duration: number): DaoTimeWindow  // daoTimeWindow.now(duration)
+  windowContains(win: DaoTimeWindow, ts: number): boolean
+  windowOverlaps(a: DaoTimeWindow, b: DaoTimeWindow): boolean
+  // ── 快照 ─────────────────────────────────────────
+  snapshot(): TimesSnapshot
+
+  // ── Getters ──────────────────────────────────────
+  get apps(): DaoUniverseApps
+  get timer(): DaoTimer
+  get scheduler(): DaoScheduler
+}
+```
+
+### 实现细节
+
+- `setInterval(appId, cb, options)` → `_timer.setInterval(cb, options)` 返回 handle，
+  存入 `_appIntervals.get(appId)` Set + `_intervalHandles.set(handle, appId)`
+- `setTimeout(appId, cb, delay)` → `_timer.setTimeout(cb, delay)` 返回 handle，
+  存入 `_appTimeouts.get(appId)` Set + `_timeoutHandles.set(handle, appId)`
+- `clearTimer(handle)` → 检查 `_intervalHandles` 或 `_timeoutHandles` 确定类型，
+  调用对应 clear 方法，从 Map + appId Set 中删除
+- `clearAllForApp(appId)` → 清除该 appId 下所有 intervals + timeouts + tasks，
+  返回清除总数
+- `scheduleTask(appId, task)` → `_scheduler.schedule(task)` 返回 taskId，
+  存入 `_appTasks.get(appId)` Set
+- `cancelTask(taskId)` → `_scheduler.cancel(taskId)`，同时从 `_appTasks` 各 Set 移除
+- `snapshot()` → 遍历 `_appIntervals` + `_appTimeouts` + `_appTasks` 构建 `byApp`
+
+### 测试（universe-times.test.ts）— 目标 ~30 个
+
+```
+构建（4）
+  ✓ 可构建 DaoUniverseTimes
+  ✓ apps/timer/scheduler getter 正确
+  ✓ 初始 snapshot 全零
+  ✓ apps getter 为传入的 DaoUniverseApps 实例
+
+setInterval（5）
+  ✓ 返回 DaoTimerHandle（Symbol）
+  ✓ snapshot.totalTimers 递增
+  ✓ byApp 记录 appId 对应 timers 数量
+  ✓ immediate=true 立即触发回调
+  ✓ maxFires 限制触发次数
+
+setTimeout（4）
+  ✓ 返回 DaoTimerHandle（Symbol）
+  ✓ snapshot.totalTimers 包含 timeout 句柄
+  ✓ delay=0 后回调执行
+  ✓ byApp 记录 appId 对应 timers 数量
+
+clearTimer（3）
+  ✓ 清除 interval 后 totalTimers 减少
+  ✓ 清除 timeout 后 totalTimers 减少
+  ✓ 重复 clearTimer 不抛出（幂等）
+
+clearAllForApp（4）
+  ✓ 清除该 app 全部 timers + tasks，返回正确数量
+  ✓ 不影响其他 app 的 timers
+  ✓ 清除后 byApp 不包含该 app（或计数为0）
+  ✓ appId 不存在时返回 0
+
+scheduleTask / cancelTask（5）
+  ✓ scheduleTask 返回 taskId（字符串）
+  ✓ pendingTasks 递增
+  ✓ cancelTask 返回 true，pendingTasks 减少
+  ✓ cancelTask 不存在 id 返回 false
+  ✓ byApp 记录 appId 对应 tasks 数量
+
+window 工具（4）
+  ✓ window(duration) 返回有效 DaoTimeWindow
+  ✓ windowContains：ts 在窗口内返回 true
+  ✓ windowContains：ts 在窗口外返回 false
+  ✓ windowOverlaps：重叠返回 true，不重叠返回 false
+
+E2E（3）
+  ✓ 多应用 timer 互不干扰
+  ✓ DaoUniverseTimes 可从 @daomind/collective 导入
+  ✓ clearAllForApp 清理多类型资源并广播 app:stopped 后验证
+```
+
+---
+
+## v2.21.0 — DaoUniverseModules
+
+**帛书依据**："为之于未有，治之于未乱"（道经·六十四章）
+**文件**：`packages/daoCollective/src/universe-modules.ts`
+
+### 接口
+
+```typescript
+export interface ModulesSnapshot {
   readonly timestamp:  number;
   readonly total:      number;
-  readonly running:    number;
+  readonly active:     number;
   readonly registered: number;
-  readonly stopped:    number;
-  readonly byState:    Partial<Record<AppState, number>>;
+  readonly terminated: number;
+  readonly byLifecycle: Partial<Record<ModuleLifecycle, number>>;
 }
 
-export class DaoUniverseApps {
-  private readonly _container:  DaoAppContainer;
-  private readonly _lifecycle:  DaoLifecycleManager;
+export class DaoUniverseModules {
+  private readonly _container: DaoAnythingContainer;
 
-  constructor(private readonly _agents: DaoUniverseAgents) {
-    this._container = new DaoAppContainer();
-    this._lifecycle = new DaoLifecycleManager();
-  }
+  constructor(private readonly _apps: DaoUniverseApps)
 
-  // 注册/卸载
-  register(definition: DaoAppDefinition): void
-  unregister(id: string): boolean
+  // ── 注册与生命周期 ────────────────────────────────────
+  register(module: DaoModuleRegistration): void
+  initialize(name: string): Promise<void>
+  activate(name: string): Promise<void>     // → agents.send('daoModules','*','module:activated',{name})
+  deactivate(name: string): Promise<void>
+  terminate(name: string): Promise<void>
 
-  // 生命周期
-  async start(id: string): Promise<void>
-  //  → _container.start(id) + _lifecycle.emit(id, from, 'running') + agents.send(...)
-  async stop(id: string): Promise<void>
-  //  → _container.stop(id) + _lifecycle.emit(id, from, 'stopped') + agents.send(...)
-  async restart(id: string): Promise<void>
-  //  → stop + start
+  // ── 查询 ─────────────────────────────────────────────
+  getModule(name: string): DaoModuleMeta | undefined
+  listModules(): ReadonlyArray<DaoModuleMeta>
+  listByLifecycle(lifecycle: ModuleLifecycle): ReadonlyArray<DaoModuleMeta>
 
-  // 查询
-  getApp(id: string): DaoAppInstance | undefined
-  listAll(): ReadonlyArray<DaoAppInstance>
-  listByState(state: AppState): ReadonlyArray<DaoAppInstance>
+  // ── resolve（透传，测试中只测非激活路径）─────────────
+  resolve<T>(name: string): Promise<T>
 
-  // 生命周期钩子
-  onStateChange(appId: string, cb: (from: AppState, to: AppState) => void): () => void
-  getHistory(appId: string, limit?: number): ReadonlyArray<...>
+  // ── 快照 ─────────────────────────────────────────────
+  snapshot(): ModulesSnapshot
 
-  // 快照
-  snapshot(): AppsSnapshot
-
-  // Getters
-  get agents(): DaoUniverseAgents
-  get container(): DaoAppContainer
-  get lifecycle(): DaoLifecycleManager
+  // ── Getters ──────────────────────────────────────────
+  get apps(): DaoUniverseApps
+  get container(): DaoAnythingContainer
 }
 ```
 
-### 集成亮点
-- `start()` / `stop()` 成功后通过 `agents.send('daoApps', '*', 'app:started/stopped', { id })` 广播 → 所有 agent 订阅者可感知应用状态变更
-- `_lifecycle.emit()` 记录状态转换历史（最多 100 条/应用）
-- `onStateChange()` 返回解绑函数（dispose pattern）
+### 实现细节
 
-### 测试规划（~30 测试）
+- `activate(name)` 调用 `_container.activate(name)` 后，
+  通过 `_apps.agents.send('daoModules', '*', 'module:activated', { name })` 广播
+- `terminate(name)` 类似广播 `'module:terminated'`
+- `listByLifecycle(lifecycle)` → `listModules().filter(m => m.lifecycle === lifecycle)`
+- `resolve<T>(name)` 直接透传 `_container.resolve<T>(name)`（测试中只测"未激活抛出"）
 
-| 分组 | 数量 |
-|------|------|
-| 构建 | 4 |
-| register/unregister | 4 |
-| start/stop/restart | 6 |
-| 查询（getApp/listAll/listByState）| 4 |
-| lifecycle hooks（onStateChange/history）| 5 |
-| snapshot | 4 |
-| E2E | 3 |
+### 测试（universe-modules.test.ts）— 目标 ~28 个
 
-### 新增文件
+```
+构建（4）
+  ✓ 可构建 DaoUniverseModules
+  ✓ apps/container getter 正确
+  ✓ 初始 snapshot 全零
+  ✓ apps getter 为传入的 DaoUniverseApps 实例
 
-| 文件 | 操作 |
-|------|------|
-| `retrospectives/2026-04-16-daomind-v2.18.0.md` | 新建（v2.18.0 复盘） |
-| `packages/daoCollective/src/universe-apps.ts` | 新建 |
-| `packages/daoCollective/src/__tests__/universe-apps.test.ts` | 新建 |
-| `packages/daoCollective/src/index.ts` | 追加 DaoUniverseApps 导出 |
-| `src/App.tsx` | 版本 v2.18.0 → v2.19.0，测试数更新 |
+register（3）
+  ✓ register 后 getModule 返回 registered 状态
+  ✓ listModules 长度增加
+  ✓ 重复 register 同一 name 抛出
+
+initialize（3）
+  ✓ registered → initialized
+  ✓ initialize 不存在的 name 抛出
+  ✓ 非法状态转换抛出（active → initialized）
+
+activate（4）
+  ✓ initialized → active，getModule.lifecycle = 'active'
+  ✓ activate 后 snapshot.active 增加
+  ✓ activate 后 agents.history 含 module:activated 消息
+  ✓ activate 不存在的 name 抛出
+
+deactivate（2）
+  ✓ active → suspending
+  ✓ deactivate 不存在的 name 抛出
+
+terminate（3）
+  ✓ registered → terminated
+  ✓ terminate 后 snapshot.terminated 增加
+  ✓ terminate 后 agents.history 含 module:terminated 消息
+
+查询（3）
+  ✓ listByLifecycle 按状态过滤
+  ✓ getModule 不存在返回 undefined
+  ✓ listModules 返回所有模块
+
+resolve（2）
+  ✓ resolve 未激活的模块抛出"模块未激活"
+  ✓ resolve 未注册的模块抛出"模块未注册"
+
+snapshot（3）
+  ✓ byLifecycle 正确统计各状态数量
+  ✓ total = 已注册模块总数
+  ✓ active / registered / terminated 字段正确
+
+E2E（2）
+  ✓ DaoUniverseModules 可从 @daomind/collective 导入
+  ✓ 完整 register → initialize → activate → deactivate → terminate 流程
+```
 
 ---
 
-## 最终架构（v2.19.0 完成后）
+## 文件变更清单
+
+| 操作 | 文件 |
+|------|------|
+| NEW | `packages/daoCollective/src/universe-times.ts` |
+| NEW | `packages/daoCollective/src/__tests__/universe-times.test.ts` |
+| NEW | `packages/daoCollective/src/universe-modules.ts` |
+| NEW | `packages/daoCollective/src/__tests__/universe-modules.test.ts` |
+| NEW | `retrospectives/2026-04-16-daomind-v2.19.0.md` |
+| NEW | `retrospectives/2026-04-16-daomind-v2.20.0.md` |
+| EDIT | `packages/daoCollective/src/index.ts` — 新增两个 bridge 导出 |
+| EDIT | `src/App.tsx` — v2.19.0→v2.20.0 (756→~786)，v2.20.0→v2.21.0 (~786→~814) |
+
+---
+
+## 架构层次（v2.21.0 后完整）
 
 ```
 DaoUniverse
   ├── DaoUniverseMonitor (v2.8.0)
-  │       ├── DaoUniverseAgents (v2.18.0) ← agent 生命周期 × 监控反馈
-  │       │       └── DaoUniverseApps (v2.19.0) ← app 状态机 × agent 广播
+  │       ├── DaoUniverseAgents (v2.18.0)
+  │       │       └── DaoUniverseApps (v2.19.0)
+  │       │               ├── DaoUniverseTimes   (v2.20.0) ← timer + scheduler × apps
+  │       │               └── DaoUniverseModules (v2.21.0) ← IoC 容器 × apps
   │       ├── DaoUniverseClock (v2.9.0)
   │       │       ├── DaoUniverseFeedback (v2.10.0)
   │       │       └── DaoUniverseScheduler (v2.12.0)
@@ -236,24 +298,13 @@ DaoUniverse
           └── DaoUniverseDocs (v2.15.0)
 ```
 
-**最终指标预测**：~751 tests，44 suites
-
 ---
 
-## 执行顺序
+## 验证步骤
 
-### v2.18.0
-1. 写 `retrospectives/2026-04-16-daomind-v2.17.0.md`
-2. 实现 `universe-agents.ts`
-3. 写 `universe-agents.test.ts`（~32 tests）
-4. 更新 `index.ts` + `App.tsx`
-5. 运行全量测试
-6. `git commit + tag v2.18.0 + push origin + github`
-
-### v2.19.0
-7. 写 `retrospectives/2026-04-16-daomind-v2.18.0.md`
-8. 实现 `universe-apps.ts`
-9. 写 `universe-apps.test.ts`（~30 tests）
-10. 更新 `index.ts` + `App.tsx`
-11. 运行全量测试
-12. `git commit + tag v2.19.0 + push origin + github`
+1. `pnpm -r run build` — 全部 Done，无 error TS
+2. `npx jest packages/daoCollective/src/__tests__/universe-times.test.ts` — ~30 pass
+3. `npx jest packages/daoCollective/src/__tests__/universe-modules.test.ts` — ~28 pass
+4. `npx jest --no-coverage` — 全部通过（目标 ~814 tests）
+5. `git log --oneline -3` — v2.20.0 + v2.21.0 各为独立 commit + tag
+6. `git push origin main --tags && git push github main --tags` — 双远端推送
