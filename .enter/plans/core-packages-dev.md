@@ -1,221 +1,259 @@
-# v2.17.0 开发计划 — DaoUniversePages
+# DaoMind v2.18.0 & v2.19.0 开发计划
 
 ## 当前状态
+- v2.17.0 已完成：DaoUniversePages（daoPages × DaoUniverseScheduler）
+- 691 tests，42 suites，全绿
+- 已 push 到 origin + github，已打 tag v2.17.0
 
-- 654 tests / 41 suites（全绿）
-- 已完成 v2.16.0 DaoUniverseSpaces
-- 剩余最后一个待集成包：`@daomind/pages`（DaoComponentTree + DaoStateBinding）
+## 未集成包分析
 
----
+daoCollective `package.json` 包含 15 个依赖，其中仍无 `DaoUniverse*` 类的包：
 
-## 目标
+| 包 | 待集成原因 |
+|---|---|
+| `@daomind/agents` | DaoAgentRegistry + DaoAgentMessenger + agent lifecycle，无 DaoUniverseAgents |
+| `@daomind/apps` | DaoAppContainer + DaoLifecycleManager，无 DaoUniverseApps |
 
-**v2.17.0 — `daoPages × DaoUniverseScheduler → DaoUniversePages`**
-
-帛书依据："致虚极，守静笃；万物并作，吾以观复"（道经·十六章）
-
-组件树 × 状态绑定 × 时序驱动刷新：组件在调度器心跳下保持与数据的动态一致。
-
----
-
-## 执行步骤
-
-### Step 1：写 v2.16.0 复盘
-- 文件：`retrospectives/2026-04-16-daomind-v2.16.0.md`
-- 内容：设计决策 / DaoNamespaceManager 适配 / DaoRouteRule weight 字段 / 测试策略 / 指标
-
-### Step 2：实现 DaoUniversePages
-
-**文件**：`packages/daoCollective/src/universe-pages.ts`
-
-```typescript
-import { DaoComponentTree, DaoStateBinding } from '@daomind/pages';
-import type { DaoComponent, DaoViewSnapshot, BindingPath } from '@daomind/pages';
-import type { DaoUniverseScheduler } from './universe-scheduler';
-
-export interface PagesSnapshot {
-  readonly timestamp:       number;
-  readonly totalMounted:    number;
-  readonly totalBindings:   number;
-  readonly pendingRefreshes: number;
-  readonly viewVersion:     number | null;
-}
-
-export class DaoUniversePages {
-  private readonly _tree:    DaoComponentTree;
-  private readonly _binding: DaoStateBinding;
-  // componentId → taskId（待执行的刷新任务）
-  private readonly _refreshTasks = new Map<string, string>();
-
-  constructor(private readonly _scheduler: DaoUniverseScheduler) {
-    this._tree    = new DaoComponentTree();
-    this._binding = new DaoStateBinding();
-    // 绑定 updater：状态变更 → tree.update()
-    this._binding.setUpdater((componentId, property, value) => {
-      this._tree.update(componentId, { [property]: value });
-    });
-  }
-
-  // ── 组件生命周期 ──
-  mount(component: Omit<DaoComponent, 'state'>): string { ... }
-  unmount(id: string): boolean { ... }
-  update(id: string, props: Record<string, unknown>): boolean { ... }
-  getComponent(id: string): DaoComponent | undefined { ... }
-
-  // ── 状态绑定 ──
-  bind(path: BindingPath, componentId: string, property: string,
-       transform?: (v: unknown) => unknown): void { ... }
-  unbind(path: BindingPath, componentId: string): boolean { ... }
-  notify(path: BindingPath, value: unknown): void { ... }
-
-  // ── 时序驱动刷新 ──
-  scheduleRefresh(
-    componentId: string,
-    delayMs: number,
-    propsFactory: () => Record<string, unknown>,
-  ): string {
-    // 取消旧任务（若存在）
-    const oldTaskId = this._refreshTasks.get(componentId);
-    if (oldTaskId) this._scheduler.cancel(oldTaskId);
-    const taskId = this._scheduler.schedule(() => {
-      this._tree.update(componentId, propsFactory());
-      this._refreshTasks.delete(componentId);   // 执行后自动清除
-    }, delayMs);
-    this._refreshTasks.set(componentId, taskId);
-    return taskId;
-  }
-
-  cancelRefresh(componentId: string): boolean {
-    const taskId = this._refreshTasks.get(componentId);
-    if (!taskId) return false;
-    this._scheduler.cancel(taskId);
-    this._refreshTasks.delete(componentId);
-    return true;
-  }
-
-  // ── 视图快照 & 综合快照 ──
-  viewSnapshot(): DaoViewSnapshot | null { return this._tree.getSnapshot(); }
-
-  snapshot(): PagesSnapshot {
-    let totalMounted = 0;
-    this._tree.traverse(() => { totalMounted++; });
-    return {
-      timestamp:        Date.now(),
-      totalMounted,
-      totalBindings:    this._binding.getBindings().length,
-      pendingRefreshes: this._refreshTasks.size,
-      viewVersion:      this._tree.getSnapshot()?.version ?? null,
-    };
-  }
-
-  // ── Getters ──
-  get scheduler(): DaoUniverseScheduler { return this._scheduler; }
-  get tree():      DaoComponentTree      { return this._tree;      }
-  get binding():   DaoStateBinding       { return this._binding;   }
-}
-```
-
-### Step 3：基础设施更新
-
-| 文件 | 变更 |
-|------|------|
-| `packages/daoCollective/package.json` | `@daomind/pages: workspace:^` |
-| `packages/daoCollective/tsconfig.json` | `../daoPages` 引用 |
-| `packages/daoCollective/src/index.ts` | DaoUniversePages + PagesSnapshot + @daomind/pages 再导出 |
-
-**注意**：`@daomind/pages` 再导出：
-```typescript
-export type { ComponentState, DaoComponent, DaoViewSnapshot, BindingPath, DaoBinding } from '@daomind/pages';
-export { daoComponentTree, DaoComponentTree, daoStateBinding, DaoStateBinding } from '@daomind/pages';
-export type { PagesSnapshot } from './universe-pages';
-export { DaoUniversePages } from './universe-pages';
-```
-
-### Step 4：测试文件（~34 tests）
-
-**文件**：`packages/daoCollective/src/__tests__/universe-pages.test.ts`
-
-```typescript
-// makeStack: universe → monitor → clock → scheduler → pages
-function makeStack() {
-  const universe  = new DaoUniverse();
-  const monitor   = new DaoUniverseMonitor(universe);
-  const clock     = new DaoUniverseClock(monitor);
-  const scheduler = new DaoUniverseScheduler(clock);
-  const pages     = new DaoUniversePages(scheduler);
-  return { universe, monitor, clock, scheduler, pages };
-}
-```
-
-**测试分组**：
-1. **构建**（4）：pages 已创建 / scheduler getter / tree getter / binding getter
-2. **mount/unmount**（4）：mount → getComponent / version 增长 / unmount → undefined / 重复 mount 抛出
-3. **update**（3）：更新 props / unmounted 组件 update 返回 false / 不存在 ID 返回 false
-4. **bind/unbind/notify**（5）：bind → getBindings() / notify → tree.update（通过 binding updater）/ unbind 返回 true / 不存在 unbind 返回 false / transform 函数
-5. **scheduleRefresh/cancelRefresh**（5）：注册 task / flush → props 更新 / cancelRefresh 取消 / 旧 task 自动取消 / pendingRefreshes 计数
-6. **viewSnapshot**（3）：初始为 null / mount 后有 snapshot / update 后 version 增长
-7. **snapshot()**（5）：totalMounted / totalBindings / pendingRefreshes / viewVersion / 全为0时
-8. **E2E**（5）：完整 Universe→Scheduler→Pages / 导入测试 / notify→组件prop更新 / scheduler.flush → refresh 执行 / traverse 计数
-
-总计：~34 tests → 654 + 34 = **688 tests**
-
-### Step 5：全量验证
-
-```bash
-pnpm install && pnpm -r run build
-npx jest --no-coverage  # 目标：688 tests，42 suites，0 FAIL
-```
-
-### Step 6：更新 homepage
-
-`src/App.tsx`：
-- 版本徽章：v2.16.0 → **v2.17.0**
-- 测试数：654 → **688**
-- footer 版本：v2.16.0 → **v2.17.0**
-
-### Step 7：Git commit + tag + push
-
-```bash
-git add -A
-git commit -m "feat(pages): v2.17.0 — DaoUniversePages..."
-git tag -a v2.17.0 -m "release: v2.17.0 — DaoUniversePages"
-git push github main:main && git push github v2.17.0
-git push origin main && git push origin v2.17.0
-```
-
-### Step 8：task-execution-summary（技能触发）
-
-使用 `task-execution-summary-skill` 生成本次 DaoMind v2.8.0→v2.17.0 完整开发会话总结报告，
-保存到 `retrospectives/2026-04-16-daomind-session-summary.md`
+其余已集成：`nothing / anything / qi(bridge) / monitor / chronos / feedback / verify / times / skills / nexus / docs / spaces / pages`
 
 ---
 
-## 最终架构（v2.17.0 完成后）
+## v2.18.0 计划：DaoUniverseAgents（agents × DaoUniverseMonitor）
+
+### 帛书：「知人者智，自知者明；胜人者有力，自胜者强」（道经·三十三章）
+
+### 架构位置
 
 ```
 DaoUniverse
   ├── DaoUniverseMonitor (v2.8.0)
+  │       ├── DaoUniverseAgents (v2.18.0) ← NEW: agents × 监控健康反馈
+  │       ├── DaoUniverseNexus (v2.14.0) → DaoUniverseSpaces (v2.16.0)
+  │       └── DaoUniverseClock → DaoUniverseFeedback / DaoUniverseScheduler
+  │               └── DaoUniverseSkills / DaoUniversePages
+  └── DaoUniverseAudit → DaoUniverseDocs
+```
+
+### 关键设计约束（来自代码分析）
+
+1. **DaoBaseAgent 硬绑定全局 messenger**：
+   - `DaoBaseAgent.send()` 内部调用 `daoAgentMessenger`（全局单例），不可注入替换
+   - 因此 `DaoUniverseAgents` 使用全局 `daoAgentMessenger` 做消息代理
+   - 独立 `DaoAgentRegistry` 实例跟踪本 universe 的 agents
+
+2. **monitor 集成方式**：
+   - `DaoUniverseMonitor.feed()` 读取 `_universe.snapshot()`（非本 registry）
+   - 本类通过直接调用 `monitor.heatmapEngine.record()` 向 monitor 输入数据
+   - `snapshot()` 调用时同步向 heatmap 注入当前 agent 分布
+
+### API 设计
+
+```typescript
+// packages/daoCollective/src/universe-agents.ts
+
+export interface AgentsSnapshot {
+  readonly timestamp:   number;
+  readonly total:       number;
+  readonly active:      number;    // byState['active'] ?? 0
+  readonly dormant:     number;    // byState['dormant'] ?? 0
+  readonly byType:      Record<string, number>;
+  readonly subscribers: number;    // daoAgentMessenger.subscriberCount()
+}
+
+export class DaoUniverseAgents {
+  private readonly _registry: DaoAgentRegistry;
+
+  constructor(private readonly _monitor: DaoUniverseMonitor) {
+    this._registry = new DaoAgentRegistry();
+  }
+
+  // 生命周期
+  spawn<T extends DaoBaseAgent>(AgentClass: new (id: string) => T, id: string): T
+  //  → new AgentClass(id) + _registry.register(agent) + heatmap.record(...)
+  terminate(id: string): Promise<boolean>
+  //  → agent.terminate() + _registry.unregister(id)
+  activate(id: string): Promise<boolean>
+  //  → agent.activate()；不存在返回 false
+  rest(id: string): Promise<boolean>
+  //  → agent.rest()；不存在返回 false
+
+  // 查询
+  getAgent(id: string): DaoAgent | undefined
+  listAll(): ReadonlyArray<DaoAgent>
+  findByCapability(cap: string): ReadonlyArray<DaoAgent>
+  findByType(type: string): ReadonlyArray<DaoAgent>
+
+  // 消息（代理全局 daoAgentMessenger）
+  send(from: string, to: string | '*', action: string, payload?: unknown): void
+  history(filter?: MessageFilter): ReadonlyArray<AgentMessage>
+
+  // 快照（同时向 monitor.heatmapEngine 注入 agent 分布数据）
+  snapshot(): AgentsSnapshot
+
+  // Getters
+  get monitor(): DaoUniverseMonitor
+  get registry(): DaoAgentRegistry
+}
+```
+
+### 测试规划（~32 测试）
+
+| 分组 | 数量 |
+|------|------|
+| 构建 | 4 |
+| spawn（创建+注册+heatmap）| 4 |
+| terminate（卸载+注销）| 3 |
+| activate/rest（状态机）| 5 |
+| 查询（getAgent/listAll/findBy*）| 5 |
+| 消息（send/history）| 4 |
+| snapshot（计数/byType/subscribers）| 4 |
+| E2E | 3 |
+
+### 需要创建/修改的文件
+
+| 文件 | 操作 |
+|------|------|
+| `retrospectives/2026-04-16-daomind-v2.17.0.md` | 新建（v2.17.0 复盘） |
+| `packages/daoCollective/src/universe-agents.ts` | 新建 |
+| `packages/daoCollective/src/__tests__/universe-agents.test.ts` | 新建 |
+| `packages/daoCollective/src/index.ts` | 追加 DaoUniverseAgents 导出 |
+| `src/App.tsx` | 版本 v2.17.0 → v2.18.0，测试数 691 → ~723 |
+
+> **注意**：`packages/daoCollective/package.json` 和 `tsconfig.json` 中 `@daomind/agents` 已存在，无需修改。
+
+---
+
+## v2.19.0 计划：DaoUniverseApps（apps × DaoUniverseAgents）
+
+### 帛书：「为之于未有，治之于未乱」（道经·六十四章）
+
+### 架构位置（追加到 v2.18.0 之后）
+
+```
+DaoUniverse
+  ├── DaoUniverseMonitor
+  │       ├── DaoUniverseAgents (v2.18.0)
+  │       │       └── DaoUniverseApps (v2.19.0) ← NEW: apps × agent lifecycle 广播
+  ...
+```
+
+### API 设计
+
+```typescript
+export interface AppsSnapshot {
+  readonly timestamp:  number;
+  readonly total:      number;
+  readonly running:    number;
+  readonly registered: number;
+  readonly stopped:    number;
+  readonly byState:    Partial<Record<AppState, number>>;
+}
+
+export class DaoUniverseApps {
+  private readonly _container:  DaoAppContainer;
+  private readonly _lifecycle:  DaoLifecycleManager;
+
+  constructor(private readonly _agents: DaoUniverseAgents) {
+    this._container = new DaoAppContainer();
+    this._lifecycle = new DaoLifecycleManager();
+  }
+
+  // 注册/卸载
+  register(definition: DaoAppDefinition): void
+  unregister(id: string): boolean
+
+  // 生命周期
+  async start(id: string): Promise<void>
+  //  → _container.start(id) + _lifecycle.emit(id, from, 'running') + agents.send(...)
+  async stop(id: string): Promise<void>
+  //  → _container.stop(id) + _lifecycle.emit(id, from, 'stopped') + agents.send(...)
+  async restart(id: string): Promise<void>
+  //  → stop + start
+
+  // 查询
+  getApp(id: string): DaoAppInstance | undefined
+  listAll(): ReadonlyArray<DaoAppInstance>
+  listByState(state: AppState): ReadonlyArray<DaoAppInstance>
+
+  // 生命周期钩子
+  onStateChange(appId: string, cb: (from: AppState, to: AppState) => void): () => void
+  getHistory(appId: string, limit?: number): ReadonlyArray<...>
+
+  // 快照
+  snapshot(): AppsSnapshot
+
+  // Getters
+  get agents(): DaoUniverseAgents
+  get container(): DaoAppContainer
+  get lifecycle(): DaoLifecycleManager
+}
+```
+
+### 集成亮点
+- `start()` / `stop()` 成功后通过 `agents.send('daoApps', '*', 'app:started/stopped', { id })` 广播 → 所有 agent 订阅者可感知应用状态变更
+- `_lifecycle.emit()` 记录状态转换历史（最多 100 条/应用）
+- `onStateChange()` 返回解绑函数（dispose pattern）
+
+### 测试规划（~30 测试）
+
+| 分组 | 数量 |
+|------|------|
+| 构建 | 4 |
+| register/unregister | 4 |
+| start/stop/restart | 6 |
+| 查询（getApp/listAll/listByState）| 4 |
+| lifecycle hooks（onStateChange/history）| 5 |
+| snapshot | 4 |
+| E2E | 3 |
+
+### 新增文件
+
+| 文件 | 操作 |
+|------|------|
+| `retrospectives/2026-04-16-daomind-v2.18.0.md` | 新建（v2.18.0 复盘） |
+| `packages/daoCollective/src/universe-apps.ts` | 新建 |
+| `packages/daoCollective/src/__tests__/universe-apps.test.ts` | 新建 |
+| `packages/daoCollective/src/index.ts` | 追加 DaoUniverseApps 导出 |
+| `src/App.tsx` | 版本 v2.18.0 → v2.19.0，测试数更新 |
+
+---
+
+## 最终架构（v2.19.0 完成后）
+
+```
+DaoUniverse
+  ├── DaoUniverseMonitor (v2.8.0)
+  │       ├── DaoUniverseAgents (v2.18.0) ← agent 生命周期 × 监控反馈
+  │       │       └── DaoUniverseApps (v2.19.0) ← app 状态机 × agent 广播
   │       ├── DaoUniverseClock (v2.9.0)
   │       │       ├── DaoUniverseFeedback (v2.10.0)
   │       │       └── DaoUniverseScheduler (v2.12.0)
   │       │               ├── DaoUniverseSkills (v2.13.0)
-  │       │               └── DaoUniversePages  (v2.17.0) ← 新
+  │       │               └── DaoUniversePages  (v2.17.0)
   │       └── DaoUniverseNexus (v2.14.0)
   │               └── DaoUniverseSpaces (v2.16.0)
   └── DaoUniverseAudit (v2.11.0)
           └── DaoUniverseDocs (v2.15.0)
 ```
 
-所有 `@daomind/*` 包（daoPages 包含）完成集成，daoCollective 达到最终形态。
+**最终指标预测**：~751 tests，44 suites
 
 ---
 
-## 关键注意事项
+## 执行顺序
 
-1. **DaoComponentTree.mount()** 签名：`Omit<DaoComponent, 'state'>` — `state` 自动设为 `'mounted'`
-2. **DaoStateBinding.setUpdater()** 必须在构造时调用，使 notify → tree.update 自动生效
-3. **scheduleRefresh()** 任务执行后需从 `_refreshTasks` 删除（避免 cancelRefresh 误报 true）
-4. **snapshot().totalMounted** 用 `traverse()` 计数（DaoComponentTree 无 size API）
-5. **测试中** 调用 `scheduler.flush()` 触发 scheduleRefresh 任务执行
-</content>
-</invoke>
+### v2.18.0
+1. 写 `retrospectives/2026-04-16-daomind-v2.17.0.md`
+2. 实现 `universe-agents.ts`
+3. 写 `universe-agents.test.ts`（~32 tests）
+4. 更新 `index.ts` + `App.tsx`
+5. 运行全量测试
+6. `git commit + tag v2.18.0 + push origin + github`
+
+### v2.19.0
+7. 写 `retrospectives/2026-04-16-daomind-v2.18.0.md`
+8. 实现 `universe-apps.ts`
+9. 写 `universe-apps.test.ts`（~30 tests）
+10. 更新 `index.ts` + `App.tsx`
+11. 运行全量测试
+12. `git commit + tag v2.19.0 + push origin + github`
