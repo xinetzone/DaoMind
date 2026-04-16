@@ -209,3 +209,9 @@ export { DaoUniverseTimes } from './universe-times';
 // ============================================================
 export type { ModulesSnapshot } from './universe-modules';
 export { DaoUniverseModules } from './universe-modules';
+
+// ============================================================
+// DaoUniverseQi — 混元气总线 × 宇宙服务网格（@modulux/qi × DaoUniverseNexus）
+// ============================================================
+export type { QiSnapshot } from './universe-qi';
+export { DaoUniverseQi } from './universe-qi';
