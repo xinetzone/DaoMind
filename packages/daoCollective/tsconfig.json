@@ -21,7 +21,8 @@
     { "path": "../daoNexus" },
     { "path": "../daoDocs" },
     { "path": "../daoSpaces" },
-    { "path": "../daoPages" }
+    { "path": "../daoPages" },
+    { "path": "../daoBenchmark" }
   ],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "src/__tests__/**"]

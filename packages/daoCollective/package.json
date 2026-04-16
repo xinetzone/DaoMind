@@ -30,7 +30,8 @@
     "@daomind/nexus":    "workspace:^",
     "@daomind/docs":     "workspace:^",
     "@daomind/spaces":   "workspace:^",
-    "@daomind/pages":    "workspace:^"
+    "@daomind/pages":    "workspace:^",
+    "@daomind/benchmark": "workspace:^"
   },
   "publishConfig": {
     "access": "public"

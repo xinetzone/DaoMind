@@ -215,3 +215,9 @@ export { DaoUniverseModules } from './universe-modules';
 // ============================================================
 export type { QiSnapshot } from './universe-qi';
 export { DaoUniverseQi } from './universe-qi';
+
+// ============================================================
+// DaoUniverseBenchmark — 性能基准 × 宇宙健康感知（@daomind/benchmark × DaoUniverseMonitor）
+// ============================================================
+export type { BenchmarkRunRecord, BenchmarkSnapshot } from './universe-benchmark';
+export { DaoUniverseBenchmark } from './universe-benchmark';
