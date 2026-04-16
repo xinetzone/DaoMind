@@ -24,7 +24,8 @@
     "@daomind/monitor":  "workspace:^",
     "@daomind/chronos":  "workspace:^",
     "@daomind/feedback": "workspace:^",
-    "@daomind/verify":   "workspace:^"
+    "@daomind/verify":   "workspace:^",
+    "@daomind/times":    "workspace:^"
   },
   "publishConfig": {
     "access": "public"

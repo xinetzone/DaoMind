@@ -125,3 +125,13 @@ export { DaoVerificationReporter, DAO_VERIFICATION_CATEGORY_LABELS } from '@daom
 // DaoUniverseAudit — 哲学自我审查（daoVerify × DaoUniverse）
 export type { AuditSnapshot } from './universe-audit';
 export { DaoUniverseAudit } from './universe-audit';
+
+// ============================================================
+// @daomind/times — 时调度层
+// ============================================================
+export type { DaoTimerHandle, DaoTimerOptions, DaoScheduledTask, DaoTimeWindow } from '@daomind/times';
+export { DaoTimer, DaoScheduler, daoTimer, daoScheduler, daoTimeWindow } from '@daomind/times';
+
+// DaoUniverseScheduler — 时序驱动任务调度（daotimes × DaoUniverseClock）
+export type { ExecutionRecord } from './universe-scheduler';
+export { DaoUniverseScheduler } from './universe-scheduler';
