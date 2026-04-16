@@ -227,3 +227,9 @@ export { DaoUniverseBenchmark } from './universe-benchmark';
 // ============================================================
 export type { DiagnosticRecord, DiagnosticSnapshot } from './universe-diagnostic';
 export { DaoUniverseDiagnostic } from './universe-diagnostic';
+
+// ============================================================
+// DaoUniverseFacade — 全栈自动装配门面（17 桥接器一键构建）
+// ============================================================
+export type { DaoFacadeSnapshot } from './universe-facade';
+export { DaoUniverseFacade } from './universe-facade';
