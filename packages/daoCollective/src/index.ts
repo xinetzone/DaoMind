@@ -233,3 +233,9 @@ export { DaoUniverseDiagnostic } from './universe-diagnostic';
 // ============================================================
 export type { DaoFacadeSnapshot } from './universe-facade';
 export { DaoUniverseFacade } from './universe-facade';
+
+// ============================================================
+// DaoUniverseHealthBoard — 宇宙健康仪表盘（纯消费者，读取 DaoUniverseFacade）
+// ============================================================
+export type { HealthEntry, HealthTrend, HealthBoardSnapshot } from './universe-health-board';
+export { DaoUniverseHealthBoard } from './universe-health-board';
