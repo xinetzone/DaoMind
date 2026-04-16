@@ -101,3 +101,14 @@ export { DaoChronos, daoGetChronos } from '@daomind/chronos';
 // DaoUniverseClock — 时序心跳（daoChronos × daoCollective）
 export type { ClockTickCallback } from './universe-clock';
 export { DaoUniverseClock } from './universe-clock';
+
+// ============================================================
+// @daomind/feedback — 反馈层（闭环自调节）
+// ============================================================
+export type { FeedbackRegulatorConfig, RegulationResult } from '@daomind/feedback';
+export type { LifecycleStatus } from '@daomind/feedback';
+export { DaoFeedbackRegulator, DaoFeedbackLifecycle } from '@daomind/feedback';
+
+// DaoUniverseFeedback — 闭环反馈（daoFeedback × DaoUniverseClock）
+export type { FeedbackEntry } from './universe-feedback';
+export { DaoUniverseFeedback } from './universe-feedback';
