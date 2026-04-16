@@ -21,7 +21,8 @@
     "@daomind/agents":   "workspace:^",
     "@daomind/apps":     "workspace:^",
     "@modulux/qi":       "workspace:^",
-    "@daomind/monitor":  "workspace:^"
+    "@daomind/monitor":  "workspace:^",
+    "@daomind/chronos":  "workspace:^"
   },
   "publishConfig": {
     "access": "public"

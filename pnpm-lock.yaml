@@ -135,6 +135,9 @@ importers:
       '@daomind/apps':
         specifier: workspace:^
         version: link:../daoApps
+      '@daomind/chronos':
+        specifier: workspace:^
+        version: link:../daoChronos
       '@daomind/monitor':
         specifier: workspace:^
         version: link:../daoMonitor

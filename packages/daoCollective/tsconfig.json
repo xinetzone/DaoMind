@@ -12,7 +12,8 @@
     { "path": "../daoAgents" },
     { "path": "../daoApps" },
     { "path": "../daoQi" },
-    { "path": "../daoMonitor" }
+    { "path": "../daoMonitor" },
+    { "path": "../daoChronos" }
   ],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "src/__tests__/**"]

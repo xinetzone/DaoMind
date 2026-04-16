@@ -91,3 +91,13 @@ export {
 
 // DaoUniverseMonitor — DaoUniverse × daoMonitor 集成桥接器
 export { DaoUniverseMonitor } from './universe-monitor';
+
+// ============================================================
+// @daomind/chronos — 宙时层（时序驱动基础设施）
+// ============================================================
+export type { DaoChronosPoint, DaoChronosConfig, TimeSource } from '@daomind/chronos';
+export { DaoChronos, daoGetChronos } from '@daomind/chronos';
+
+// DaoUniverseClock — 时序心跳（daoChronos × daoCollective）
+export type { ClockTickCallback } from './universe-clock';
+export { DaoUniverseClock } from './universe-clock';
