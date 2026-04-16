@@ -197,3 +197,9 @@ export { DaoUniverseAgents } from './universe-agents';
 // ============================================================
 export type { AppsSnapshot } from './universe-apps';
 export { DaoUniverseApps } from './universe-apps';
+
+// ============================================================
+// DaoUniverseTimes — 定时器 × 任务调度 × 时间窗口（@daomind/times × DaoUniverseApps）
+// ============================================================
+export type { TimesSnapshot } from './universe-times';
+export { DaoUniverseTimes } from './universe-times';

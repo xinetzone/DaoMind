@@ -71,5 +71,6 @@ export default {
   },
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   maxWorkers: '50%',
-  testTimeout: 30000
+  testTimeout: 30000,
+  forceExit: true
 };
