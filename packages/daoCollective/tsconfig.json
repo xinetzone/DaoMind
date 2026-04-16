@@ -4,26 +4,66 @@
     "composite": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
   "references": [
-    { "path": "../daoNothing" },
-    { "path": "../daoAnything" },
-    { "path": "../daoAgents" },
-    { "path": "../daoApps" },
-    { "path": "../daoQi" },
-    { "path": "../daoMonitor" },
-    { "path": "../daoChronos" },
-    { "path": "../daoFeedback" },
-    { "path": "../daoVerify" },
-    { "path": "../daotimes" },
-    { "path": "../daoSkilLs" },
-    { "path": "../daoNexus" },
-    { "path": "../daoDocs" },
-    { "path": "../daoSpaces" },
-    { "path": "../daoPages" },
-    { "path": "../daoBenchmark" }
+    {
+      "path": "../daoNothing"
+    },
+    {
+      "path": "../daoAnything"
+    },
+    {
+      "path": "../daoAgents"
+    },
+    {
+      "path": "../daoApps"
+    },
+    {
+      "path": "../daoQi"
+    },
+    {
+      "path": "../daoMonitor"
+    },
+    {
+      "path": "../daoChronos"
+    },
+    {
+      "path": "../daoFeedback"
+    },
+    {
+      "path": "../daoVerify"
+    },
+    {
+      "path": "../daotimes"
+    },
+    {
+      "path": "../daoSkilLs"
+    },
+    {
+      "path": "../daoNexus"
+    },
+    {
+      "path": "../daoDocs"
+    },
+    {
+      "path": "../daoSpaces"
+    },
+    {
+      "path": "../daoPages"
+    },
+    {
+      "path": "../daoBenchmark"
+    }
   ],
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "src/__tests__/**"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/__tests__/**"
+  ]
 }

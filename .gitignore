@@ -82,6 +82,11 @@ out
 .nuxt
 # Package dist directories (but not root dist for deployment)
 packages/*/dist
+# TypeScript project-reference compiled output (*.d.ts/*.js generated in src/ as side-effect)
+packages/daoBenchmark/src/**/*.d.ts
+packages/daoBenchmark/src/**/*.d.ts.map
+packages/daoBenchmark/src/**/*.js
+packages/daoBenchmark/src/**/*.js.map
 
 # Gatsby files
 .cache/
