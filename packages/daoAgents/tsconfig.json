@@ -1,1 +1,27 @@
-{"extends": "../../tsconfig.base.json", "compilerOptions": {"composite": true, "outDir": "./dist", "rootDir": "./src", "types": ["node"]}, "references": [{"path": "../daoNothing"}], "include": ["src/**/*.ts"], "exclude": ["node_modules", "dist", "src/__tests__/**"]}
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "types": [
+      "node"
+    ]
+  },
+  "references": [
+    {
+      "path": "../daoNothing"
+    },
+    {
+      "path": "../daoAnything"
+    }
+  ],
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/__tests__/**"
+  ]
+}

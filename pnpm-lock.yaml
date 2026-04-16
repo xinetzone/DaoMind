@@ -88,6 +88,9 @@ importers:
 
   packages/daoAgents:
     dependencies:
+      '@daomind/anything':
+        specifier: workspace:^
+        version: link:../daoAnything
       '@daomind/nothing':
         specifier: workspace:^
         version: link:../daoNothing

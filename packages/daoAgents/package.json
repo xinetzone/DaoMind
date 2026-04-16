@@ -23,6 +23,7 @@
     "README.md"
   ],
   "dependencies": {
-    "@daomind/nothing": "workspace:^"
+    "@daomind/nothing": "workspace:^",
+    "@daomind/anything": "workspace:^"
   }
 }
