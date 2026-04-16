@@ -30,11 +30,11 @@ describe('daoBirthFromNothing', () => {
   });
 
   test('should throw error when value is undefined', () => {
-    expect(() => daoBirthFromNothing<number>(undefined)).toThrow(/无法从绝对的"无"中生有/);
+    expect(() => daoBirthFromNothing<number>(undefined)).toThrow(/无法从绝对的"无名".*中生有/);
   });
 
   test('should throw error when value is null', () => {
-    expect(() => daoBirthFromNothing<number>(null)).toThrow(/无法从绝对的"无"中生有/);
+    expect(() => daoBirthFromNothing<number>(null)).toThrow(/无法从绝对的"无名".*中生有/);
   });
 
   test('should properly type assert the returned value', () => {
