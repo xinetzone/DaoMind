@@ -1,64 +1,198 @@
-# DaoMind v2.15.0 开发计划
+# v2.16.0 开发计划 — DaoUniverseSpaces（daoSpaces × DaoUniverseNexus）
 
 ## 当前状态
 
-- **已完成**：v2.14.0 DaoUniverseNexus（daoNexus × DaoUniverseMonitor）
-- **当前 commit**：`9f0cbbf` chore(homepage): update version and test case count
-- **测试**：39 suites 中 12 个失败（303/595 tests）← 关键 Bug 需先修复
+- v2.15.0 已发布：627 tests / 40 suites，全绿
+- 未集成包：`@daomind/spaces`、`@daomind/pages`
+- `tsconfig.base.json` 路径映射已完整（v2.15.0 修复）
 
 ---
 
-## Step 0：关键 Bug 修复 — tsconfig.base.json 缺少路径映射
+## 帛书依据
 
-### 根因
-
-`tsconfig.base.json` 的 `"paths"` 字段缺少以下包的映射，导致 ts-jest TypeScript 编译阶段找不到模块：
-
-| 缺失映射 | 实际路径 |
-|---------|---------|
-| `@daomind/anything` | `./packages/daoAnything/src` |
-| `@daomind/chronos` | `./packages/daoChronos/src` |
-| `@daomind/feedback` | `./packages/daoFeedback/src` |
-| `@daomind/skills` | `./packages/daoSkilLs/src` |
-| `@daomind/pages` | `./packages/daoPages/src` |
-| `@daomind/spaces` | `./packages/daoSpaces/src` |
-| `@daomind/docs` | `./packages/daoDocs/src` |
-| `@daomind/times` | `./packages/daotimes/src` |
-| `@daomind/collective` | `./packages/daoCollective/src` |
-
-### 修复方式
-
-直接编辑 `tsconfig.base.json`，在现有 `"paths"` 对象中追加上述 9 条映射。
-
-**注意**：`@daomind/skills` 的包目录是 `daoSkilLs`（大写 L），`@daomind/times` 的包目录是 `daotimes`（小写 t）。
-
-### 失败的 12 个 suite
-
-- `packages/daoCollective/src/__tests__/universe*.test.ts`（9 个）
-- `packages/daoCollective/src/__tests__/qi-bridge.test.ts`（1 个）
-- `src/__tests__/integration/agents-apps-integration.test.ts`
-- `src/__tests__/e2e/full-system.test.ts`
-- `packages/daoAgents/src/__tests__/container-bridge.test.ts`
+"知足者富，强行者有志"（德经·三十三章）  
+空间是资源归属的容器；服务网格是调度的枢纽。  
+让每个空间拥有自己的服务标识，通过网格路由归位，是"知足"的架构表达。
 
 ---
 
-## Step 1：v2.14.0 复盘文档
+## Step 1 — 写 v2.15.0 复盘
 
-**文件**：`retrospectives/2026-04-16-daomind-v2.14.0.md`（新建）
+文件：`retrospectives/2026-04-16-daomind-v2.15.0.md`
 
-**内容要点**：
-- DaoUniverseNexus 架构（Monitor + Clock 订阅）
-- 三个关键决策：纯路由层 / 独立 Discovery 实例 / syncHealthNow 测试钩子
-- 测试 32 条全部通过
-- v2.13.0→v2.14.0 指标表
-- 下一步：v2.15.0 DaoUniverseDocs
+内容：
+- 目标：daoDocs × DaoUniverseAudit
+- 核心设计决策（addDoc 双写 / publishDoc 哲学门控 / 纯同步 snapshot）
+- tsconfig.base.json 路径修复（根因 + 影响 + 经验）
+- 新类型：DocAuditResult / DocsSnapshot
+- 指标：595 → 627 tests（+32），40 suites
 
 ---
 
-## Step 2：v2.15.0 — DaoUniverseDocs（daoDocs × DaoUniverseAudit）
+## Step 2 — 实现 DaoUniverseSpaces（v2.16.0）
 
-**帛书依据**："知常曰明，不知常，妄作凶"（德经·十六章）
-**架构定位**：DaoUniverseAudit 的知识体系层，文档通过哲学验证门控后方可发布
+### 新文件：`packages/daoCollective/src/universe-spaces.ts`
+
+```typescript
+// 帛书依据："知足者富"（德经·三十三章）
+// 架构：DaoUniverseNexus → DaoUniverseSpaces（命名空间 × 服务网格路由归位）
+
+import { DaoNamespaceManager } from '@daomind/spaces';
+import type { DaoSpace, DaoSpaceId, DaoResourceLocator } from '@daomind/spaces';
+import type { DaoUniverseNexus } from './universe-nexus';
+
+export interface SpacesSnapshot {
+  readonly timestamp:         number;
+  readonly totalSpaces:       number;
+  readonly rootCount:         number;
+  readonly nexusServiceCount: number;  // 来自 nexus.healthCheck().length
+}
+
+export class DaoUniverseSpaces {
+  private readonly _namespace: DaoNamespaceManager;
+
+  constructor(private readonly _nexus: DaoUniverseNexus)
+  // 全新独立 DaoNamespaceManager，不污染全局 daoNamespace 单例
+
+  // 空间管理（namespace + 同步注册 nexus 服务）
+  createSpace(name: string, parent?: DaoSpaceId): DaoSpaceId
+  // → 创建 namespace 空间 + nexus.register({ id: spaceId, name, version: '1.0.0', endpoint: `space://${spaceId}` })
+  // → 自动 nexus.markHealthy(spaceId, true)
+
+  removeSpace(id: DaoSpaceId): boolean
+  // → namespace.removeSpace(id)（如有子空间自动抛出） + nexus.deregister(id)
+
+  getSpace(id: DaoSpaceId): DaoSpace | undefined
+  getChildren(parentId: DaoSpaceId): ReadonlyArray<DaoSpace>
+  getRootSpaces(): ReadonlyArray<DaoSpace>
+
+  // 路径解析（纯 namespace 操作）
+  resolve(locator: DaoResourceLocator): string[]
+  // 委托 namespace.resolvePath(locator)
+
+  // 空间路由（将 pattern 路由到 spaceId 对应的服务 endpoint）
+  routeSpace(pattern: string, spaceId: DaoSpaceId): void
+  // → nexus.addRoute({ pattern, target: `space://${spaceId}`, priority: 1 })
+
+  // 快照
+  snapshot(): SpacesSnapshot
+  // { timestamp, totalSpaces: getAllSpaces().length, rootCount: getRootSpaces().length, nexusServiceCount: nexus.healthCheck().length }
+
+  // Getters
+  get nexus(): DaoUniverseNexus
+  get namespace(): DaoNamespaceManager
+}
+```
+
+**关键设计决策：**
+- `createSpace()` 同步注册 nexus 服务：每个 space 有唯一 endpoint `space://${id}`，可被路由层寻址
+- `removeSpace()` 双清：先调用 namespace（可能抛异常），再 nexus.deregister()
+- `routeSpace()` 建立 pattern → space 的路由映射，dispatch 请求即可找到对应 space 的 endpoint
+- `snapshot()` 中 nexusServiceCount 来自 `nexus.healthCheck().length`（所有服务，含 space 外注册的）
+
+### 更新 `packages/daoCollective/package.json`
+```diff
++ "@daomind/spaces":  "workspace:^"
+```
+
+### 更新 `packages/daoCollective/tsconfig.json`
+```diff
++ { "path": "../daoSpaces" }
+```
+
+### 更新 `packages/daoCollective/src/index.ts`
+新增末尾：
+```typescript
+// @daomind/spaces — 空间层
+export type { DaoSpaceId, DaoSpace, DaoResourceLocator, PartitionStrategy } from '@daomind/spaces';
+export { daoNamespace, DaoNamespaceManager } from '@daomind/spaces';
+
+// DaoUniverseSpaces — 命名空间 × 服务网格（daoSpaces × DaoUniverseNexus）
+export type { SpacesSnapshot } from './universe-spaces';
+export { DaoUniverseSpaces } from './universe-spaces';
+```
+
+---
+
+## Step 3 — 测试文件
+
+文件：`packages/daoCollective/src/__tests__/universe-spaces.test.ts`  
+目标：**30 个测试**
+
+```
+构建（4）：
+  - 可构建 DaoUniverseSpaces
+  - nexus getter 返回传入的 DaoUniverseNexus
+  - namespace getter 已初始化（独立实例）
+  - 初始 snapshot().totalSpaces = 0
+
+createSpace / removeSpace（5）：
+  - createSpace 返回 DaoSpaceId 字符串
+  - createSpace 后 getSpace 可取回
+  - createSpace 自动在 nexus 注册对应服务
+  - removeSpace 返回 true，getSpace 返回 undefined
+  - removeSpace 同步从 nexus 注销服务
+
+getChildren / getRootSpaces（4）：
+  - createSpace 无 parent → 出现在 getRootSpaces()
+  - createSpace 有 parent → 出现在 getChildren()
+  - 子空间不出现在 getRootSpaces()
+  - removeSpace 有子空间时抛出异常
+
+resolve（3）：
+  - 单层空间 resolve 返回 [spaceName, ...path]
+  - 嵌套空间 resolve 返回完整层级路径
+  - resolve 不存在的 space 抛出异常
+
+routeSpace（3）：
+  - routeSpace 添加 nexus 路由规则
+  - dispatch 到已路由 space 返回 dispatched
+  - dispatch 到未路由 space 返回 no-service（nexus 无对应服务名）
+
+snapshot（4）：
+  - totalSpaces 随 createSpace 增长
+  - rootCount 只统计根空间
+  - removeSpace 后 totalSpaces 减少
+  - nexusServiceCount 包含 space 注册的服务
+
+E2E（4）：
+  - 完整 Universe→Monitor→Nexus→Spaces 流程
+  - DaoUniverseSpaces 可从 @daomind/collective 导入
+  - 多层嵌套空间（3层深度）路径解析正确
+  - space 注册的 nexus 服务可被 healthCheck() 检测到
+```
+
+---
+
+## Step 4 — 更新 src/App.tsx
+
+- 版本：v2.14.0 → v2.16.0
+- 测试数：595 → 657（估算：627 + 30）
+
+---
+
+## Step 5 — 验证
+
+```bash
+pnpm -r run build          # 全部 Done
+npx jest --no-coverage     # 657 tests, 41 suites
+```
+
+---
+
+## Step 6 — 提交 + 打标签 + 推送
+
+```bash
+git add -A
+git commit -m "feat(spaces): v2.16.0 — DaoUniverseSpaces..."
+git tag -a v2.16.0 -m "release: v2.16.0 — DaoUniverseSpaces"
+git push github main:main && git push github v2.16.0
+git push origin main && git push origin v2.16.0
+```
+
+---
+
+## 架构（v2.16.0 后完整）
 
 ```
 DaoUniverse
@@ -68,151 +202,12 @@ DaoUniverse
   │       │       └── DaoUniverseScheduler (v2.12.0)
   │       │               └── DaoUniverseSkills (v2.13.0)
   │       └── DaoUniverseNexus (v2.14.0)
+  │               └── DaoUniverseSpaces (v2.16.0) ← 命名空间 × 服务网格路由归位
   └── DaoUniverseAudit (v2.11.0)
-          └── DaoUniverseDocs (v2.15.0) ← 知识图谱 × 哲学文档管理
+          └── DaoUniverseDocs (v2.15.0)
 ```
 
-### 新类型（universe-docs.ts 顶部）
+## 剩余包（v2.17.0 预留）
 
-```typescript
-export interface DocAuditResult {
-  readonly docId: string;
-  readonly passed: boolean;
-  readonly issues: readonly string[];
-  readonly timestamp: number;
-}
-
-export interface DocsSnapshot {
-  readonly timestamp:       number;
-  readonly totalDocs:       number;
-  readonly knowledgeNodes:  number;
-  readonly currentVersion:  string | null;
-  readonly publishedCount:  number;
-  readonly recentAudit:     DocAuditResult | null;
-}
-```
-
-### DaoUniverseDocs 类
-
-```typescript
-export class DaoUniverseDocs {
-  private readonly _docStore:       DaoDocStore;
-  private readonly _knowledgeGraph: DaoKnowledgeGraph;
-  private readonly _versionTracker: DaoVersionTracker;
-  private readonly _apiDocs:        DaoApiDocs;
-  private readonly _published = new Set<string>();   // 已通过验证发布的 doc id
-  private _lastAuditResult: DocAuditResult | null = null;
-
-  constructor(private readonly _audit: DaoUniverseAudit) {
-    // 全新独立实例，不污染全局单例
-    this._docStore       = new DaoDocStore();
-    this._knowledgeGraph = new DaoKnowledgeGraph();
-    this._versionTracker = new DaoVersionTracker();
-    this._apiDocs        = new DaoApiDocs();
-  }
-```
-
-### 公开 API
-
-| 方法 | 说明 |
-|------|------|
-| `addDoc(entry)` | 存入 docStore + 自动添加到 knowledge graph 节点 |
-| `removeDoc(id)` | 从 docStore 和 knowledge graph 同时移除 |
-| `getDoc(id)` | 读取文档 |
-| `searchDocs(query)` | 全文搜索 |
-| `connect(fromId, toId, relation, weight?)` | 建立知识图谱连接 |
-| `knowledgeStats()` | `{ nodeCount, edgeCount }` |
-| `recordVersion(record)` | 版本历史追踪 |
-| `currentVersion()` | 当前版本字符串 |
-| `versionHistory(limit?)` | 版本历史列表 |
-| `generateChangelog(sinceVersion?)` | 生成变更日志字符串 |
-| `addApi(api)` | 添加 API 文档 |
-| `getApi(path)` | 获取 API 描述 |
-| `verifyDoc(id)` | 内联哲学验证（标题/内容/版本/长度检查） |
-| `publishDoc(id)` | verifyDoc → 若通过则加入 _published，返回 DocAuditResult |
-| `getPublished()` | 已发布的 doc id 列表 |
-| `isPublished(id)` | 检查是否已发布 |
-| `snapshot()` | DocsSnapshot（无需文件系统扫描） |
-| `get audit` | DaoUniverseAudit 引用 |
-| `get docStore` | DaoDocStore 引用 |
-| `get knowledgeGraph` | DaoKnowledgeGraph 引用 |
-| `get versionTracker` | DaoVersionTracker 引用 |
-
-### verifyDoc 内联检查逻辑
-
-```typescript
-verifyDoc(id: string): DocAuditResult {
-  const doc = this._docStore.get(id);
-  const timestamp = Date.now();
-  if (!doc) return { docId: id, passed: false, issues: ['文档不存在'], timestamp };
-
-  const issues: string[] = [];
-  if (!doc.title.trim())                       issues.push('标题不能为空');
-  if (!doc.content.trim())                     issues.push('内容不能为空');
-  if (doc.content.length < 10)                 issues.push('内容过短（< 10 字符）');
-  if (!/^\d+\.\d+\.\d+/.test(doc.version))    issues.push('版本号不符合语义版本规范');
-
-  this._lastAuditResult = { docId: id, passed: issues.length === 0, issues, timestamp };
-  return this._lastAuditResult;
-}
-```
-
-### publishDoc 逻辑
-
-```typescript
-publishDoc(id: string): DocAuditResult {
-  const result = this.verifyDoc(id);
-  if (result.passed) this._published.add(id);
-  return result;
-}
-```
-
----
-
-## 需要修改的文件
-
-| 文件 | 操作 |
-|------|------|
-| `tsconfig.base.json` | 追加 9 条缺失路径映射（edit_file） |
-| `retrospectives/2026-04-16-daomind-v2.14.0.md` | 新建 |
-| `packages/daoCollective/src/universe-docs.ts` | 新建 |
-| `packages/daoCollective/package.json` | 追加 `"@daomind/docs": "workspace:^"` |
-| `packages/daoCollective/tsconfig.json` | 追加 `{ "path": "../daoDocs" }` 到 references |
-| `packages/daoCollective/src/index.ts` | 追加 DaoUniverseDocs + @daomind/docs 再导出 |
-| `packages/daoCollective/src/__tests__/universe-docs.test.ts` | 新建（~30 tests） |
-
----
-
-## 测试计划（~30 tests）
-
-| 分组 | 数量 | 覆盖点 |
-|------|------|--------|
-| 构建 | 5 | construct / getters / audit 引用 |
-| addDoc / removeDoc / searchDocs | 5 | CRUD / 自动 graph 节点 |
-| knowledge graph | 3 | connect / knowledgeStats / removeDoc 同步删图节点 |
-| version tracking | 3 | recordVersion / currentVersion / generateChangelog |
-| addApi / getApi | 2 | API 文档管理 |
-| verifyDoc | 4 | passed / 空标题 / 内容过短 / 版本号格式 |
-| publishDoc | 4 | 发布成功 / 验证失败不发布 / getPublished / isPublished |
-| snapshot | 2 | totalDocs / publishedCount |
-| E2E | 3 | 全栈 / @daomind/collective 导入 / 与 DaoUniverseAudit 共存 |
-
----
-
-## 执行顺序
-
-1. 修复 `tsconfig.base.json`（立即验证 595 tests 全通过）
-2. 写 `retrospectives/2026-04-16-daomind-v2.14.0.md`
-3. 写 `universe-docs.ts`
-4. 更新 package.json + tsconfig.json + index.ts
-5. 写 `universe-docs.test.ts`
-6. `pnpm install && pnpm -r run build && npx jest --no-coverage`（目标 625+ tests）
-7. Git commit + tag v2.15.0 + push origin + push github
-
----
-
-## 验证标准
-
-- `npx jest --no-coverage`：39+1=40 suites，全部通过，Tests ≥ 625（595 + ~30 new）
-- `pnpm -r run build`：全部 Done
-- `git tag v2.15.0` 推送成功
+`@daomind/pages`（DaoComponentTree + DaoStateBinding）→ 计划挂在 DaoUniverseScheduler 下  
+→ `DaoUniversePages`：时序驱动组件生命周期 × 状态绑定
