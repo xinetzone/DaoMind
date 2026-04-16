@@ -1,115 +1,119 @@
-# v2.9.0 — DaoUniverseClock：daoChronos × daoUniverse 时序心跳
+# v2.10.0 Plan — DaoUniverseFeedback（daoFeedback × DaoUniverseClock）
 
 ## Context
 
-v2.8.0 完成了 `DaoUniverseMonitor`（系统快照 + 五感引擎），但快照目前只能手动触发（`monitor.capture()`）。  
-v2.9.0 目标：引入 **`DaoUniverseClock`**，用 `daoChronos` 驱动定时心跳，每 N ms 自动调用 `monitor.capture()` 并向订阅者广播，为系统注入**时间维度**。
+v2.9.0 完成了 `DaoUniverseClock`（daoChronos 驱动的时序心跳）。
+现在要利用每次心跳产生的健康分数，接入 `daoFeedback` 的 S 型曲线调节器，
+形成**闭环自调节**：宇宙状态 → 健康分数 → 信号调节 → RegulationResult。
 
----
+## 里程碑零：复盘文档
 
-## 新文件
+**文件：** `retrospectives/2026-04-16-daomind-v2.9.0.md`
 
-| 文件 | 说明 |
-|------|------|
-| `packages/daoCollective/src/universe-clock.ts` | `DaoUniverseClock` 类（核心） |
-| `packages/daoCollective/src/__tests__/universe-clock.test.ts` | ~28 测试 |
+内容提纲：
+- 目标：daoChronos × daoCollective 时序心跳
+- 关键设计：`DaoChronos.sync()` + `_doTick()` 私有方法 + `tick()` 手动 API
+- `jest.useFakeTimers()` 测试定时行为
+- 结果：29 tests，架构层：Universe → Monitor → Clock
 
-## 修改文件
+## 里程碑一：`DaoUniverseFeedback`
 
-| 文件 | 变更 |
-|------|------|
-| `packages/daoCollective/package.json` | 添加 `@daomind/chronos: workspace:^` |
-| `packages/daoCollective/tsconfig.json` | 添加 `{ "path": "../daoChronos" }` |
-| `packages/daoCollective/src/index.ts` | 导出 `DaoUniverseClock` + chronos 再导出 |
-
----
-
-## `DaoUniverseClock` API 设计
+**文件：** `packages/daoCollective/src/universe-feedback.ts`（新建）
 
 ```typescript
-import { DaoChronos } from '@daomind/chronos';
-import type { DaoChronosPoint } from '@daomind/chronos';
-import type { MonitorSnapshot } from '@daomind/monitor';
-import type { DaoUniverseMonitor } from './universe-monitor';
+export interface FeedbackEntry {
+  readonly timestamp: number;
+  readonly health: number;
+  readonly result: RegulationResult;
+}
 
-type ClockTickCallback = (snap: MonitorSnapshot, point: DaoChronosPoint) => void;
+export class DaoUniverseFeedback {
+  private readonly _regulator: DaoFeedbackRegulator;
+  private readonly _history: FeedbackEntry[] = [];
+  private _unsubscribe?: () => void;
 
-export class DaoUniverseClock {
-  constructor(monitor: DaoUniverseMonitor, intervalMs = 1000)
+  constructor(
+    private readonly _clock: DaoUniverseClock,
+    config?: Partial<FeedbackRegulatorConfig>,
+    private readonly _windowMs = 60_000,
+  ) {
+    this._regulator = new DaoFeedbackRegulator(config);
+  }
 
-  start(): void          // 启动定时心跳（幂等）
-  stop(): void           // 停止定时心跳（幂等）
-  tick(): MonitorSnapshot  // 手动触发一次（不依赖定时器，测试友好）
+  /** attach(): 订阅 clock.onTick()，每次心跳自动 regulate（幂等） */
+  attach(): void
 
-  onTick(cb: ClockTickCallback): () => void  // 订阅 tick 事件，返回取消函数
+  /** detach(): 取消订阅（幂等） */
+  detach(): void
 
-  elapsed(): number | undefined  // 距离最后一次 tick 经过的毫秒数
+  /** regulate(health): 手动传入健康分数 → RegulationResult，写入 history */
+  regulate(health: number): RegulationResult
 
-  get ticks():     number                      // 累计 tick 次数（自建实例起算）
-  get isRunning(): boolean                     // 是否正在运行
-  get lastTick():  DaoChronosPoint | undefined // 最后一次 tick 的时间点
-  get chronos():   DaoChronos                  // 底层 DaoChronos 实例
-  get monitor():   DaoUniverseMonitor          // 传入的 monitor 实例
+  /** tick(): 手动以 clock.monitor 最新快照健康分数触发一次 regulate */
+  tick(): RegulationResult | null  // 若 monitor 无历史则返回 null
+
+  /** history(limit?): 历史调节记录 */
+  history(limit?: number): ReadonlyArray<FeedbackEntry>
+
+  get lastResult(): RegulationResult | undefined
+  get isAttached(): boolean
+  get regulator(): DaoFeedbackRegulator
+  get clock(): DaoUniverseClock
 }
 ```
 
-### 实现要点
-
-- `start()` 调用 `this._chronos.sync(point => { ... })` 获得 unsync 函数，存入 `_unsync`；幂等：已运行则直接返回
-- `stop()` 调用 `_unsync()`，置空；幂等：未运行则直接返回
-- `tick()`：调用 `_chronos.now()` + `_monitor.capture()`，更新 `_ticks` / `_lastTick`，广播所有 `_callbacks`
-- `start()` 内部的 sync 回调与 `tick()` 共享相同逻辑（提取私有方法 `_doTick(point)`）
-- 构造时 `new DaoChronos({ source: 'system', tickInterval: intervalMs })`
-
----
-
-## index.ts 再导出
-
+**信号转换逻辑：**
 ```typescript
-// DaoUniverseClock — 时序心跳（daoChronos × daoCollective）
-export type { DaoChronosPoint, DaoChronosConfig, TimeSource } from '@daomind/chronos';
-export { DaoChronos, daoGetChronos } from '@daomind/chronos';
-export type { ClockTickCallback } from './universe-clock';  // 如已导出
-export { DaoUniverseClock } from './universe-clock';
+// health = 0–100（100 = 完美），转换为 signalStrength = 0–100（越高越需要调节）
+const signalStrength = 100 - health;
+const result = this._regulator.regulate(signalStrength, this._windowMs);
+this._regulator.tick();  // 按恢复速率衰减 currentIntensity
+this._history.push({ timestamp: Date.now(), health, result });
 ```
 
----
+## 里程碑二：基础设施更新
 
-## 测试覆盖（~28 个）
+| 文件 | 变更 |
+|------|------|
+| `packages/daoCollective/package.json` | `"@daomind/feedback": "workspace:^"` |
+| `packages/daoCollective/tsconfig.json` | `{ "path": "../daoFeedback" }` |
+| `packages/daoCollective/src/index.ts` | export `DaoUniverseFeedback` + `FeedbackEntry` + `@daomind/feedback` re-exports |
 
-| 分组 | 数量 | 要点 |
+**index.ts 新增再导出：**
+```typescript
+export type { FeedbackRegulatorConfig, RegulationResult } from '@daomind/feedback';
+export { DaoFeedbackRegulator, DaoFeedbackLifecycle } from '@daomind/feedback';
+export type { FeedbackEntry } from './universe-feedback';
+export { DaoUniverseFeedback } from './universe-feedback';
+```
+
+## 里程碑三：测试（~28 个）
+
+**文件：** `packages/daoCollective/src/__tests__/universe-feedback.test.ts`
+
+| 分组 | 数量 | 内容 |
 |------|------|------|
-| 构建（7） | 7 | 可构建、默认 isRunning=false、ticks=0、lastTick=undefined、chronos/monitor getter、自定义 interval |
-| start/stop（5） | 5 | start→isRunning=true、stop→false、幂等 start、幂等 stop、stop 后 ticks 不增 |
-| tick() 手动（5） | 5 | 返回 MonitorSnapshot、ticks++、lastTick 更新、callbacks 触发、elapsed() 有值 |
-| onTick callbacks（4） | 4 | 订阅触发、unsubscribe 停止、多 listener 都触发、参数结构正确 |
-| 定时 tick（4） | 4 | fake timers: start+advance→ticks++、stop 后 advance→不变、每 tick 推 history、stop→start→ticks 累计 |
-| elapsed（1） | 1 | tick 前 undefined，tick 后 ≥ 0 |
-| E2E（2） | 2 | Universe→Monitor→Clock 整栈、可从 @daomind/collective 导入 |
+| 构建 | 6 | 构建、isAttached=false、lastResult=undefined、regulator getter、clock getter、自定义 config |
+| attach/detach | 4 | attach → isAttached=true、detach → false、幂等 attach、幂等 detach |
+| regulate() | 5 | 返回 RegulationResult、health=100→低信号、health=0→高信号、outputIntensity∈[0,1]、effectiveSignals≥0 |
+| attach 自动调节 | 4 | fake timers：Clock tick → history++、lastResult 更新、isSaturated=false（正常情况）、多次 tick |
+| history | 5 | 初始为空、regulate 后增长、limit 限制、entry 含 {timestamp,health,result}、lastResult = 最新 |
+| regulator 集成 | 2 | tick() 衰减 intensity、setSensitivity 影响输出 |
+| E2E | 2 | 全栈（Universe→Monitor→Clock→Feedback）、可从 @daomind/collective 导入 |
 
-**定时 tick 组使用 `jest.useFakeTimers()` + `jest.advanceTimersByTime()` 避免实际等待**
-
----
-
-## 执行顺序
-
-1. 更新 `packages/daoCollective/package.json`（加 `@daomind/chronos`）
-2. 更新 `packages/daoCollective/tsconfig.json`（加 `../daoChronos`）
-3. 创建 `packages/daoCollective/src/universe-clock.ts`
-4. 更新 `packages/daoCollective/src/index.ts`（加 chronos 再导出 + DaoUniverseClock）
-5. 创建 `packages/daoCollective/src/__tests__/universe-clock.test.ts`
-6. `pnpm install && pnpm -r build && npx jest packages/daoCollective`
-7. `git commit -m "feat(clock): v2.9.0 — DaoUniverseClock"` + `git tag v2.9.0` + push
-
----
-
-## 验证
+## 里程碑四：验证 + 发布
 
 ```bash
-npx jest packages/daoCollective/src/__tests__/universe-clock.test.ts --no-coverage
-# 期望：~28 tests passed
-npx jest --no-coverage
-# 期望：~435 tests passed，33 suites
-pnpm -r run build
-# 期望：全部 Done
+npx jest packages/daoCollective --no-coverage   # 145+ tests pass
+pnpm -r run build                                 # 全包 Done
+git commit + git tag v2.10.0 + push
+```
+
+## 标准 push 命令
+
+```bash
+ANON_KEY="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+GITHUB_PAT=$(curl ... get-secrets)
+git remote add github "https://x-access-token:${PAT}@github.com/xinetzone/DaoMind.git"
+git push github main:main && git tag v2.10.0 && git push github v2.10.0
 ```
