@@ -203,3 +203,9 @@ export { DaoUniverseApps } from './universe-apps';
 // ============================================================
 export type { TimesSnapshot } from './universe-times';
 export { DaoUniverseTimes } from './universe-times';
+
+// ============================================================
+// DaoUniverseModules — IoC 容器 × Agent 广播（@daomind/anything × DaoUniverseApps）
+// ============================================================
+export type { ModulesSnapshot } from './universe-modules';
+export { DaoUniverseModules } from './universe-modules';
