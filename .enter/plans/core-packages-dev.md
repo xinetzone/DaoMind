@@ -1,310 +1,204 @@
-# DaoMind 开发计划 — v2.20.0 + v2.21.0
+# DaoMind v2.22.0 开发计划 — DaoUniverseQi
 
 ## Context
 
-v2.19.0（DaoUniverseApps）已完成，756 tests / 44 suites 全绿，双远端已推送。
+v2.21.0 完成 `DaoUniverseModules`（@daomind/anything × DaoUniverseApps），DaoUniverse* 桥接树在 `DaoUniverseApps` 分支下已有 Times + Modules 两个子节点。
 
-本轮目标：继续向 `@daomind/collective` 集成剩余包。
+`@modulux/qi` 是 DaoMind 最核心的消息传输基础设施，实现了帛书道德经四十二章"天地人冲"四通道通信模型，但尚未融入 DaoUniverse* 树。
+最自然的接入点是 `DaoUniverseNexus`（服务网格层），因为 Qi 的 `DaoRouter` 与 Nexus 的路由层在职责上高度对齐：
+- Nexus 管理**服务级**路由（DaoServiceDiscovery + DaoNexusRouter）
+- Qi 管理**消息级**路由（HunyuanBus + DaoRouter）
 
-已集成但无 DaoUniverse* bridge 的包：
-- `@daomind/times` — DaoTimer / DaoScheduler / daoTimeWindow（已在 index.ts 再导出）
-- `@daomind/anything` — DaoAnythingContainer（已在 index.ts 再导出）
-
-本轮扩展两个新 bridge 类（紧接 DaoUniverseApps 分叉）：
-```
-DaoUniverseApps (v2.19.0)
-  ├── DaoUniverseTimes   (v2.20.0) ← @daomind/times × DaoUniverseApps
-  └── DaoUniverseModules (v2.21.0) ← @daomind/anything × DaoUniverseApps
-```
+将两者结合，形成"消息总线 × 服务网格"的完整传输层。
 
 ---
 
-## 已知约束
+## 目标版本
 
-| 约束 | 说明 |
-|------|------|
-| DaoTimer | 独立实例（`new DaoTimer()`），不污染全局 `daoTimer` 单例 |
-| DaoScheduler | 独立实例（`new DaoScheduler()`），不污染全局 `daoScheduler` 单例 |
-| DaoScheduler.next() | 异步等待最近任务，测试中只用 `pending()` 验证任务数量 |
-| DaoAnythingContainer | 独立实例（`new DaoAnythingContainer()`），不污染全局 `daoContainer` 单例 |
-| DaoAnythingContainer.resolve() | 内部 `import(path)` 文件系统，测试中只测"未激活抛出"路径 |
-| beforeEach | 始终调用 `daoNothingVoid.void()` 重置全局状态 |
+**v2.22.0**：`DaoUniverseQi` — `@modulux/qi × DaoUniverseNexus`
 
----
-
-## v2.20.0 — DaoUniverseTimes
-
-**帛书依据**："曲则全，枉则直，洼则盈，弊则新"（道经·二十二章）
-**文件**：`packages/daoCollective/src/universe-times.ts`
-
-### 接口
-
-```typescript
-export interface TimesSnapshot {
-  readonly timestamp:    number;
-  readonly totalTimers:  number;          // _intervalHandles.size + _timeoutHandles.size
-  readonly pendingTasks: number;          // _scheduler.pending()
-  readonly byApp:        Record<string, { timers: number; tasks: number }>;
-}
-
-export class DaoUniverseTimes {
-  private readonly _timer:    DaoTimer;
-  private readonly _scheduler: DaoScheduler;
-  // per-app 追踪（用于 clearAllForApp）
-  private readonly _appIntervals = new Map<string, Set<DaoTimerHandle>>();
-  private readonly _appTimeouts  = new Map<string, Set<DaoTimerHandle>>();
-  private readonly _appTasks     = new Map<string, Set<string>>();
-  // 全量句柄集（区分类型，用于 clearTimer）
-  private readonly _intervalHandles = new Map<DaoTimerHandle, string>(); // handle→appId
-  private readonly _timeoutHandles  = new Map<DaoTimerHandle, string>(); // handle→appId
-
-  constructor(private readonly _apps: DaoUniverseApps)
-
-  // ── 间隔定时器 ──────────────────────────────────
-  setInterval(appId: string, cb: () => void, options: DaoTimerOptions): DaoTimerHandle
-  // ── 单次定时器 ──────────────────────────────────
-  setTimeout(appId: string, cb: () => void, delay: number): DaoTimerHandle
-  // ── 取消定时器（interval / timeout 均可）────────
-  clearTimer(handle: DaoTimerHandle): void
-  // ── 清除某应用全部定时器+任务 ──────────────────
-  clearAllForApp(appId: string): number  // 返回已清除数量
-  // ── 任务调度 ─────────────────────────────────────
-  scheduleTask<T>(appId: string, task: Omit<DaoScheduledTask<T>, 'id'>): string
-  cancelTask(taskId: string): boolean
-  // ── 时间窗口工具 ─────────────────────────────────
-  window(duration: number): DaoTimeWindow  // daoTimeWindow.now(duration)
-  windowContains(win: DaoTimeWindow, ts: number): boolean
-  windowOverlaps(a: DaoTimeWindow, b: DaoTimeWindow): boolean
-  // ── 快照 ─────────────────────────────────────────
-  snapshot(): TimesSnapshot
-
-  // ── Getters ──────────────────────────────────────
-  get apps(): DaoUniverseApps
-  get timer(): DaoTimer
-  get scheduler(): DaoScheduler
-}
-```
-
-### 实现细节
-
-- `setInterval(appId, cb, options)` → `_timer.setInterval(cb, options)` 返回 handle，
-  存入 `_appIntervals.get(appId)` Set + `_intervalHandles.set(handle, appId)`
-- `setTimeout(appId, cb, delay)` → `_timer.setTimeout(cb, delay)` 返回 handle，
-  存入 `_appTimeouts.get(appId)` Set + `_timeoutHandles.set(handle, appId)`
-- `clearTimer(handle)` → 检查 `_intervalHandles` 或 `_timeoutHandles` 确定类型，
-  调用对应 clear 方法，从 Map + appId Set 中删除
-- `clearAllForApp(appId)` → 清除该 appId 下所有 intervals + timeouts + tasks，
-  返回清除总数
-- `scheduleTask(appId, task)` → `_scheduler.schedule(task)` 返回 taskId，
-  存入 `_appTasks.get(appId)` Set
-- `cancelTask(taskId)` → `_scheduler.cancel(taskId)`，同时从 `_appTasks` 各 Set 移除
-- `snapshot()` → 遍历 `_appIntervals` + `_appTimeouts` + `_appTasks` 构建 `byApp`
-
-### 测试（universe-times.test.ts）— 目标 ~30 个
-
-```
-构建（4）
-  ✓ 可构建 DaoUniverseTimes
-  ✓ apps/timer/scheduler getter 正确
-  ✓ 初始 snapshot 全零
-  ✓ apps getter 为传入的 DaoUniverseApps 实例
-
-setInterval（5）
-  ✓ 返回 DaoTimerHandle（Symbol）
-  ✓ snapshot.totalTimers 递增
-  ✓ byApp 记录 appId 对应 timers 数量
-  ✓ immediate=true 立即触发回调
-  ✓ maxFires 限制触发次数
-
-setTimeout（4）
-  ✓ 返回 DaoTimerHandle（Symbol）
-  ✓ snapshot.totalTimers 包含 timeout 句柄
-  ✓ delay=0 后回调执行
-  ✓ byApp 记录 appId 对应 timers 数量
-
-clearTimer（3）
-  ✓ 清除 interval 后 totalTimers 减少
-  ✓ 清除 timeout 后 totalTimers 减少
-  ✓ 重复 clearTimer 不抛出（幂等）
-
-clearAllForApp（4）
-  ✓ 清除该 app 全部 timers + tasks，返回正确数量
-  ✓ 不影响其他 app 的 timers
-  ✓ 清除后 byApp 不包含该 app（或计数为0）
-  ✓ appId 不存在时返回 0
-
-scheduleTask / cancelTask（5）
-  ✓ scheduleTask 返回 taskId（字符串）
-  ✓ pendingTasks 递增
-  ✓ cancelTask 返回 true，pendingTasks 减少
-  ✓ cancelTask 不存在 id 返回 false
-  ✓ byApp 记录 appId 对应 tasks 数量
-
-window 工具（4）
-  ✓ window(duration) 返回有效 DaoTimeWindow
-  ✓ windowContains：ts 在窗口内返回 true
-  ✓ windowContains：ts 在窗口外返回 false
-  ✓ windowOverlaps：重叠返回 true，不重叠返回 false
-
-E2E（3）
-  ✓ 多应用 timer 互不干扰
-  ✓ DaoUniverseTimes 可从 @daomind/collective 导入
-  ✓ clearAllForApp 清理多类型资源并广播 app:stopped 后验证
-```
-
----
-
-## v2.21.0 — DaoUniverseModules
-
-**帛书依据**："为之于未有，治之于未乱"（道经·六十四章）
-**文件**：`packages/daoCollective/src/universe-modules.ts`
-
-### 接口
-
-```typescript
-export interface ModulesSnapshot {
-  readonly timestamp:  number;
-  readonly total:      number;
-  readonly active:     number;
-  readonly registered: number;
-  readonly terminated: number;
-  readonly byLifecycle: Partial<Record<ModuleLifecycle, number>>;
-}
-
-export class DaoUniverseModules {
-  private readonly _container: DaoAnythingContainer;
-
-  constructor(private readonly _apps: DaoUniverseApps)
-
-  // ── 注册与生命周期 ────────────────────────────────────
-  register(module: DaoModuleRegistration): void
-  initialize(name: string): Promise<void>
-  activate(name: string): Promise<void>     // → agents.send('daoModules','*','module:activated',{name})
-  deactivate(name: string): Promise<void>
-  terminate(name: string): Promise<void>
-
-  // ── 查询 ─────────────────────────────────────────────
-  getModule(name: string): DaoModuleMeta | undefined
-  listModules(): ReadonlyArray<DaoModuleMeta>
-  listByLifecycle(lifecycle: ModuleLifecycle): ReadonlyArray<DaoModuleMeta>
-
-  // ── resolve（透传，测试中只测非激活路径）─────────────
-  resolve<T>(name: string): Promise<T>
-
-  // ── 快照 ─────────────────────────────────────────────
-  snapshot(): ModulesSnapshot
-
-  // ── Getters ──────────────────────────────────────────
-  get apps(): DaoUniverseApps
-  get container(): DaoAnythingContainer
-}
-```
-
-### 实现细节
-
-- `activate(name)` 调用 `_container.activate(name)` 后，
-  通过 `_apps.agents.send('daoModules', '*', 'module:activated', { name })` 广播
-- `terminate(name)` 类似广播 `'module:terminated'`
-- `listByLifecycle(lifecycle)` → `listModules().filter(m => m.lifecycle === lifecycle)`
-- `resolve<T>(name)` 直接透传 `_container.resolve<T>(name)`（测试中只测"未激活抛出"）
-
-### 测试（universe-modules.test.ts）— 目标 ~28 个
-
-```
-构建（4）
-  ✓ 可构建 DaoUniverseModules
-  ✓ apps/container getter 正确
-  ✓ 初始 snapshot 全零
-  ✓ apps getter 为传入的 DaoUniverseApps 实例
-
-register（3）
-  ✓ register 后 getModule 返回 registered 状态
-  ✓ listModules 长度增加
-  ✓ 重复 register 同一 name 抛出
-
-initialize（3）
-  ✓ registered → initialized
-  ✓ initialize 不存在的 name 抛出
-  ✓ 非法状态转换抛出（active → initialized）
-
-activate（4）
-  ✓ initialized → active，getModule.lifecycle = 'active'
-  ✓ activate 后 snapshot.active 增加
-  ✓ activate 后 agents.history 含 module:activated 消息
-  ✓ activate 不存在的 name 抛出
-
-deactivate（2）
-  ✓ active → suspending
-  ✓ deactivate 不存在的 name 抛出
-
-terminate（3）
-  ✓ registered → terminated
-  ✓ terminate 后 snapshot.terminated 增加
-  ✓ terminate 后 agents.history 含 module:terminated 消息
-
-查询（3）
-  ✓ listByLifecycle 按状态过滤
-  ✓ getModule 不存在返回 undefined
-  ✓ listModules 返回所有模块
-
-resolve（2）
-  ✓ resolve 未激活的模块抛出"模块未激活"
-  ✓ resolve 未注册的模块抛出"模块未注册"
-
-snapshot（3）
-  ✓ byLifecycle 正确统计各状态数量
-  ✓ total = 已注册模块总数
-  ✓ active / registered / terminated 字段正确
-
-E2E（2）
-  ✓ DaoUniverseModules 可从 @daomind/collective 导入
-  ✓ 完整 register → initialize → activate → deactivate → terminate 流程
-```
-
----
-
-## 文件变更清单
-
-| 操作 | 文件 |
-|------|------|
-| NEW | `packages/daoCollective/src/universe-times.ts` |
-| NEW | `packages/daoCollective/src/__tests__/universe-times.test.ts` |
-| NEW | `packages/daoCollective/src/universe-modules.ts` |
-| NEW | `packages/daoCollective/src/__tests__/universe-modules.test.ts` |
-| NEW | `retrospectives/2026-04-16-daomind-v2.19.0.md` |
-| NEW | `retrospectives/2026-04-16-daomind-v2.20.0.md` |
-| EDIT | `packages/daoCollective/src/index.ts` — 新增两个 bridge 导出 |
-| EDIT | `src/App.tsx` — v2.19.0→v2.20.0 (756→~786)，v2.20.0→v2.21.0 (~786→~814) |
-
----
-
-## 架构层次（v2.21.0 后完整）
-
+新增位置：
 ```
 DaoUniverse
-  ├── DaoUniverseMonitor (v2.8.0)
-  │       ├── DaoUniverseAgents (v2.18.0)
-  │       │       └── DaoUniverseApps (v2.19.0)
-  │       │               ├── DaoUniverseTimes   (v2.20.0) ← timer + scheduler × apps
-  │       │               └── DaoUniverseModules (v2.21.0) ← IoC 容器 × apps
-  │       ├── DaoUniverseClock (v2.9.0)
-  │       │       ├── DaoUniverseFeedback (v2.10.0)
-  │       │       └── DaoUniverseScheduler (v2.12.0)
-  │       │               ├── DaoUniverseSkills (v2.13.0)
-  │       │               └── DaoUniversePages  (v2.17.0)
-  │       └── DaoUniverseNexus (v2.14.0)
-  │               └── DaoUniverseSpaces (v2.16.0)
-  └── DaoUniverseAudit (v2.11.0)
-          └── DaoUniverseDocs (v2.15.0)
+  └── DaoUniverseMonitor (v2.8.0)
+          └── DaoUniverseNexus (v2.14.0)
+                  ├── DaoUniverseSpaces (v2.16.0)
+                  └── DaoUniverseQi (v2.22.0)  ← 新建
 ```
 
 ---
 
-## 验证步骤
+## 执行步骤（严格顺序）
 
-1. `pnpm -r run build` — 全部 Done，无 error TS
-2. `npx jest packages/daoCollective/src/__tests__/universe-times.test.ts` — ~30 pass
-3. `npx jest packages/daoCollective/src/__tests__/universe-modules.test.ts` — ~28 pass
-4. `npx jest --no-coverage` — 全部通过（目标 ~814 tests）
-5. `git log --oneline -3` — v2.20.0 + v2.21.0 各为独立 commit + tag
-6. `git push origin main --tags && git push github main --tags` — 双远端推送
+### Step 0：复盘 v2.21.0
+创建 `retrospectives/2026-04-16-daomind-v2.21.0.md`，覆盖：
+- 目标：DaoUniverseModules IoC 容器 × Agent 广播
+- 核心设计：独立 DaoAnythingContainer / activate 广播 / terminate 广播
+- 关键发现：resolve() 的文件系统平台依赖 → 仅测错误路径
+- 已知限制：动态 import 在非 Node.js 平台的行为差异
+- 测试覆盖：29 个测试（构建/register/initialize/activate/deactivate/terminate/查询/resolve/snapshot/E2E）
+
+---
+
+### Step 1：实现 universe-qi.ts
+
+**文件**：`packages/daoCollective/src/universe-qi.ts`
+
+**依赖**：
+```typescript
+import {
+  HunyuanBus,
+  TianQiChannel, DiQiChannel, RenQiChannel,
+  ChongQiRegulator, daoCreateChongQiRegulator,
+  DaoSerializer, DaoRouter, DaoSigner, DaoBackpressure,
+} from '@modulux/qi';
+import type { DaoMessage, QiChannelType } from '@modulux/qi';
+import type { DaoUniverseNexus } from './universe-nexus';
+```
+
+**快照类型**：
+```typescript
+export interface QiSnapshot {
+  readonly timestamp:       number;
+  readonly totalEmitted:    number;
+  readonly totalDropped:    number;
+  readonly channelsStats:   Record<string, number>;
+  readonly registeredNodes: number;
+}
+```
+
+**内部状态**：
+```typescript
+private readonly _bus:    HunyuanBus;   // HunyuanBus(serializer, router, signer, backpressure, 'dao-universe-secret')
+private readonly _tian:   TianQiChannel;
+private readonly _di:     DiQiChannel;
+private readonly _ren:    RenQiChannel;
+private readonly _chong:  ChongQiRegulator;
+private readonly _router: DaoRouter;    // 独立保存（DaoRouter 实例）
+private readonly _nodes:  Set<string>;  // 追踪已注册节点 id，用于 registeredNodes 快照
+```
+
+**公开 API**：
+```typescript
+constructor(nexus: DaoUniverseNexus)
+addNode(nodeId: string, target?: string): void
+  // _router.addRoute(target ?? nodeId, nodeId) + _nodes.add(nodeId)
+removeNode(nodeId: string, target?: string): void
+  // _router.removeRoute(target ?? nodeId, nodeId) + _nodes.delete(nodeId)
+broadcast(messageType: string, body: Record<string, unknown>): Promise<void>
+  // 委托 _tian.broadcast(messageType, body)
+report(sourceId: string, messageType: string, metrics: Record<string, number>): Promise<void>
+  // 委托 _di.report(sourceId, messageType, metrics)
+subscribe(channelType: QiChannelType, handler: (msg: DaoMessage) => void): () => void
+  // 委托 _bus.subscribe(channelType, handler)
+probe(target: string): Promise<number>
+  // 委托 _bus.probe(target)
+snapshot(): QiSnapshot
+  // { timestamp: Date.now(), ...bus.getStats(), registeredNodes: _nodes.size }
+get nexus(): DaoUniverseNexus
+get bus(): HunyuanBus
+get tian(): TianQiChannel
+get di(): DiQiChannel
+get ren(): RenQiChannel
+get chong(): ChongQiRegulator
+```
+
+**帛书依据**（顶部注释）：
+- "万物负阴而抱阳，冲气以为和"（德经·四十二章）
+- "为学日益，为道日损"（德经·四十八章）
+
+---
+
+### Step 2：测试 universe-qi.test.ts
+
+**文件**：`packages/daoCollective/src/__tests__/universe-qi.test.ts`
+
+**makeStack helper**：
+```typescript
+function makeStack(intervalMs = 100) {
+  const universe = new DaoUniverse();
+  const monitor  = new DaoUniverseMonitor(universe);
+  const clock    = new DaoUniverseClock(monitor, intervalMs);
+  const nexus    = new DaoUniverseNexus(monitor, clock);
+  const qi       = new DaoUniverseQi(nexus);
+  return { universe, monitor, clock, nexus, qi };
+}
+```
+
+**30 个测试分组**：
+
+| 分组 | 数量 | 测试点 |
+|------|------|--------|
+| 构建 | 5 | 可构建 / nexus getter / bus/tian/di/ren/chong getter 均已初始化 / snapshot 初始值（0 emitted/dropped/nodes）|
+| addNode / removeNode | 4 | addNode 后 _nodes.size=1 / removeNode 后 size=0 / 重复 addNode 幂等（Set 去重）/ 不存在的 remove 不抛出 |
+| broadcast | 5 | 无节点 → totalDropped+1 / addNode 后 → totalEmitted+1 / broadcast 返回 Promise<void> / 正确传入 messageType / getStats 增长 |
+| report | 3 | 调用 di.report 不抛出 / report 后 totalDropped 不增长（backpressure 未触发）/ 返回 Promise<void> |
+| subscribe | 4 | 返回 unsubscribe 函数 / unsubscribe 后不再接收 / 订阅后 bus 有 listener / channelType 参数传递 |
+| probe | 2 | 返回 number / 返回非负值 |
+| snapshot | 4 | 初始 totalEmitted=0 / broadcast(有节点)后 totalEmitted>0 / dropped 计数反映无路由消息 / registeredNodes 随 addNode 增长 |
+| E2E | 3 | 完整栈构建并取 snapshot / addNode→broadcast→getStats 验证消息流 / removeNode 后 registeredNodes=0 |
+
+总计 = **30 个测试** → 测试总数：817 + 30 = **847**
+
+**关键 mock 策略**：
+- 在需要路由 `broadcast` 的测试中，先 `addNode` 注册节点，确保 `DaoRouter.route()` 返回非空数组
+- `DaoBackpressure` 默认 `allow()` 返回 true（maxRatePerNode=100，不超出）
+- 不用 jest.spyOn，依赖真实实现以验证集成正确性（与 DaoUniverseModules 策略一致）
+
+---
+
+### Step 3：注册到 index.ts
+
+在 `packages/daoCollective/src/index.ts` 末尾追加：
+```typescript
+// DaoUniverseQi — 混元气总线 × 宇宙服务网格（@modulux/qi × DaoUniverseNexus）
+export type { QiSnapshot } from './universe-qi';
+export { DaoUniverseQi } from './universe-qi';
+```
+
+---
+
+### Step 4：更新 App.tsx
+
+- 版本：`v2.21.0` → `v2.22.0`
+- 测试数：`817` → `847`
+
+---
+
+### Step 5：验证 + commit + push
+
+```bash
+# 全量测试（预期：847 tests passed, 47 suites）
+npx jest --no-coverage 2>&1 | tail -5
+
+# 全量构建
+pnpm -r run build 2>&1 | grep -E "Done|error"
+
+# 单步 commit（v2.22.0）
+git add -A && git commit -m "feat(qi): v2.22.0 — ..."
+git tag v2.22.0
+git push origin main --tags
+git push github main --tags
+```
+
+---
+
+## 关键文件
+
+| 文件 | 操作 |
+|------|------|
+| `packages/daoCollective/src/universe-qi.ts` | 新建 |
+| `packages/daoCollective/src/__tests__/universe-qi.test.ts` | 新建 |
+| `packages/daoCollective/src/index.ts` | 追加 2 行导出 |
+| `retrospectives/2026-04-16-daomind-v2.21.0.md` | 新建 |
+| `src/App.tsx` | 817→847, v2.21.0→v2.22.0 |
+
+---
+
+## 验证
+
+- `pnpm test` 全部通过，预期 **847 个测试，47 个套件**
+- `pnpm -r run build` 所有包输出 Done，无 error
+- `packages/daoCollective` 构建无 TypeScript 报错（@modulux/qi 类型已在 daoCollective 的 peerDeps 中）
+- `git log --oneline -1` 显示 v2.22.0 commit
+- `git tag | grep v2.22.0` 确认 tag 存在
