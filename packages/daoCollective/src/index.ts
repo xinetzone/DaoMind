@@ -185,3 +185,9 @@ export { daoComponentTree, DaoComponentTree, daoStateBinding, DaoStateBinding } 
 // DaoUniversePages — 组件树 × 状态绑定 × 时序驱动刷新（daoPages × DaoUniverseScheduler）
 export type { PagesSnapshot } from './universe-pages';
 export { DaoUniversePages } from './universe-pages';
+
+// ============================================================
+// DaoUniverseAgents — Agent 生命周期 × 监控健康反馈（@daomind/agents × DaoUniverseMonitor）
+// ============================================================
+export type { AgentsSnapshot } from './universe-agents';
+export { DaoUniverseAgents } from './universe-agents';
