@@ -26,7 +26,8 @@
     "@daomind/feedback": "workspace:^",
     "@daomind/verify":   "workspace:^",
     "@daomind/times":    "workspace:^",
-    "@daomind/skills":   "workspace:^"
+    "@daomind/skills":   "workspace:^",
+    "@daomind/nexus":    "workspace:^"
   },
   "publishConfig": {
     "access": "public"

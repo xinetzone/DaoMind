@@ -144,6 +144,9 @@ importers:
       '@daomind/monitor':
         specifier: workspace:^
         version: link:../daoMonitor
+      '@daomind/nexus':
+        specifier: workspace:^
+        version: link:../daoNexus
       '@daomind/nothing':
         specifier: workspace:^
         version: link:../daoNothing

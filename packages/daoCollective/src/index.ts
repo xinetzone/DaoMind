@@ -145,3 +145,13 @@ export { DaoSkillRegistry, daoSkillRegistry, DaoSkillActivator, daoSkillActivato
 // DaoUniverseSkills — 时序驱动技能生命周期（daoSkilLs × DaoUniverseScheduler）
 export type { SkillEventRecord } from './universe-skills';
 export { DaoUniverseSkills } from './universe-skills';
+
+// ============================================================
+// @daomind/nexus — 枢纽层（服务网格 + 路由 + 负载均衡）
+// ============================================================
+export type { ConnectionType, ConnectionState, ConnectionHandle, DaoConnection, DaoRouteRule, LoadBalanceStrategy, DaoServiceInstance, DaoNexusRequest, DaoNexusMetrics } from '@daomind/nexus';
+export { DaoServiceDiscovery, daoServiceDiscovery, DaoNexusRouter, daoNexusRouter, DaoLoadBalancer, daoLoadBalancer } from '@daomind/nexus';
+
+// DaoUniverseNexus — 服务网格 × 宇宙健康（daoNexus × DaoUniverseMonitor）
+export type { NexusHealthRecord, NexusDispatchResult, NexusMetrics } from './universe-nexus';
+export { DaoUniverseNexus } from './universe-nexus';
