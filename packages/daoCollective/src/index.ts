@@ -239,3 +239,9 @@ export { DaoUniverseFacade } from './universe-facade';
 // ============================================================
 export type { HealthEntry, HealthTrend, HealthBoardSnapshot } from './universe-health-board';
 export { DaoUniverseHealthBoard } from './universe-health-board';
+
+// ============================================================
+// DaoUniverseOptimizer — 宇宙优化建议引擎（DaoUniverseHealthBoard 二级消费者）
+// ============================================================
+export type { Recommendation, RecommendationLevel, RecommendationArea, OptimizationReport, OptimizerSnapshot } from './universe-optimizer';
+export { DaoUniverseOptimizer } from './universe-optimizer';
