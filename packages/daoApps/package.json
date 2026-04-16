@@ -21,5 +21,8 @@
   "files": [
     "dist",
     "README.md"
-  ]
+  ],
+  "dependencies": {
+    "@daomind/nothing": "workspace:^"
+  }
 }

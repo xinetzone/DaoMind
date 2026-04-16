@@ -28,10 +28,13 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
-      - name: Build all packages
-        run: pnpm -r run build
+      - name: Build @daomind/nothing first (all others depend on it)
+        run: pnpm --filter @daomind/nothing run build
+
+      - name: Build remaining packages
+        run: pnpm -r --filter '!@daomind/nothing' run build
 
       - name: Publish @daomind/nothing (core, no deps)
         run: cd packages/daoNothing && npm publish --access public

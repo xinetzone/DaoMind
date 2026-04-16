@@ -86,11 +86,23 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  packages/daoAgents: {}
+  packages/daoAgents:
+    dependencies:
+      '@daomind/nothing':
+        specifier: workspace:^
+        version: link:../daoNothing
 
-  packages/daoAnything: {}
+  packages/daoAnything:
+    dependencies:
+      '@daomind/nothing':
+        specifier: workspace:^
+        version: link:../daoNothing
 
-  packages/daoApps: {}
+  packages/daoApps:
+    dependencies:
+      '@daomind/nothing':
+        specifier: workspace:^
+        version: link:../daoNothing
 
   packages/daoBenchmark:
     dependencies:
