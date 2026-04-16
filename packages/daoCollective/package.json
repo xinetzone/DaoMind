@@ -1,6 +1,6 @@
 {
   "name": "@daomind/collective",
-  "version": "2.0.0",
+  "version": "2.6.0",
   "type": "module",
   "description": "DaoMind Collective — 道宇宙 — 根节点，整体架构入口",
   "main": "./dist/index.js",
@@ -12,8 +12,14 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build",
     "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "@daomind/nothing":  "workspace:^",
+    "@daomind/anything": "workspace:^",
+    "@daomind/agents":   "workspace:^",
+    "@daomind/apps":     "workspace:^"
   },
   "publishConfig": {
     "access": "public"
