@@ -138,6 +138,9 @@ importers:
       '@daomind/nothing':
         specifier: workspace:^
         version: link:../daoNothing
+      '@modulux/qi':
+        specifier: workspace:^
+        version: link:../daoQi
 
   packages/daoDocs: {}
 

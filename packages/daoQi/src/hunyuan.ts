@@ -50,9 +50,7 @@ export class HunyuanBus extends EventEmitter {
     if (!message.header.source) {
       throw new Error('[HunyuanBus] Invalid message: missing source in header');
     }
-    if (!message.header.target) {
-      throw new Error('[HunyuanBus] Invalid message: missing target in header');
-    }
+    // target 可为空（广播语义），router.route() 会将消息发至所有注册节点
     if (!message.header.timestamp) {
       throw new Error('[HunyuanBus] Invalid message: missing timestamp in header');
     }

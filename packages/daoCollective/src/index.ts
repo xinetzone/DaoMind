@@ -64,3 +64,15 @@ export { DaoAppContainer, daoAppContainer, DaoLifecycleManager, daoLifecycleMana
 // ============================================================
 export type { DaoSystemSnapshot } from './universe';
 export { DaoUniverse, daoUniverse } from './universe';
+
+// ============================================================
+// @modulux/qi — 气通道层（四气传输基础设施）
+// ============================================================
+export type { DaoMessage, QiChannelType, DaoMessagePriority } from '@modulux/qi';
+export {
+  HunyuanBus, DaoRouter, DaoSerializer, DaoSigner, DaoBackpressure,
+  TianQiChannel, DiQiChannel, RenQiChannel, ChongQiRegulator,
+} from '@modulux/qi';
+
+// DaoQiAgentBridge — 气 × Agent 桥接器
+export { DaoQiAgentBridge } from './qi-bridge';

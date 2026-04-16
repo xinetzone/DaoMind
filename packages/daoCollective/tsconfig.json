@@ -10,7 +10,8 @@
     { "path": "../daoNothing" },
     { "path": "../daoAnything" },
     { "path": "../daoAgents" },
-    { "path": "../daoApps" }
+    { "path": "../daoApps" },
+    { "path": "../daoQi" }
   ],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "src/__tests__/**"]
