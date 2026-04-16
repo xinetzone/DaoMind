@@ -1,183 +1,211 @@
-# daoCollective 根节点实现计划
+# v2.7.0 — daoQi × daoAgents 集成：DaoQiAgentBridge
 
 ## Context
 
-`@daomind/collective` 当前仅有 4 行存根代码。它应作为整个 DaoMind 系统的门面入口（Facade）：
-- 统一再导出所有核心包（nothing / anything / agents / apps）
-- 提供 `DaoUniverse` 类：一站式初始化、工厂方法、系统快照
-- 提供全局单例 `daoUniverse`，让用户只需一个包即可使用全系统
+目标：将 `@modulux/qi`（HunyuanBus 四气通道传输层）与 `@daomind/agents`（内部 daoNothingVoid 消息系统）桥接，让 Agent 可通过 QiChannel 收发消息。
 
-## 架构设计
+**当前架构**：
+- Agent 消息通过 `DaoAgentMessenger` → `daoNothingVoid`（EventEmitter，进程内，轻量）
+- `HunyuanBus` 有完整传输基础设施（签名/背压/路由/序列化/四通道），但与 Agent 层无连接
 
-```
-@daomind/collective
-    ├── DaoUniverse (universe.ts)         ← 核心门面类
-    │   ├── .container: DaoAnythingContainer
-    │   ├── .agentRegistry: DaoAgentRegistry
-    │   ├── .appContainer: DaoAppContainer
-    │   ├── .bridge: DaoAgentContainerBridge
-    │   ├── .void: daoNothingVoid (只读引用)
-    │   ├── createAgent<T>(Class, id) → T    工厂：创建+注册+可选mount
-    │   ├── createApp(def) → DaoAppInstance  工厂：注册应用
-    │   ├── snapshot() → DaoSystemSnapshot   系统全局快照
-    │   └── reset()                          测试用：重置全部状态
-    └── index.ts                            ← 再导出所有核心包 + DaoUniverse
+**集成原则**：
+- `@daomind/agents` 不引入 `@modulux/qi` 依赖（保持 agents 包独立）
+- 桥接代码放入 `@daomind/collective`（本就是整合门面）
+- Agent 侧 API 不变：依然通过 `onMessage(handler)` 接收，通过 `send()` 发送
+- 双向桥接：HunyuanBus → AgentMessenger（入站），AgentMessenger 方法 → HunyuanBus（出站）
 
-export const daoUniverse = new DaoUniverse();
-```
-
-## 文件变更清单
-
-### 新增文件
-
-| 文件 | 说明 |
-|------|------|
-| `packages/daoCollective/src/universe.ts` | DaoUniverse 类 + daoUniverse 单例 |
-| `packages/daoCollective/src/__tests__/universe.test.ts` | 20+ 测试 |
-
-### 修改文件
-
-| 文件 | 变更 |
-|------|------|
-| `packages/daoCollective/src/index.ts` | 再导出所有核心包 + DaoUniverse |
-| `packages/daoCollective/package.json` | 添加 workspace deps + 改 tsc→tsc --build |
-| `packages/daoCollective/tsconfig.json` | 添加 references |
+**已发现 Bug**（需同步修复）：
+- `HunyuanBus.send()` 在 `message.header.target` 为 undefined 时抛出错误，但 `TianQiChannel.broadcast()` 故意省略 target（广播语义），`DaoRouter.route()` 也已正确处理无 target 的情况 → 删除该 throw
 
 ---
 
-## universe.ts 实现细节
+## 涉及文件
+
+| 操作 | 文件 |
+|------|------|
+| fix | `packages/daoQi/src/hunyuan.ts` |
+| new | `packages/daoCollective/src/qi-bridge.ts` |
+| edit | `packages/daoCollective/src/index.ts` |
+| edit | `packages/daoCollective/package.json` |
+| edit | `packages/daoCollective/tsconfig.json` |
+| new | `packages/daoCollective/src/__tests__/qi-bridge.test.ts` |
+
+---
+
+## M1 — 修复 HunyuanBus 广播 Bug
+
+**文件**：`packages/daoQi/src/hunyuan.ts`
+
+删除第 53-56 行的抛出逻辑，将其改为广播（不 throw，继续走 router.route()）：
 
 ```typescript
-interface DaoSystemSnapshot {
-  timestamp: number;
-  modules: { total: number; byLifecycle: Record<string, number> };
-  agents:  { total: number; byState: Record<string, number>; byType: Record<string, number> };
-  apps:    { total: number; byState: Record<string, number> };
-  events:  { total: number; byType: Record<string, number> };
+// 删除：
+if (!message.header.target) {
+  throw new Error('[HunyuanBus] Invalid message: missing target in header');
 }
+// 替换为：（让 router.route() 处理广播，无 target 时返回所有注册节点）
+```
 
-class DaoUniverse {
-  readonly container   = new DaoAnythingContainer();
-  readonly agentRegistry = new DaoAgentRegistry();
-  readonly appContainer  = new DaoAppContainer();
-  readonly bridge        = new DaoAgentContainerBridge();
-  get void() { return daoNothingVoid; }
+---
 
-  // 创建 Agent + 自动注册到 registry
-  createAgent<T extends DaoBaseAgent>(
-    AgentClass: new (id: string) => T,
-    id: string,
-  ): T {
-    const agent = new AgentClass(id);
-    this.agentRegistry.register(agent);
-    return agent;
+## M2 — DaoQiAgentBridge 类
+
+**文件**：`packages/daoCollective/src/qi-bridge.ts`
+
+```typescript
+import { daoAgentMessenger } from '@daomind/agents';
+import {
+  HunyuanBus, DaoRouter, DaoSerializer, DaoSigner, DaoBackpressure,
+  TianQiChannel, DiQiChannel, RenQiChannel,
+} from '@modulux/qi';
+import type { DaoMessage } from '@modulux/qi';
+
+export class DaoQiAgentBridge {
+  private readonly _bus: HunyuanBus;
+  private readonly _tian: TianQiChannel;  // 天气：下行广播
+  private readonly _di: DiQiChannel;      // 地气：上行指标
+  private readonly _ren: RenQiChannel;    // 人气：横向点对点
+
+  private _busHandler?: (msg: DaoMessage) => void;
+  private _isMounted = false;
+
+  constructor(secretKey = 'dao-bridge-secret') {
+    const router = new DaoRouter();
+    router.addRoute('daoAgents', 'daoAgents');
+    router.addRoute('daoCollective', 'daoCollective');
+    this._bus = new HunyuanBus(new DaoSerializer(), router, new DaoSigner(), new DaoBackpressure({}), secretKey);
+    this._tian = new TianQiChannel(this._bus);
+    this._di = new DiQiChannel(this._bus);
+    this._ren = new RenQiChannel(this._bus);
   }
 
-  // 注册应用（不自动 start）
-  createApp(definition: DaoAppDefinition): DaoAppInstance {
-    this.appContainer.register(definition);
-    return this.appContainer.getInstance(definition.id)!;
+  /** 挂载：HunyuanBus 'message' → daoAgentMessenger */
+  mount(): void {
+    if (this._isMounted) return;
+    this._busHandler = (msg: DaoMessage) => {
+      const body = msg.body as Record<string, unknown>;
+      const from = String(body.from ?? msg.header.source);
+      const to   = String(body.to   ?? msg.header.target ?? '*');
+      const action = String(body.action ?? msg.header.type);
+      daoAgentMessenger.send(from, to, action, body.payload);
+    };
+    this._bus.on('message', this._busHandler);
+    this._isMounted = true;
   }
 
-  // 系统全局快照
-  snapshot(): DaoSystemSnapshot {
-    const modules  = this.container.listModules();
-    const agents   = this.agentRegistry.listAll();
-    const apps     = this.appContainer.listAll();
-    const events   = this.void.reflect();
-
-    // 计算各维度分布
-    ...
-    return { timestamp: Date.now(), modules: {...}, agents: {...}, apps: {...}, events: {...} };
+  /** 卸载：停止转发 */
+  unmount(): void {
+    if (!this._isMounted || !this._busHandler) return;
+    this._bus.removeListener('message', this._busHandler);
+    this._busHandler = undefined;
+    this._isMounted = false;
   }
 
-  // 仅测试用：重置全部状态（调用 daoNothingVoid.void()）
-  reset(): void {
-    this.bridge.dispose();
-    daoNothingVoid.void();
+  /** 天气下行：根节点广播指令给所有 Agent */
+  async sendDown(messageType: string, action: string, payload?: unknown): Promise<void> {
+    await this._tian.broadcast(messageType, {
+      type: messageType, from: 'daoCollective', to: '*', action, payload: payload ?? null,
+    });
   }
+
+  /** 地气上行：Agent 向根节点上报指标 */
+  async reportUp(agentId: string, messageType: string, metrics: Record<string, number>): Promise<void> {
+    await this._di.report(agentId, messageType, metrics);
+  }
+
+  /** 直接点对点：不经 RenQi 端口限制，直接通过 HunyuanBus 发送 */
+  async sendDirect(from: string, to: string, action: string, payload?: unknown): Promise<void> {
+    const { randomUUID } = await import('node:crypto');
+    const message: DaoMessage = {
+      header: {
+        id: randomUUID(), type: action, source: from, target: to,
+        priority: 1, ttl: 3, timestamp: Date.now(), encoding: 'json',
+      },
+      body: { type: action, from, to, action, payload: payload ?? null },
+    };
+    await this._bus.send(message);
+  }
+
+  /** 人气横向：通过 RenQiChannel 点对点（需先 openPort） */
+  openPort(nodeA: string, nodeB: string): boolean { return this._ren.open(nodeA, nodeB); }
+
+  stats() { return this._bus.getStats(); }
+  get isMounted(): boolean { return this._isMounted; }
+  get bus(): HunyuanBus { return this._bus; }
+  get tian(): TianQiChannel { return this._tian; }
+  get di(): DiQiChannel { return this._di; }
+  get ren(): RenQiChannel { return this._ren; }
 }
 ```
 
-## index.ts 再导出清单
+---
 
-```typescript
-// 从 daoNothing 再导出
-export type { ExistenceContract, ... } from '@daomind/nothing';
-export { daoNothingVoid, daoSome, daoNone, daoOk, daoErr, ... } from '@daomind/nothing';
+## M3 — package.json + tsconfig.json
 
-// 从 daoAnything 再导出
-export type { DaoModuleMeta, ... } from '@daomind/anything';
-export { DaoAnythingContainer, daoContainer } from '@daomind/anything';
-
-// 从 daoAgents 再导出
-export type { DaoAgent, ... } from '@daomind/agents';
-export { DaoBaseAgent, TaskAgent, ObserverAgent, CoordinatorAgent, ... } from '@daomind/agents';
-
-// 从 daoApps 再导出
-export type { DaoAppDefinition, ... } from '@daomind/apps';
-export { daoAppContainer, DaoAppContainer } from '@daomind/apps';
-
-// daoCollective 自身
-export type { DaoSystemSnapshot } from './universe';
-export { DaoUniverse, daoUniverse } from './universe';
-```
-
-## package.json 变更
-
+**`packages/daoCollective/package.json`** — 新增依赖：
 ```json
-{
-  "scripts": { "build": "tsc --build" },
-  "dependencies": {
-    "@daomind/nothing":  "workspace:^",
-    "@daomind/anything": "workspace:^",
-    "@daomind/agents":   "workspace:^",
-    "@daomind/apps":     "workspace:^"
-  }
-}
+"@modulux/qi": "workspace:^"
 ```
 
-## tsconfig.json 变更
+**`packages/daoCollective/tsconfig.json`** — 新增引用：
+```json
+{ "path": "../daoQi" }
+```
 
-添加四个 references：daoNothing / daoAnything / daoAgents / daoApps
+---
 
-## 测试覆盖（universe.test.ts，目标 20+ 测试）
+## M4 — 更新 index.ts
 
-1. `DaoUniverse` 实例创建
-2. `createAgent` → 返回正确类型、自动注册到 agentRegistry
-3. `createAgent` → 重复 id 抛出错误（来自 registry）
-4. `createApp` → 注册应用，state 为 registered
-5. `createApp` → 重复 id 抛出错误
-6. `appContainer.start()` → state 变为 running
-7. `snapshot()` → agents/modules/apps 数量正确
-8. `snapshot()` → byState 分类正确
-9. `snapshot()` → events.total 反映 daoNothingVoid 事件数
-10. Agent lifecycle → daoNothingVoid 接收 agent:lifecycle 事件
-11. createAgent + initialize + activate → snapshot 中 active 数 +1
-12. `reset()` → agentRegistry.listAll() 不保证清空（registry 独立），但 daoNothingVoid 清空
-13. TaskAgent 通过 createAgent 创建后可正常 execute
-14. ObserverAgent 通过 createAgent 创建后 initialize 正常订阅事件
-15. CoordinatorAgent 通过 createAgent 创建后 add-agent/broadcast 正常
-16. 多个 Agent 协同：snapshot 事件计数反映消息传递
-17. 再导出验证：从 @daomind/collective 导入的 daoNothingVoid 是同一个单例
-18. 再导出验证：从 @daomind/collective 导入的 DaoBaseAgent 是同一个类
-19. 系统快照 byType 事件分类（agent:lifecycle vs agent:message）
-20. createApp + start + stop 全流程
+`packages/daoCollective/src/index.ts` 新增：
+```typescript
+export { DaoQiAgentBridge } from './qi-bridge.js';
+// 同时从 @modulux/qi 再导出关键类型
+export type { DaoMessage, QiChannelType } from '@modulux/qi';
+export { HunyuanBus, TianQiChannel, DiQiChannel, RenQiChannel } from '@modulux/qi';
+```
+
+---
+
+## M5 — 测试（~27 个）
+
+**文件**：`packages/daoCollective/src/__tests__/qi-bridge.test.ts`
+
+测试分组：
+
+| 分组 | 测试 |
+|------|------|
+| 构建 | 无参数构建 / 自定义 secretKey |
+| mount/unmount | 初始未挂载 / mount → isMounted=true / unmount → isMounted=false / 重复 mount 幂等 |
+| sendDown | 发送后 bus.stats.totalEmitted += 1 / 未挂载时不触发 agent |
+| sendDown + mount | 挂载后广播被 daoAgentMessenger 转发 / Agent 通过 onMessage 收到 |
+| sendDirect | 发送到指定 target / 收到正确 action + payload |
+| sendDirect + mount | Agent 通过 onMessage 收到点对点消息 |
+| reportUp | 不抛错 / stats.totalEmitted 正确 |
+| openPort | 有效 pair 返回 true / 无效 pair 返回 false |
+| stats | 空时返回 0 / 多次发送后统计正确 |
+| HunyuanBus fix | broadcast（无 target）不再抛错 |
+| 集成 | TaskAgent 通过 QiBridge 接收 sendDown 命令后执行任务 |
+| 导出 | DaoQiAgentBridge 可从 @daomind/collective 导入 |
+
+---
 
 ## 验证步骤
 
 ```bash
-# 1. 安装新 workspace deps
+# 1. 安装新依赖
 pnpm install
 
-# 2. 全量构建（包含 daoCollective）
+# 2. 全量构建
 pnpm -r run build
 
-# 3. 全量测试
+# 3. 专项测试
+npx jest packages/daoCollective packages/daoQi --no-coverage
+
+# 4. 全量测试
 npx jest --no-coverage
+# 期望：>= 370 tests（+27 新增）
 
-# 4. daoCollective 专项
-npx jest packages/daoCollective --no-coverage
-
-# 5. 通过后：git commit + tag v2.6.0 + push
+# 5. commit + tag v2.7.0 + push
+git commit -m "feat(qi-bridge): v2.7.0 — DaoQiAgentBridge + HunyuanBus 广播修复"
+git tag -a v2.7.0 ...
 ```
