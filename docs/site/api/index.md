@@ -2,8 +2,8 @@
 
 完整的 API 参考文档，涵盖所有核心包和接口。
 
-> 📘 **版本**: 2.0.0  
-> 📅 **更新日期**: 2026-04-15
+> 📘 **版本**: 2.5.0  
+> 📅 **更新日期**: 2026-04-16
 
 ---
 
@@ -29,9 +29,9 @@
 
 ### @daomind/nothing
 
-**零运行时类型定义包**，实现"无名"（Nameless）哲学层。
+**零运行时类型定义包**，实现"无名"（Nameless）哲学层。v2.5.0 起新增 `DaoOption<T>` 和 `DaoResult<T,E>` 函数式类型工具。
 
-> 🎯 **设计理念**: 纯类型定义，编译后完全消失，零运行时开销。
+> 🎯 **设计理念**: 纯类型定义 + 虚空事件总线 + 函数式错误处理，零魔法、显式优先。
 
 #### 安装
 
@@ -188,7 +188,7 @@ import type {
   DaoModuleRegistration,
 } from '@daomind/anything';
 
-import { DaoContainer } from '@daomind/anything';
+import { DaoAnythingContainer } from '@daomind/anything';
 ```
 
 ---
@@ -278,12 +278,12 @@ registered → initialized → active → suspending → terminated
 
 ---
 
-#### `DaoContainer`
+#### `DaoAnythingContainer`
 
 **模块容器类** - 管理模块的注册、查找和生命周期。
 
 ```typescript
-class DaoContainer {
+class DaoAnythingContainer {
   constructor();
   
   register<T extends DaoModuleMeta>(module: T): void;
@@ -303,7 +303,7 @@ class DaoContainer {
 注册一个模块到容器。
 
 ```typescript
-const container = new DaoContainer();
+const container = new DaoAnythingContainer();
 const todo = createTodo('学习 DaoMind');
 
 container.register(todo);
@@ -398,7 +398,7 @@ modules.forEach(m => console.log(m.name));
 
 ### @daomind/agents
 
-**Agent 系统包** - 自主行动实体。
+**Agent 系统包** - 自主行动实体。v2.4.0 起提供 `TaskAgent` / `ObserverAgent` / `CoordinatorAgent` 三种内置实现。
 
 #### 安装
 
@@ -409,18 +409,16 @@ npm install @daomind/agents
 #### 导入
 
 ```typescript
-import type {
-  DaoAgent,
-  DaoAgentCapability,
-  AgentState,
-} from '@daomind/agents';
+import type { DaoAgent, DaoAgentCapability, AgentState } from '@daomind/agents';
+import { DaoBaseAgent, daoAgentMessenger, daoAgentRegistry } from '@daomind/agents';
+import { TaskAgent, ObserverAgent, CoordinatorAgent } from '@daomind/agents';
 ```
 
 ---
 
 #### `DaoAgent`
 
-**Agent 接口** - 具有自主行动能力的实体。
+**Agent 接口** - 具有自主行动能力的实体。v2.5.0 起新增 `send()` / `onMessage()` 声明。
 
 ```typescript
 interface DaoAgent extends ExistenceContract {
@@ -435,6 +433,8 @@ interface DaoAgent extends ExistenceContract {
   rest(): Promise<void>;
   terminate(): Promise<void>;
   execute<T>(action: string, payload?: unknown): Promise<T>;
+  send(to: string | '*', action: string, payload?: unknown): void;
+  onMessage(handler: MessageHandler): void;
 }
 ```
 
@@ -784,6 +784,6 @@ class EventDrivenSystem {
 
 ---
 
-**文档版本**: 2.0.0  
-**最后更新**: 2026-04-15  
+**文档版本**: 2.5.0  
+**最后更新**: 2026-04-16  
 **维护者**: DaoMind Team

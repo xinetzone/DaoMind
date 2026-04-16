@@ -1,134 +1,234 @@
 # @daomind/anything
 
-**有名** 核心包 — 提供运行时模块系统和依赖容器。
+**有名** 核心包 — 运行时模块容器，管理模块注册与生命周期。
+
+> "有名，万物之母也。"  
+> —— 马王堆汉墓帛书《老子》甲本
 
 ## 安装
 
 ```bash
-pnpm add @daomind/anything
+pnpm add @daomind/anything @daomind/nothing
 ```
 
-## 核心 API
+---
 
-### `defineModule(config)`
+## 核心概念
 
-定义一个模块：
+`DaoAnythingContainer` 是"有名"层的核心类，实现模块的注册、生命周期管理和实例解析。
+
+模块生命周期：
+
+```
+registered → initialized → active → suspending → terminated
+   注册         初始化       活跃      暂停中        终止
+                              ↑__________↓  (可来回)
+```
+
+---
+
+## DaoAnythingContainer
+
+### 创建容器
 
 ```typescript
-import { defineModule } from '@daomind/anything';
+import { DaoAnythingContainer } from '@daomind/anything';
 
-const greetModule = defineModule({
-  id: 'greet',
-  version: '1.0.0',
-  
-  setup() {
-    return {
-      greet: (name: string) => `你好，${name}！`
-    };
-  }
+const container = new DaoAnythingContainer();
+```
+
+或使用全局默认实例：
+
+```typescript
+import { daoContainer } from '@daomind/anything';
+```
+
+---
+
+### `register(module)`
+
+注册模块到容器（初始状态：`registered`）。
+
+```typescript
+container.register({
+  name: 'user-service',
+  path: './services/user',   // 动态 import 路径
 });
 ```
 
-**参数：**
+**参数**：`DaoModuleRegistration`
 
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `id` | `string` | ✅ | 模块唯一标识符 |
-| `version` | `string` | ❌ | 语义化版本号 |
-| `deps` | `Record<string, Module>` | ❌ | 模块依赖声明 |
-| `setup` | `(deps) => T \| Promise<T>` | ✅ | 模块工厂函数 |
-| `teardown` | `(instance) => void \| Promise<void>` | ❌ | 销毁钩子 |
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `name` | `string` | 模块唯一名称 |
+| `path` | `string` | 动态 import 路径 |
 
-### `createContainer()`
+**异常**：若模块名已存在则抛出错误。
 
-创建模块容器：
+---
+
+### 生命周期方法
+
+所有方法均为 `async`，接受模块名作为参数。
 
 ```typescript
-import { createContainer } from '@daomind/anything';
+// registered → initialized
+await container.initialize('user-service');
 
-const container = createContainer({
-  // 可选配置
-  strict: true,         // 严格模式：检测循环依赖
-  timeout: 5000,        // 初始化超时（ms）
-  logger: console,      // 日志记录器
-});
+// initialized → active
+await container.activate('user-service');
 
-// 注册模块
-container.register(greetModule);
-container.register(userModule);
+// active → suspending
+await container.deactivate('user-service');
 
-// 初始化（自动解析依赖顺序）
-await container.initialize();
+// suspending → active（恢复）
+await container.activate('user-service');
 
-// 获取模块
-const greeter = container.get('greet');
-greeter.greet('道友'); // 你好，道友！
-
-// 销毁
-await container.destroy();
+// 任意状态 → terminated
+await container.terminate('user-service');
 ```
 
-### `container.get<T>(id)`
-
-获取已初始化的模块实例：
+**完整流程示例**：
 
 ```typescript
-// 类型安全获取
-const user = container.get<UserService>('user');
+const container = new DaoAnythingContainer();
 
-// 检查模块是否存在
-if (container.has('optional-module')) {
-  const mod = container.get('optional-module');
+container.register({ name: 'auth', path: './auth' });
+container.register({ name: 'user', path: './user' });
+
+await container.initialize('auth');
+await container.activate('auth');
+
+await container.initialize('user');
+await container.activate('user');
+
+// 使用模块
+const authService = await container.resolve<AuthService>('auth');
+authService.login('alice', 'password');
+
+// 暂停
+await container.deactivate('user');
+
+// 终止
+await container.terminate('auth');
+await container.terminate('user');
+```
+
+---
+
+### `resolve<T>(name)`
+
+获取模块实例（模块必须处于 `active` 状态）。
+
+```typescript
+const service = await container.resolve<UserService>('user');
+```
+
+底层行为：首次调用时动态 `import(registration.path)` 并缓存实例；后续调用直接返回缓存。
+
+**异常**：
+- 模块未注册 → 抛出错误
+- 模块未激活 → 抛出错误（含当前状态）
+
+---
+
+### `getModule(name)`
+
+获取模块元数据，不返回实例。
+
+```typescript
+const meta = container.getModule('user-service');
+if (meta) {
+  console.log(meta.lifecycle);  // 'active'
+  console.log(meta.activatedAt); // number
 }
 ```
 
-### `container.register(module, options?)`
+**返回**：`DaoModuleMeta | undefined`
 
-注册模块：
+---
 
-```typescript
-container.register(myModule, {
-  // 覆盖默认实现（用于测试）
-  override: true,
-  
-  // 懒加载：首次 get 时才初始化
-  lazy: true,
-});
-```
+### `listModules()`
 
-## 高级用法
-
-### 作用域容器
+列出容器内所有模块元数据。
 
 ```typescript
-const appContainer = createContainer();
-appContainer.register(dbModule);
-appContainer.register(loggerModule);
-
-// 创建请求作用域容器
-const requestContainer = appContainer.createScope();
-requestContainer.register(requestContextModule);
-
-await requestContainer.initialize();
-// requestContainer 可访问 appContainer 中的所有模块
+const modules = container.listModules();
+modules.forEach(m => console.log(m.name, m.lifecycle));
 ```
 
-### 模块替换（测试用）
+**返回**：`ReadonlyArray<DaoModuleMeta>`
+
+---
+
+## 类型参考
+
+### `DaoModuleMeta`
+
+模块元数据，实现了 `ExistenceContract`。
 
 ```typescript
-// 生产
-container.register(emailModule);
-
-// 测试
-const testContainer = createContainer();
-testContainer.register(mockEmailModule, { override: true });
+interface DaoModuleMeta extends ExistenceContract {
+  readonly id: string;
+  readonly name: string;
+  readonly lifecycle: ModuleLifecycle;
+  readonly createdAt: number;
+  readonly registeredAt: number;
+  readonly activatedAt?: number;   // active 后才有值
+}
 ```
 
-## 错误类型
+### `ModuleLifecycle`
 
-| 错误 | 描述 |
-|------|------|
-| `ModuleNotFoundError` | 尝试获取未注册的模块 |
-| `CircularDependencyError` | 检测到循环依赖 |
-| `InitializationTimeoutError` | 模块初始化超时 |
-| `DuplicateModuleError` | 注册同名模块（非 override 模式） |
+```typescript
+type ModuleLifecycle =
+  | 'registered'   // 已注册，未初始化
+  | 'initialized'  // 已初始化，未激活
+  | 'active'       // 运行中
+  | 'suspending'   // 暂停中
+  | 'terminated';  // 已销毁（终态）
+```
+
+### `DaoModuleRegistration`
+
+注册时传入的配置：
+
+```typescript
+interface DaoModuleRegistration {
+  readonly name: string;
+  readonly path: string;
+}
+```
+
+---
+
+## 与 DaoAgentContainerBridge 集成
+
+`DaoAgentContainerBridge` 可将 Agent 的生命周期事件自动同步到容器模块状态：
+
+```typescript
+import { DaoAnythingContainer } from '@daomind/anything';
+import { daoAgentContainerBridge, TaskAgent } from '@daomind/agents';
+
+const container = new DaoAnythingContainer();
+const agent = new TaskAgent('worker-1');
+
+// 绑定：Agent 状态改变时，容器内对应模块自动跟进
+daoAgentContainerBridge.mount(agent, container);
+
+await agent.initialize(); // 容器内模块同步到 initialized
+await agent.activate();   // 容器内模块同步到 active
+await agent.terminate();  // 容器内模块同步到 terminated
+
+daoAgentContainerBridge.unmount('worker-1');
+```
+
+---
+
+## 完整导出列表
+
+```typescript
+import type { DaoModuleRegistration, ModuleLifecycle, DaoModuleMeta } from '@daomind/anything';
+
+import { DaoAnythingContainer, daoContainer } from '@daomind/anything';
+```

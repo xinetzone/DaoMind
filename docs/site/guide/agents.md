@@ -1,147 +1,270 @@
 # Agent 系统
 
-Agent 是 DaoMind 中具有自主行为和状态的智能模块单元。
+Agent 是 DaoMind 中具有自主行为、内部状态机和消息通信能力的智能模块单元。
 
 ## 什么是 Agent？
 
-Agent 是一种特殊的模块，它：
+Agent 继承 `DaoBaseAgent`，具备：
 
-- **有自己的状态** — 内部状态机
-- **响应消息** — 通过消息总线通信
-- **自主决策** — 根据状态和消息做出响应
+- **生命周期状态机** — `dormant → awakening → active → resting → deceased`
+- **自主执行** — 通过 `execute(action, payload)` 驱动逻辑
+- **消息通信** — 通过 `send()` / `onMessage()` 与其他 Agent 解耦通信
+- **事件观照** — 状态变化自动发布到 `daoNothingVoid` 全局事件总线
 
-```
-普通模块：  输入 → 函数 → 输出
-Agent：    消息 → 状态机 → 行为 + 新状态
-```
+---
 
-## 创建基础 Agent
+## 创建自定义 Agent
+
+继承 `DaoBaseAgent` 并实现 `execute()` 方法：
 
 ```typescript
-import { defineAgent } from '@daomind/agents';
+import { DaoBaseAgent } from '@daomind/agents';
+import type { DaoAgentCapability } from '@daomind/agents';
 
-// 定义 Agent 状态类型
-type CounterState = {
-  count: number;
-  isRunning: boolean;
-};
+class CounterAgent extends DaoBaseAgent {
+  readonly agentType = 'counter';
+  readonly capabilities: ReadonlyArray<DaoAgentCapability> = [
+    { name: 'count', version: '1.0.0', description: '计数操作' },
+  ];
 
-// 定义消息类型
-type CounterMessage = 
-  | { type: 'INCREMENT'; amount?: number }
-  | { type: 'DECREMENT'; amount?: number }
-  | { type: 'RESET' }
-  | { type: 'START' }
-  | { type: 'STOP' };
+  private count = 0;
 
-const counterAgent = defineAgent<CounterState, CounterMessage>({
-  id: 'counter-agent',
-  
-  // 初始状态
-  initialState: {
-    count: 0,
-    isRunning: false,
-  },
-  
-  // 消息处理器
-  handlers: {
-    INCREMENT({ state, message }) {
-      if (!state.isRunning) return state;
-      return { ...state, count: state.count + (message.amount ?? 1) };
-    },
-    
-    DECREMENT({ state, message }) {
-      if (!state.isRunning) return state;
-      return { ...state, count: state.count - (message.amount ?? 1) };
-    },
-    
-    RESET({ state }) {
-      return { ...state, count: 0 };
-    },
-    
-    START({ state }) {
-      return { ...state, isRunning: true };
-    },
-    
-    STOP({ state }) {
-      return { ...state, isRunning: false };
-    },
+  async execute<T>(action: string, payload?: unknown): Promise<T> {
+    switch (action) {
+      case 'increment':
+        this.count += (payload as number | undefined) ?? 1;
+        return this.count as T;
+      case 'decrement':
+        this.count -= (payload as number | undefined) ?? 1;
+        return this.count as T;
+      case 'reset':
+        this.count = 0;
+        return this.count as T;
+      case 'get':
+        return this.count as T;
+      default:
+        throw new Error(`[CounterAgent] 未知操作: ${action}`);
+    }
   }
-});
+}
 ```
 
 ## 使用 Agent
 
 ```typescript
-// 获取 agent 实例
-const counter = counterAgent.create();
+const counter = new CounterAgent('counter-1');
 
-// 订阅状态变化
-counter.subscribe(state => {
-  console.log(`Count: ${state.count}, Running: ${state.isRunning}`);
-});
+// 生命周期
+await counter.initialize();  // dormant → awakening
+await counter.activate();    // awakening → active
 
-// 发送消息
-counter.send({ type: 'START' });
-counter.send({ type: 'INCREMENT' });
-counter.send({ type: 'INCREMENT', amount: 5 });
-counter.send({ type: 'DECREMENT' });
-counter.send({ type: 'STOP' });
+// 执行操作
+await counter.execute('increment');    // 1
+await counter.execute('increment', 4); // 5
+await counter.execute('decrement', 2); // 3
 
-// 输出:
-// Count: 0, Running: true
-// Count: 1, Running: true
-// Count: 6, Running: true
-// Count: 5, Running: true
-// Count: 5, Running: false
+const value = await counter.execute<number>('get'); // 3
+
+// 休眠 / 恢复
+await counter.rest();      // active → resting
+await counter.activate();  // resting → active
+
+// 终止
+await counter.terminate(); // → deceased
 ```
 
-## Agent 间通信
+---
 
-通过消息总线实现 Agent 间通信：
+## Agent 间消息通信
+
+Agent 通过 `DaoAgentMessenger`（底层走 `daoNothingVoid`）互相通信，**不直接持有对方引用**。
 
 ```typescript
-import { createMessageBus } from '@daomind/agents';
+const agentA = new CounterAgent('agent-a');
+const agentB = new CounterAgent('agent-b');
 
-const bus = createMessageBus();
+await agentA.initialize(); await agentA.activate();
+await agentB.initialize(); await agentB.activate();
 
-// Agent A：发布者
-const producerAgent = defineAgent({
-  id: 'producer',
-  // ...
-  handlers: {
-    PRODUCE({ state, context }) {
-      // 通过总线广播
-      context.bus.publish('data:ready', { payload: state.data });
-      return state;
-    }
-  }
+// agentB 监听消息
+agentB.onMessage((msg) => {
+  console.log(`[${msg.from} → ${msg.to}] ${msg.action}:`, msg.payload);
 });
 
-// Agent B：订阅者
-const consumerAgent = defineAgent({
-  id: 'consumer',
-  // ...
-  setup({ bus }) {
-    // 订阅来自其他 agent 的消息
-    bus.subscribe('data:ready', (event) => {
-      this.send({ type: 'PROCESS', data: event.payload });
-    });
-  }
-});
+// agentA 向 agentB 发送消息
+agentA.send('agent-b', 'increment', 5);
+// 输出: [agent-a → agent-b] increment: 5
+
+// 广播给所有订阅者
+agentA.send('*', 'reset');
 ```
 
-## 有状态 Agent vs 无状态模块
+---
 
-| 特性 | 普通模块 | Agent |
-|------|---------|-------|
-| 状态 | 无/简单 | 复杂状态机 |
-| 通信 | 直接调用 | 消息传递 |
-| 生命周期 | 简单 | 完整状态转换 |
-| 适用场景 | 工具函数 | 业务逻辑 |
+## 内置 Agent
 
-## 下一步
+DaoMind 提供三种开箱即用的 Agent 覆盖常见场景。
 
-- [API 参考 - @daomind/agents](/api/agents)
-- [示例：聊天应用](/examples/chat-app)
-- [示例：多 Agent 系统](/examples/multi-agent)
+### TaskAgent — 优先级任务队列
+
+```typescript
+import { TaskAgent } from '@daomind/agents';
+
+const tasks = new TaskAgent('task-runner');
+await tasks.initialize();
+await tasks.activate();
+
+// 入队（priority 越大越先执行）
+await tasks.execute('enqueue', { id: 'urgent', action: 'send-email', priority: 10 });
+await tasks.execute('enqueue', { id: 'normal', action: 'generate-report', priority: 1 });
+
+// 执行最高优先级（'urgent' 先执行）
+const result = await tasks.execute('run-next');
+// 完成后自动广播 task:completed
+
+// 批量执行所有剩余任务
+await tasks.execute('run-all');
+
+// 查看队列状态
+const status = await tasks.execute<{ pending: number; completed: number }>('status');
+```
+
+### ObserverAgent — 系统事件观察者
+
+```typescript
+import { ObserverAgent } from '@daomind/agents';
+
+const observer = new ObserverAgent('system-eye');
+await observer.initialize(); // 开始监听 daoNothingVoid 事件
+await observer.activate();
+
+// 其他包的操作会触发事件...
+
+// 系统快照
+const snap = await observer.execute<{
+  totalObservations: number;
+  lifecycleEvents: number;
+  messageEvents: number;
+}>('get-snapshot');
+
+console.log(`共观察到 ${snap.totalObservations} 个事件`);
+console.log(`其中生命周期事件 ${snap.lifecycleEvents} 个`);
+
+// 按类型查历史
+const agentEvents = await observer.execute('get-by-type', { type: 'agent:lifecycle' });
+
+await observer.terminate(); // 自动清除监听器
+```
+
+### CoordinatorAgent — 多 Agent 调度
+
+```typescript
+import { CoordinatorAgent, TaskAgent, daoAgentRegistry } from '@daomind/agents';
+
+// 建立 Agent 群
+const worker1 = new TaskAgent('worker-1');
+const worker2 = new TaskAgent('worker-2');
+const coord   = new CoordinatorAgent('boss');
+
+for (const a of [worker1, worker2, coord]) {
+  daoAgentRegistry.register(a);
+  await a.initialize();
+  await a.activate();
+}
+
+// 建立协调关系
+await coord.execute('add-agent', { agentId: 'worker-1' });
+await coord.execute('add-agent', { agentId: 'worker-2' });
+
+// 分配任务给指定 Agent
+await coord.execute('assign', {
+  agentId: 'worker-1',
+  action: 'enqueue',
+  payload: { id: 'j1', action: 'process-data', priority: 5 },
+});
+
+// 广播给所有托管 Agent
+await coord.execute('broadcast', { action: 'run-all' });
+
+// 查看名册状态
+const roster = await coord.execute('get-roster');
+console.log(`托管 ${roster.rosterSize} 个 Agent`);
+```
+
+---
+
+## 注册中心
+
+```typescript
+import { daoAgentRegistry } from '@daomind/agents';
+
+// 注册 Agent（供全局查找）
+daoAgentRegistry.register(agent);
+
+// 按 ID 查找
+const agent = daoAgentRegistry.get('worker-1');
+
+// 按能力查找
+const taskAgents = daoAgentRegistry.findByCapability('execute-task');
+
+// 注销
+daoAgentRegistry.unregister('worker-1');
+```
+
+---
+
+## 最佳实践
+
+### 1. 生命周期管理
+
+```typescript
+// ✅ 正确：按顺序初始化
+await agent.initialize();
+await agent.activate();
+// 使用 agent...
+await agent.terminate();
+
+// ❌ 错误：跳过 initialize 直接 activate
+await agent.activate(); // 抛出错误：非法状态转换
+```
+
+### 2. 消息通信
+
+```typescript
+// ✅ 使用消息总线，不直接持有对方引用
+agentA.send('agent-b', 'action', payload);
+
+// ❌ 不要直接调用
+(agentB as TaskAgent).execute('action', payload); // 破坏松耦合
+```
+
+### 3. ObserverAgent 内存安全
+
+```typescript
+// ✅ 确保调用 terminate() 移除监听器
+const observer = new ObserverAgent('obs');
+await observer.initialize();
+// ... 使用 ...
+await observer.terminate(); // 自动 removeListener，无内存泄漏
+
+// ❌ 不要跳过 terminate
+process.exit(); // 若未 terminate，EventEmitter 监听器可能泄漏
+```
+
+### 4. 测试时重置事件总线
+
+```typescript
+import { daoNothingVoid } from '@daomind/nothing';
+import { DaoAgentContainerBridge } from '@daomind/agents';
+
+let bridge: DaoAgentContainerBridge;
+
+beforeEach(() => {
+  daoNothingVoid.void();          // ← 先清空，移除所有旧监听器
+  bridge = new DaoAgentContainerBridge(); // ← 再注册新监听器
+});
+
+afterEach(() => {
+  bridge.dispose();
+});
+```
