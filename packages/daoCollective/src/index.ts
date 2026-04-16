@@ -135,3 +135,13 @@ export { DaoTimer, DaoScheduler, daoTimer, daoScheduler, daoTimeWindow } from '@
 // DaoUniverseScheduler — 时序驱动任务调度（daotimes × DaoUniverseClock）
 export type { ExecutionRecord } from './universe-scheduler';
 export { DaoUniverseScheduler } from './universe-scheduler';
+
+// ============================================================
+// @daomind/skills — 技能层
+// ============================================================
+export type { SkillId, SkillState, DaoSkillDefinition, DaoSkillInstance, DaoSkillScore } from '@daomind/skills';
+export { DaoSkillRegistry, daoSkillRegistry, DaoSkillActivator, daoSkillActivator, DaoSkillScorer, daoSkillScorer, DaoSkillCombiner, daoSkillCombiner } from '@daomind/skills';
+
+// DaoUniverseSkills — 时序驱动技能生命周期（daoSkilLs × DaoUniverseScheduler）
+export type { SkillEventRecord } from './universe-skills';
+export { DaoUniverseSkills } from './universe-skills';
