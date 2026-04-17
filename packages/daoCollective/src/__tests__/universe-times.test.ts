@@ -189,7 +189,8 @@ describe('clearAllForApp()', () => {
     times.clearAllForApp('a1');
     expect(times.snapshot().totalTimers).toBe(1);
     expect(times.snapshot().byApp['a2']?.timers).toBe(1);
-    times.clearTimer(h1);  // won't throw even if already cleared
+    times.clearTimer(h1); // won't throw even if already cleared
+    times.clearAllForApp('a2'); // cleanup: prevent open handle leak
   });
 
   test('同时清除 tasks', () => {

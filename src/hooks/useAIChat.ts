@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 
 export interface Message {
@@ -31,6 +31,13 @@ export function useAIChat() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+
+  // Abort any active SSE stream on unmount to prevent Jest worker leaks
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort()
+    }
+  }, [])
 
   const sendMessage = useCallback(
     async (text: string) => {
