@@ -1,6 +1,8 @@
 import React from 'react'
 import { MessageCircle, FlaskConical, Activity, Layers } from 'lucide-react'
 import { DaoLogo } from './components/DaoLogo'
+import { ThemeToggle } from './components/ThemeToggle'
+import { useTheme } from './hooks/useTheme'
 import { ChatPage } from './pages/ChatPage'
 import { AuditPage } from './pages/AuditPage'
 import { MonitorPage } from './pages/MonitorPage'
@@ -18,6 +20,7 @@ function getInitialPage(): Page {
 
 export default function App(): React.JSX.Element {
   const [page, setPage] = React.useState<Page>(getInitialPage)
+  const { theme, setTheme } = useTheme()
 
   // Sync hash ↔ page state
   React.useEffect(() => {
@@ -77,6 +80,10 @@ export default function App(): React.JSX.Element {
             <Layers size={14} />
             <span>道集</span>
           </button>
+        </div>
+
+        <div className="app-nav-right">
+          <ThemeToggle theme={theme} setTheme={setTheme} />
         </div>
       </nav>
 
