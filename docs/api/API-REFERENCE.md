@@ -2,9 +2,9 @@
 
 完整的 API 参考文档，涵盖所有核心包、功能包和 DaoUniverse* 桥接体系。
 
-> **版本**: 2.24.0  
-> **更新日期**: 2026-04-16  
-> **测试**: 817 个测试，46 个套件，全部通过
+> **版本**: 2.27.2  
+> **更新日期**: 2026-04-17  
+> **测试**: 1000 个测试，52 个套件，全部通过
 
 ---
 
@@ -1049,7 +1049,7 @@ qi.bus     // 底层 HunyuanBus
 qi.tian    // TianQiChannel（天气广播，注意签名 Bug 已在 broadcast() 绕过）
 qi.di      // DiQiChannel（地气度量聚合缓冲）
 qi.ren     // RenQiChannel（人气 P2P 通信）
-qi.chong   // ChongQiRegulator（冲气调控器）
+qi.chong   // ChongQiRegulator（中气调控器，帛书：阴阳居间调和）
 ```
 
 ---
@@ -1136,6 +1136,151 @@ const md = diag.generateReport(record, 'markdown');
 
 ---
 
+
+---
+
+## 消费者层（Consumer Layer）
+
+> 消费者层是 DaoUniverse* 桥接体系之上的**纯消费者组件**，自 v2.25.0 起引入。
+> 它们不拥有任何子系统实例，只读取桥接体系数据进行聚合、分析、建议。
+
+---
+
+### DaoUniverseFacade
+
+**v2.25.0** — 全栈自动装配门面，一行构建完整 17 桥接器宇宙。
+
+```typescript
+import { DaoUniverseFacade } from '@daomind/collective';
+
+const facade = new DaoUniverseFacade();
+// 内部自动依次构建全部 17 个 DaoUniverse* 桥接器实例
+
+// 访问各层桥接器
+facade.universe     // DaoUniverse
+facade.monitor      // DaoUniverseMonitor
+facade.clock        // DaoUniverseClock
+facade.feedback     // DaoUniverseFeedback
+facade.audit        // DaoUniverseAudit
+facade.scheduler    // DaoUniverseScheduler
+facade.nexus        // DaoUniverseNexus
+facade.docs         // DaoUniverseDocs
+facade.spaces       // DaoUniverseSpaces
+facade.qi           // DaoUniverseQi
+facade.skills       // DaoUniverseSkills
+facade.pages        // DaoUniversePages
+facade.agents       // DaoUniverseAgents
+facade.apps         // DaoUniverseApps
+facade.times        // DaoUniverseTimes
+facade.modules      // DaoUniverseModules
+facade.benchmark    // DaoUniverseBenchmark
+facade.diagnostic   // DaoUniverseDiagnostic
+
+facade.snapshot(): FacadeSnapshot
+
+interface FacadeSnapshot {
+  timestamp: number
+  universe:  ReturnType<DaoUniverse['snapshot']>
+  monitor:   MonitorSnapshot
+  // ... 各桥接器快照
+}
+```
+
+---
+
+### DaoUniverseHealthBoard
+
+**v2.26.0** — 宇宙健康蒸馏仪表盘，趋势感知（纯消费者）。
+
+```typescript
+import { DaoUniverseHealthBoard } from '@daomind/collective';
+
+const board = new DaoUniverseHealthBoard(facade);
+
+board.measure(): HealthRecord       // 采集一次健康快照
+board.trend(): HealthTrend          // 'stable' | 'improving' | 'degrading'
+board.history(): ReadonlyArray<HealthRecord>
+board.clearHistory(): void
+board.snapshot(): HealthBoardSnapshot
+
+export type HealthTrend = 'stable' | 'improving' | 'degrading';
+
+interface HealthRecord {
+  readonly timestamp: number
+  readonly score:     number    // 0~1
+  readonly trend:     HealthTrend
+}
+
+interface HealthBoardSnapshot {
+  readonly timestamp:    number
+  readonly latestScore:  number | null
+  readonly trend:        HealthTrend
+  readonly historySize:  number
+}
+
+// Getters
+board.facade   // 关联的 DaoUniverseFacade
+```
+
+---
+
+### DaoUniverseOptimizer
+
+**v2.27.0** — 宇宙优化建议引擎（二级消费者，基于 HealthBoard 历史）。  
+帛书宇宙生成论映射：道→一（Facade）→二（HealthBoard）→三（Optimizer）→万物（建议）。
+
+```typescript
+import { DaoUniverseOptimizer } from '@daomind/collective';
+
+const optimizer = new DaoUniverseOptimizer(board);
+
+optimizer.analyze(): OptimizationReport      // 读取 board.history()，生成分析报告
+optimizer.recommend(): readonly Recommendation[]  // analyze().recommendations 快捷方式
+optimizer.history(): ReadonlyArray<OptimizationReport>
+optimizer.clearHistory(): void
+optimizer.snapshot(): OptimizerSnapshot
+
+export type RecommendationLevel = 'info' | 'warn' | 'critical';
+export type RecommendationArea  = 'monitor' | 'qi' | 'apps' | 'bench' | 'diag' | 'system';
+
+interface Recommendation {
+  readonly level:   RecommendationLevel
+  readonly area:    RecommendationArea
+  readonly message: string
+}
+
+interface OptimizationReport {
+  readonly timestamp:        number
+  readonly trend:            HealthTrend
+  readonly sampleCount:      number
+  readonly averageScore:     number
+  readonly minScore:         number
+  readonly maxScore:         number
+  readonly scoreRange:       number
+  readonly recommendations:  readonly Recommendation[]
+}
+
+interface OptimizerSnapshot {
+  readonly timestamp:   number
+  readonly analysisCount: number
+  readonly lastAnalysisAt: number | null
+  readonly lastReportSize: number
+}
+
+// Getters
+optimizer.board   // 关联的 DaoUniverseHealthBoard
+
+// 典型用法：一键宇宙健康评估 + 优化建议
+const facade    = new DaoUniverseFacade();
+const board     = new DaoUniverseHealthBoard(facade);
+const optimizer = new DaoUniverseOptimizer(board);
+
+board.measure();          // 采集基准健康值
+const report = optimizer.analyze();
+console.log(report.recommendations);
+// → [{ level: 'info', area: 'system', message: '系统健康状况良好...' }]
+```
+
 ## 类型工具
 
 ### 类型守卫
@@ -1156,14 +1301,16 @@ if (daoIsNone(opt)) { /* 无值 */ }
 
 ## 常见模式
 
-### 模式 1：完整 DaoUniverse* 层次构建
+### 模式 1：完整 DaoUniverse* 层次构建（含消费者层）
 
 ```typescript
+// 方式 A：手动逐层构建（精细控制）
 import {
   DaoUniverse, DaoUniverseMonitor, DaoUniverseAgents,
   DaoUniverseApps, DaoUniverseTimes, DaoUniverseModules,
   DaoUniverseNexus, DaoUniverseQi, DaoUniverseAudit,
   DaoUniverseBenchmark, DaoUniverseDiagnostic,
+  DaoUniverseFacade, DaoUniverseHealthBoard, DaoUniverseOptimizer,
 } from '@daomind/collective';
 
 const universe   = new DaoUniverse();
@@ -1177,6 +1324,11 @@ const qi         = new DaoUniverseQi(nexus);
 const audit      = new DaoUniverseAudit(universe);
 const benchmark  = new DaoUniverseBenchmark(monitor);
 const diagnostic = new DaoUniverseDiagnostic(audit, benchmark);
+
+// 方式 B：消费者层（v2.25.0+，推荐生产环境）
+const facade    = new DaoUniverseFacade();      // 一行装配全部 17 桥接器
+const board     = new DaoUniverseHealthBoard(facade);   // 健康蒸馏
+const optimizer = new DaoUniverseOptimizer(board);      // 优化建议引擎
 ```
 
 ### 模式 5：宇宙综合诊断
@@ -1238,6 +1390,10 @@ console.log(times.windowOverlaps(winA, winB)); // true（重叠）
 
 | 版本 | TypeScript | Node.js | 测试数 |
 |------|-----------|---------|--------|
+| v2.27.2 | >=5.9.0 | >=18.0.0 | 1000 |
+| v2.27.0 | >=5.9.0 | >=18.0.0 | 1000 |
+| v2.26.0 | >=5.9.0 | >=18.0.0 | 971 |
+| v2.25.0 | >=5.9.0 | >=18.0.0 | 941 |
 | v2.24.0 | >=5.9.0 | >=18.0.0 | 908 |
 | v2.23.0 | >=5.9.0 | >=18.0.0 | 877 |
 | v2.22.0 | >=5.9.0 | >=18.0.0 | 847 |

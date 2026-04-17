@@ -297,7 +297,7 @@ await modules.terminate('payments');
 
 ## DaoUniverse* 桥接体系
 
-DaoMind v2.24.0 的核心是 **17 个分层桥接器**，将所有功能包统一融入宇宙层次。每个桥接器：
+DaoMind v2.27.2 的核心是 **17 个分层桥接器 + 3 个消费者层组件**，将所有功能包统一融入宇宙层次。每个桥接器：
 
 - 创建独立的子系统实例（不污染全局单例）
 - 通过构造参数接收上层桥接器引用
@@ -312,17 +312,22 @@ DaoUniverse（全局宇宙）
   │       │               ├── DaoUniverseTimes    — per-app 定时器 × 调度
   │       │               └── DaoUniverseModules  — IoC 容器 × Agent 广播
   │       ├── DaoUniverseClock     — 时序心跳
-  │       │       ├── DaoUniverseFeedback  — 闭环调节
+  │       │       ├── DaoUniverseFeedback  — 闭环调节（中和，帛书四十二章）
   │       │       └── DaoUniverseScheduler — 时序调度
   │       │               ├── DaoUniverseSkills — 技能生命周期
   │       │               └── DaoUniversePages  — 组件树 × 刷新
   │       ├── DaoUniverseNexus     — 服务网格
   │       │       ├── DaoUniverseSpaces    — 命名空间
-  │       │       └── DaoUniverseQi        — 混元气总线 × 路由
+  │       │       └── DaoUniverseQi        — 三才×中气 四维混元气总线
   │       └── DaoUniverseBenchmark — 性能基准 × 宇宙健康感知
   ├── DaoUniverseAudit       — 哲学契约审查
   │       └── DaoUniverseDocs      — 知识图谱
   └─────── DaoUniverseDiagnostic — 综合诊断（Audit × Benchmark）
+
+消费者层（v2.25.0+，纯读取，不持有子系统实例）
+  DaoUniverseFacade         — 一行自动装配全部 17 桥接器
+    └── DaoUniverseHealthBoard — 健康蒸馏 × 趋势感知
+          └── DaoUniverseOptimizer — 6 条建议规则，优化引擎
 ```
 
 ### 构建完整宇宙
@@ -347,9 +352,13 @@ import {
   DaoUniverseQi,
   DaoUniverseBenchmark,
   DaoUniverseDiagnostic,
+  // 消费者层（v2.25.0+）
+  DaoUniverseFacade,
+  DaoUniverseHealthBoard,
+  DaoUniverseOptimizer,
 } from '@daomind/collective';
 
-// 从根节点开始，逐层构建
+// 从根节点开始，逐层构建（17 个桥接器）
 const universe    = new DaoUniverse();
 const monitor     = new DaoUniverseMonitor(universe);
 const clock       = new DaoUniverseClock(monitor);
@@ -368,6 +377,11 @@ const times       = new DaoUniverseTimes(apps);
 const modules     = new DaoUniverseModules(apps);
 const benchmark   = new DaoUniverseBenchmark(monitor);
 const diagnostic  = new DaoUniverseDiagnostic(audit, benchmark);
+
+// 消费者层：一行代替上面全部（v2.25.0+，推荐生产使用）
+const facade    = new DaoUniverseFacade();
+const board     = new DaoUniverseHealthBoard(facade);
+const optimizer = new DaoUniverseOptimizer(board);
 ```
 
 ---
@@ -395,7 +409,7 @@ const diagnostic  = new DaoUniverseDiagnostic(audit, benchmark);
 
 1. **"无名"** = TypeScript 类型 = 零运行时 = 潜在可能
 2. **"有名"** = TypeScript 值 = 运行时实体 = 显化实现
-3. **DaoUniverse*** = 17 个分层桥接器，统一管理所有子系统
+3. **DaoUniverse*** = 17 个分层桥接器 + 消费者层（Facade/HealthBoard/Optimizer），统一管理所有子系统
 4. **per-app 资源追踪** = DaoUniverseTimes 将定时器绑定到应用 ID
 5. **Agent 广播** = DaoUniverseApps/Modules 的状态变化自动通知 Agent 系统
 6. **哲学一致** = 每个设计都有帛书《道德经》依据
@@ -404,4 +418,5 @@ const diagnostic  = new DaoUniverseDiagnostic(audit, benchmark);
 ---
 
 > "道生一，一生二，二生三，三生万物。"  
+> ——帛书《道德经》四十二章：一(Facade)→ 二(HealthBoard)→ 三(Optimizer，中气以为和)→ 万物（优化建议）  
 > 从一个简单的宇宙根节点，你可以构建整个应用生态。这就是 DaoMind 的力量。

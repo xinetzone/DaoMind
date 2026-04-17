@@ -27,7 +27,7 @@
 **核心特点**:
 - 🎯 哲学驱动的架构设计
 - ⚡ 零运行时类型系统
-- 📦 20+ 个功能完整的 npm 包，含 17 个 DaoUniverse* 桥接器
+- 📦 20+ 个功能完整的 npm 包，含 17 个 DaoUniverse* 桥接器 + 3 个消费者层组件（Facade/HealthBoard/Optimizer）
 - 🏗️ Monorepo 模块化架构
 
 ### Q2: "无名"和"有名"具体指什么？
