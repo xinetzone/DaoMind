@@ -130,6 +130,27 @@ export function useSessions() {
     [sessions, currentSessionId],
   )
 
+  /** 用导入数据覆盖所有会话 */
+  const replaceAllSessions = useCallback((incoming: Session[]) => {
+    saveSessions(incoming)
+    setSessions(incoming)
+    const firstId = incoming[0]?.id ?? null
+    setCurrentSessionId(firstId)
+    if (firstId) localStorage.setItem(CURRENT_KEY, firstId)
+    else localStorage.removeItem(CURRENT_KEY)
+  }, [])
+
+  /** 与现有会话合并（按 id 去重，现有优先，新增追加到末尾） */
+  const mergeSessions = useCallback((incoming: Session[]) => {
+    setSessions((prev) => {
+      const existingIds = new Set(prev.map((s) => s.id))
+      const newOnes = incoming.filter((s) => !existingIds.has(s.id))
+      const next = [...prev, ...newOnes]
+      saveSessions(next)
+      return next
+    })
+  }, [])
+
   return {
     sessions,
     currentSessionId,
@@ -139,5 +160,7 @@ export function useSessions() {
     updateCurrentMessages,
     updateTitle,
     deleteSession,
+    replaceAllSessions,
+    mergeSessions,
   }
 }

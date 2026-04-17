@@ -2,6 +2,7 @@ import React from 'react'
 import { MessageCircle, MessagesSquare, Hash, Flame, BarChart2, Trophy } from 'lucide-react'
 import { useSessions } from '../hooks/useSessions'
 import { useStats } from '../hooks/useStats'
+import { DataIOPanel } from '../components/DataIOPanel'
 
 function KpiCard({
   icon,
@@ -29,7 +30,7 @@ function KpiCard({
 }
 
 export function StatsPage(): React.JSX.Element {
-  const { sessions } = useSessions()
+  const { sessions, replaceAllSessions, mergeSessions } = useSessions()
   const stats = useStats(sessions)
 
   const maxBar = Math.max(...stats.last7Days.map((d) => d.count), 1)
@@ -152,6 +153,12 @@ export function StatsPage(): React.JSX.Element {
           <p className="stats-onboarding-sub">开始对话后，统计数据将显示在这里</p>
         </div>
       )}
+
+      <DataIOPanel
+        sessions={sessions}
+        onReplace={replaceAllSessions}
+        onMerge={mergeSessions}
+      />
     </div>
   )
 }
