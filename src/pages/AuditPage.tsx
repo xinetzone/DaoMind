@@ -37,7 +37,7 @@ function renderInline(text: string): React.ReactNode[] {
   const TOKEN_RE = /(\u2713|\([^)]+\.ts\))/g
   const parts = text.split(TOKEN_RE)
   return parts.map((p, i) => {
-    if (p === '\u2713') return <span key={i} className="audit-check">\u2713</span>
+    if (p === '\u2713') return <span key={i} className="audit-check">✓</span>
     if (/^\([^)]+\.ts\)$/.test(p)) return <code key={i} className="audit-filename">{p}</code>
     return <React.Fragment key={i}>{p}</React.Fragment>
   })
@@ -59,9 +59,9 @@ function BulletLine({ content }: { content: string }): React.JSX.Element {
         <span className="audit-pair-name">[{pairName}]</span>
         <div className="audit-pair-checks">
           {checks.map(c => (
-            <span key={c} className="audit-check-tag">{c} \u2713</span>
+            <span key={c} className="audit-check-tag">{c} ✓</span>
           ))}
-          {isComplete && <span className="audit-badge-complete">\u5b8c\u6574</span>}
+          {isComplete && <span className="audit-badge-complete">完整</span>}
         </div>
       </div>
     )
@@ -74,7 +74,7 @@ function BulletLine({ content }: { content: string }): React.JSX.Element {
     return (
       <div className="audit-bullet-row">
         <span className="audit-bullet-label">{renderInline(label.trim())}</span>
-        <span className="audit-bullet-badge">\u2713 {status.trim()}</span>
+        <span className="audit-bullet-badge">✓ {status.trim()}</span>
       </div>
     )
   }
@@ -215,22 +215,22 @@ export function AuditPage(): React.JSX.Element {
           <div className="audit-overview-stats">
             <div className="audit-stat">
               <span className="audit-stat-value pass">{report.passedCount}</span>
-              <span className="audit-stat-label">\u901a\u8fc7</span>
+              <span className="audit-stat-label">通过</span>
             </div>
             <div className="audit-stat-divider" />
             <div className="audit-stat">
               <span className="audit-stat-value fail">{report.failedCount}</span>
-              <span className="audit-stat-label">\u672a\u901a\u8fc7</span>
+              <span className="audit-stat-label">未通过</span>
             </div>
             <div className="audit-stat-divider" />
             <div className="audit-stat">
               <span className="audit-stat-value">{report.overallScore}</span>
-              <span className="audit-stat-label">\u7efc\u5408\u5f97\u5206</span>
+              <span className="audit-stat-label">综合得分</span>
             </div>
           </div>
         </div>
         <div className="audit-overview-right">
-          <div className="audit-overview-title">\u54f2\u5b66\u6df1\u5ea6\u8bc4\u4f30</div>
+          <div className="audit-overview-title">哲学深度评估</div>
           <div className="audit-depth-grid">
             {depthEntries.map(([key, val]) => (
               <div key={key} className="audit-depth-item">
@@ -243,7 +243,7 @@ export function AuditPage(): React.JSX.Element {
             ))}
           </div>
           <div className="audit-depth-total">
-            \u52a0\u6743\u603b\u5206\uff1a<strong>{depth.weightedTotal}</strong>
+            加权总分：<strong>{depth.weightedTotal}</strong>
           </div>
         </div>
       </div>
@@ -266,7 +266,7 @@ export function AuditPage(): React.JSX.Element {
       </div>
 
       <p className="audit-footer-note">
-        \u57fa\u4e8e\u5e1b\u4e66\u300a\u9053\u5fb7\u7ecf\u300b\u54f2\u5b66\u4e00\u81f4\u6027\u68c0\u9a8c \u00b7 \u751f\u6210\u4e8e{' '}
+        基于帛书《道德经》哲学一致性检验 · 生成于{' '}
         {new Date(report.generatedAt).toLocaleDateString('zh-CN')}
       </p>
     </div>
