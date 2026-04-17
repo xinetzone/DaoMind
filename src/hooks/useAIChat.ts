@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, type Dispatch, type SetStateAction } from 'react'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 
 export interface Message {
@@ -26,13 +26,26 @@ function getErrorMessage(code: string, backendMsg: string): string {
   return FALLBACK_MESSAGES[code] || '服务暂时不可用，请稍后再试。'
 }
 
-export function useAIChat() {
-  const [messages, setMessages] = useState<Message[]>([])
+/**
+ * useAIChat — AI 流式对话核心 Hook
+ *
+ * messages / setMessages 由外部传入，由 ChatPage 统一管理并持久化到 localStorage。
+ */
+export function useAIChat(
+  messages: Message[],
+  setMessages: Dispatch<SetStateAction<Message[]>>,
+): {
+  isLoading: boolean
+  error: string | null
+  sendMessage: (text: string) => Promise<void>
+  stopStreaming: () => void
+  dismissError: () => void
+} {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
-  // Abort any active SSE stream on unmount to prevent Jest worker leaks
+  // Abort any active SSE stream on unmount to prevent worker leaks
   useEffect(() => {
     return () => {
       abortRef.current?.abort()
@@ -71,7 +84,6 @@ export function useAIChat() {
           signal: abortRef.current.signal,
           openWhenHidden: true,
 
-          // Level 0: Parse errors from non-2xx SSE responses
           async onopen(response) {
             const ct = response.headers.get('content-type') ?? ''
             if (!response.ok) {
@@ -102,7 +114,6 @@ export function useAIChat() {
             }
           },
 
-          // Level 1: Handle SSE error events mid-stream
           onmessage(event) {
             if (!event.data) return
             let data: Record<string, unknown>
@@ -161,13 +172,11 @@ export function useAIChat() {
             }
           },
 
-          // Level 2: Network errors
           onerror(err) {
             throw err
           },
         })
       } catch (err: unknown) {
-        // Level 3: Catch all — filter AbortError
         const e = err as Error
         if (e.name !== 'AbortError') {
           setError(e.message || '连接失败，请稍后重试。')
@@ -183,7 +192,7 @@ export function useAIChat() {
         setIsLoading(false)
       }
     },
-    [messages, isLoading],
+    [messages, isLoading, setMessages],
   )
 
   const stopStreaming = useCallback(() => {
@@ -196,16 +205,9 @@ export function useAIChat() {
       }
       return prev
     })
-  }, [])
-
-  const clearMessages = useCallback(() => {
-    if (isLoading) abortRef.current?.abort()
-    setMessages([])
-    setError(null)
-    setIsLoading(false)
-  }, [isLoading])
+  }, [setMessages])
 
   const dismissError = useCallback(() => setError(null), [])
 
-  return { messages, isLoading, error, sendMessage, stopStreaming, clearMessages, dismissError }
+  return { isLoading, error, sendMessage, stopStreaming, dismissError }
 }

@@ -1,0 +1,73 @@
+{
+  "generatedAt": 1776415908699,
+  "results": [
+    {
+      "name": "有无平衡检验",
+      "category": "wu-you-balance",
+      "passed": false,
+      "score": 20,
+      "details": "有无失衡：daoNothing 过重。daoNothing: 624 行，daoAnything: 300 行，比值: 2.080（高于上限 0.333）\n  · 帛书依据：\"有名，万物之母也\"——有名（实现容器）应承载主要的运行逻辑",
+      "recommendation": "建议将部分纯类型定义迁移至 daoNothing，确保 daoAnything 聚焦于实际容器与模块注册功能",
+      "timestamp": 1776415908648
+    },
+    {
+      "name": "反馈完整性检验",
+      "category": "feedback-integrity",
+      "passed": true,
+      "score": 100,
+      "details": "@dao/feedback 包存在，四阶段检查结果：\n  · 感知（观其妙） (stage1-perceive.ts): ✓ 已实现\n  · 聚合（大曰逝） (stage2-aggregate.ts): ✓ 已实现\n  · 中和（中气以为和） (stage3-harmonize.ts): ✓ 已实现\n  · 归元（远曰反） (stage4-return.ts): ✓ 已实现\n  · lifecycle.ts 阶段串联: ✓ 完整串联\n\n  帛书依据：《道德经》乙本·四十章「反也者，道之动也」— 反馈循环是道的运动形式",
+      "timestamp": 1776415908649
+    },
+    {
+      "name": "气流通畅性检验",
+      "category": "qi-fluency",
+      "passed": true,
+      "score": 100,
+      "details": "@dao/qi 包存在，气机通道检查结果：\n  · 天气通道（天道） (tian-qi.ts): ✓ 已实现\n  · 地气通道（地道） (di-qi.ts): ✓ 已实现\n  · 人气通道（人道） (ren-qi.ts): ✓ 已实现\n  · 冲气通道（调和） (chong-qi.ts): ✓ 已实现\n  · HunyuanBus 核心类: ✓ 已实现\n  · 消息协议 DaoMessage: ✓ 已定义\n  · 通道类型 QiChannelType: ✓ 已定义\n\n  帛书依据：《道德经》乙本·四十二章「万物负阴而抱阳，中气以为和」— 三才路由通道（天/地/人）+ 中气调和机制，构成完整气机传输网络。\n                    帛书二十五章「人法地，地法天，天法道」确立三才，四十二章帛书「中气以为和」确立调和机制",
+      "timestamp": 1776415908649
+    },
+    {
+      "name": "阴阳平衡检验",
+      "category": "yin-yang-balance",
+      "passed": true,
+      "score": 100,
+      "details": "chong-qi.ts 存在，阴阳对分析结果：\n  · 阴阳对总数: 5（期望 ≥5）\n  · 完整对数: 5/5\n\n  · 对 [nothing-anything]: yinNode=✓ yangNode=✓ idealRatio=✓ threshold=✓ (完整)\n  · 对 [chronos-times]: yinNode=✓ yangNode=✓ idealRatio=✓ threshold=✓ (完整)\n  · 对 [spaces-agents]: yinNode=✓ yangNode=✓ idealRatio=✓ threshold=✓ (完整)\n  · 对 [skills-nexus]: yinNode=✓ yangNode=✓ idealRatio=✓ threshold=✓ (完整)\n  · 对 [docs-apps]: yinNode=✓ yangNode=✓ idealRatio=✓ threshold=✓ (完整)\n\n  ChongQiRegulator 方法检查:\n  · regulateAll(): ✓ 已实现\n  · converge(): ✓ 已实现\n\n  帛书依据：《道德经》乙本·四十二章「万物负阴而抱阳，中气以为和」",
+      "timestamp": 1776415908649
+    },
+    {
+      "name": "无为验证",
+      "category": "wu-wei-verification",
+      "passed": false,
+      "score": 66,
+      "details": "daoCollective/index.ts 无为分析结果：\n  · 有效代码行数: 113\n  · 导出风格: mixed\n  · 协调导向（非直接控制）: ✓ 符合\n  · 事件驱动模式: — 未检测到事件驱动\n  · 避免直接控制调用: ✓ 无直接控制模式\n  · 自组织结构支撑: — 自组织特征不明显\n\n  帛书依据：《道德经》「道常无为而无不为」— 根节点应做协调者而非控制者",
+      "recommendation": "建议采用事件驱动/发布订阅模式替代直接函数调用；根节点应保持精简，将复杂逻辑下沉到子模块",
+      "timestamp": 1776415908649
+    },
+    {
+      "name": "命名规范检验",
+      "category": "naming-convention",
+      "passed": false,
+      "score": 1,
+      "details": "命名规范扫描结果（扫描 129 个文件，274 个公共导出）：\n  · dao 前缀合规率: 57% (155/274)\n  · 武力隐喻违规: 9 处\n  · 自然意象使用: 9 处\n\n  违规详情（前10条）：\n    · daoVerify/src/checks/naming-convention.ts:8 — 检测到 \"kill\" (kill)\n    · daoVerify/src/checks/naming-convention.ts:9 — 检测到 \"force\" (force)\n    · daoVerify/src/checks/naming-convention.ts:10 — 检测到 \"attack\" (attack)\n    · daoVerify/src/checks/naming-convention.ts:11 — 检测到 \"destroy\" (destroy)\n    · daoVerify/src/checks/naming-convention.ts:12 — 检测到 \"war\" (war)\n    · daoVerify/src/checks/naming-convention.ts:13 — 检测到 \"violence\" (violence)\n    · daoVerify/src/checks/naming-convention.ts:15 — 检测到 \"hack\" (hack)\n    · daoVerify/src/checks/naming-convention.ts:16 — 检测到 \"slash\" (slash)\n    · daoVerify/src/checks/naming-convention.ts:17 — 检测到 \"stab\" (stab)\n\n  非 dao 前缀导出: AssignmentRecord, CoordinatorSnapshot, CoordinatorAgent, Observation, SystemSnapshot, ObserverAgent, AgentTask, TaskResult, QueueSnapshot, TaskAgent, AGENT_LIFECYCLE_EVENT, AgentMessage, MessageHandler, MessageFilter, AgentState... 等 119 个\n\n  帛书依据：「道可道，非常名」— 命名应体现道的自然本性，避免暴力隐喻",
+      "recommendation": "公共导出 dao 前缀率仅 57%，建议统一使用 dao 前缀；发现 9 处武力隐喻命名，应替换为自然意象词汇",
+      "timestamp": 1776415908650
+    }
+  ],
+  "overallScore": 65,
+  "passedCount": 3,
+  "failedCount": 3,
+  "warnings": [
+    "[有无平衡] 建议将部分纯类型定义迁移至 daoNothing，确保 daoAnything 聚焦于实际容器与模块注册功能",
+    "[无为验证] 建议采用事件驱动/发布订阅模式替代直接函数调用；根节点应保持精简，将复杂逻辑下沉到子模块",
+    "[命名规范] 公共导出 dao 前缀率仅 57%，建议统一使用 dao 前缀；发现 9 处武力隐喻命名，应替换为自然意象词汇"
+  ],
+  "philosophyDepth": {
+    "ontologyScore": 43,
+    "epistemologyScore": 65,
+    "methodologyScore": 86,
+    "ethicsScore": 49,
+    "aestheticsScore": 54,
+    "culturalScore": 58,
+    "weightedTotal": 60
+  }
+}
