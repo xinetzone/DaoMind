@@ -3,6 +3,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const ALLOWED_MODELS = new Set([
+  'z-ai/glm-5',
+  'deepseek/deepseek-chat',
+  'qwen/qwen-max',
+])
+
+const DEFAULT_MODEL = 'z-ai/glm-5'
+
 // Concise system prompt — shorter input = faster TTFB
 const SYSTEM_PROMPT =
   '你是「道衍」，帛书《道德经》智慧引导者。' +
@@ -27,7 +35,10 @@ Deno.serve(async (req) => {
       })
     }
 
-    const { messages } = body
+    const { messages, model: requestedModel } = body
+
+    // Validate model — only allow known models to prevent injection
+    const model = ALLOWED_MODELS.has(requestedModel) ? requestedModel : DEFAULT_MODEL
 
     const response = await fetch('https://api.enter.pro/code/api/v1/ai/messages', {
       method: 'POST',
@@ -36,7 +47,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'z-ai/glm-5',
+        model,
         system: SYSTEM_PROMPT,
         messages,
         stream: true,

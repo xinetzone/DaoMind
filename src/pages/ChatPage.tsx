@@ -16,6 +16,8 @@ import { useMindMap } from '../hooks/useMindMap'
 import { MindMapModal } from '../components/MindMapModal'
 import { PromptPanel } from '../components/PromptPanel'
 import { ShareCardModal } from '../components/ShareCardModal'
+import { ModelSelector } from '../components/ModelSelector'
+import { useModel } from '../hooks/useModel'
 import type { Message } from '../hooks/useAIChat'
 
 const SUGGESTIONS = [
@@ -38,9 +40,12 @@ export function ChatPage(): React.JSX.Element {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [input, setInput] = React.useState('')
 
+  const { model, selectedModelId, setSelectedModel } = useModel()
+
   const { isLoading, error, sendMessage, stopStreaming, dismissError } = useAIChat(
     messages,
     setMessages,
+    selectedModelId,
   )
 
   const { getFeedback, submitFeedback } = useFeedback(currentSessionId)
@@ -215,7 +220,7 @@ export function ChatPage(): React.JSX.Element {
             <History size={14} />
           </button>
           <span className="chat-subheader-name">道衍 AI</span>
-          <span className="chat-model-tag">GLM 5</span>
+          <ModelSelector model={model} onSelect={setSelectedModel} disabled={isLoading} />
           {messages.length > 0 && (
             <>
               <button className="chat-icon-btn" onClick={handleNewChat} title="新对话">

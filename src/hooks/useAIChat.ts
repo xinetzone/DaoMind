@@ -34,6 +34,7 @@ function getErrorMessage(code: string, backendMsg: string): string {
 export function useAIChat(
   messages: Message[],
   setMessages: Dispatch<SetStateAction<Message[]>>,
+  modelId?: string,
 ): {
   isLoading: boolean
   error: string | null
@@ -80,7 +81,7 @@ export function useAIChat(
             'Content-Type': 'application/json',
             Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
           },
-          body: JSON.stringify({ messages: apiMessages }),
+          body: JSON.stringify({ messages: apiMessages, model: modelId }),
           signal: abortRef.current.signal,
           openWhenHidden: true,
 
