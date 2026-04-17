@@ -333,14 +333,14 @@ img {
   pointer-events: none;
 }
 .chat-welcome-logo {
-  width: 68px;
-  height: 68px;
+  width: 44px;
+  height: 44px;
   color: var(--primary);
   margin-bottom: 1.25rem;
   animation: float 5s ease-in-out infinite;
 }
 .chat-welcome-title {
-  font-size: 2.75rem;
+  font-size: 2rem;
   font-weight: 800;
   letter-spacing: 0.12em;
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 65%);
@@ -676,11 +676,11 @@ img {
     padding: 0.75rem 1rem 0.625rem;
   }
   .chat-welcome-logo {
-    width: 56px;
-    height: 56px;
+    width: 36px;
+    height: 36px;
   }
   .chat-welcome-title {
-    font-size: 2.25rem;
+    font-size: 1.75rem;
   }
 }
 
