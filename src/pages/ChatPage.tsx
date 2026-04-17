@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { Send, Square, RotateCcw, MessageCircle, X, History, Download, Network } from 'lucide-react'
+import { Send, Square, RotateCcw, MessageCircle, X, History, Download, Network, LayoutTemplate } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -14,6 +14,7 @@ import { DaoLogo } from '../components/DaoLogo'
 import { downloadMarkdown } from '../utils/exportChat'
 import { useMindMap } from '../hooks/useMindMap'
 import { MindMapModal } from '../components/MindMapModal'
+import { PromptPanel } from '../components/PromptPanel'
 import type { Message } from '../hooks/useAIChat'
 
 const SUGGESTIONS = [
@@ -29,6 +30,7 @@ export function ChatPage(): React.JSX.Element {
 
   const [messages, setMessages] = React.useState<Message[]>(() => currentSession?.messages ?? [])
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
+  const [showPromptPanel, setShowPromptPanel] = React.useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -310,7 +312,25 @@ export function ChatPage(): React.JSX.Element {
 
         {/* Input */}
         <footer className="chat-footer">
+          {showPromptPanel && (
+            <PromptPanel
+              onSelect={(prompt) => {
+                setInput(prompt)
+                setTimeout(() => textareaRef.current?.focus(), 0)
+              }}
+              onClose={() => setShowPromptPanel(false)}
+            />
+          )}
           <form className="chat-input-wrap" onSubmit={handleSubmit}>
+            <button
+              type="button"
+              className={`chat-prompt-btn${showPromptPanel ? ' active' : ''}`}
+              onClick={() => setShowPromptPanel((v) => !v)}
+              title="提示词模板"
+              tabIndex={-1}
+            >
+              <LayoutTemplate size={15} />
+            </button>
             <textarea
               ref={textareaRef}
               className="chat-input"
