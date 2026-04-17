@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react'
 
 export function DaoLogo({ className }: { className?: string }): React.JSX.Element {
   return (
@@ -19,5 +19,5 @@ export function DaoLogo({ className }: { className?: string }): React.JSX.Elemen
       <circle cx="16" cy="9" r="2.5" fill="currentColor" />
       <circle cx="16" cy="23" r="2.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
     </svg>
-  );
+  )
 }

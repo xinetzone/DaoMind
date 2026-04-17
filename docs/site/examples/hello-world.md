@@ -6,11 +6,11 @@
 
 ```typescript
 // hello-world.ts
-import { defineModule, createContainer } from '@daomind/anything';
+import { defineModule, createContainer } from '@daomind/anything'
 
 // 1. 定义契约（无名）
 interface Greeter {
-  greet(name: string): string;
+  greet(name: string): string
 }
 
 // 2. 创建模块（有名）
@@ -19,19 +19,19 @@ const greeterModule = defineModule<Greeter>({
   setup() {
     return {
       greet(name: string) {
-        return `你好，${name}！欢迎来到 DaoMind 的世界。`;
-      }
-    };
-  }
-});
+        return `你好，${name}！欢迎来到 DaoMind 的世界。`
+      },
+    }
+  },
+})
 
 // 3. 使用模块
-const container = createContainer();
-container.register(greeterModule);
-await container.initialize();
+const container = createContainer()
+container.register(greeterModule)
+await container.initialize()
 
-const greeter = container.get<Greeter>('greeter');
-console.log(greeter.greet('道友'));
+const greeter = container.get<Greeter>('greeter')
+console.log(greeter.greet('道友'))
 // 输出: 你好，道友！欢迎来到 DaoMind 的世界。
 ```
 

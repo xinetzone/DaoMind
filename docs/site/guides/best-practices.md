@@ -11,25 +11,25 @@
 ```typescript
 // ❌ 避免：过大的接口
 interface GodModule {
-  createUser(data: unknown): Promise<User>;
-  deleteUser(id: string): Promise<void>;
-  sendEmail(to: string, content: string): Promise<void>;
-  generateReport(): Promise<Report>;
+  createUser(data: unknown): Promise<User>
+  deleteUser(id: string): Promise<void>
+  sendEmail(to: string, content: string): Promise<void>
+  generateReport(): Promise<Report>
   // ... 20 more methods
 }
 
 // ✅ 推荐：职责单一的接口
 interface UserRepository {
-  create(data: CreateUserDto): Promise<User>;
-  delete(id: string): Promise<void>;
+  create(data: CreateUserDto): Promise<User>
+  delete(id: string): Promise<void>
 }
 
 interface EmailService {
-  send(to: string, content: string): Promise<void>;
+  send(to: string, content: string): Promise<void>
 }
 
 interface ReportGenerator {
-  generate(): Promise<Report>;
+  generate(): Promise<Report>
 }
 ```
 
@@ -40,7 +40,7 @@ interface ReportGenerator {
 ```typescript
 // ✅ 正确：依赖接口
 interface PaymentGateway {
-  charge(amount: number, currency: string): Promise<ChargeResult>;
+  charge(amount: number, currency: string): Promise<ChargeResult>
 }
 
 const orderModule = defineModule({
@@ -48,12 +48,12 @@ const orderModule = defineModule({
   setup({ payment }) {
     return {
       async createOrder(items: OrderItem[]) {
-        const total = calculateTotal(items);
-        return payment.charge(total, 'CNY'); // 不关心具体实现
-      }
-    };
-  }
-});
+        const total = calculateTotal(items)
+        return payment.charge(total, 'CNY') // 不关心具体实现
+      },
+    }
+  },
+})
 ```
 
 ---
@@ -104,20 +104,20 @@ const appContainer = createContainer();
 ### 使用 Result 类型
 
 ```typescript
-type Result<T, E = Error> = 
-  | { ok: true; value: T }
-  | { ok: false; error: E };
+type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E }
 
 interface UserService {
-  findUser(id: string): Promise<Result<User, 'NOT_FOUND' | 'DB_ERROR'>>;
+  findUser(id: string): Promise<Result<User, 'NOT_FOUND' | 'DB_ERROR'>>
 }
 
 // 使用时强制处理错误
-const result = await userService.findUser('123');
+const result = await userService.findUser('123')
 if (!result.ok) {
   switch (result.error) {
-    case 'NOT_FOUND': return handle404();
-    case 'DB_ERROR': return handle500();
+    case 'NOT_FOUND':
+      return handle404()
+    case 'DB_ERROR':
+      return handle500()
   }
 }
 // 此处 result.value 类型安全
@@ -131,22 +131,22 @@ if (!result.ok) {
 
 ```typescript
 // 生产实现
-const emailService: EmailService = new SmtpEmailService(config);
+const emailService: EmailService = new SmtpEmailService(config)
 
 // 测试替换
 const mockEmailService: EmailService = {
   send: vi.fn().mockResolvedValue(undefined),
-};
+}
 
 // 测试
 test('创建用户时发送欢迎邮件', async () => {
-  const userModule = createUserModule({ email: mockEmailService });
-  await userModule.createUser({ name: '测试用户', email: 'test@test.com' });
+  const userModule = createUserModule({ email: mockEmailService })
+  await userModule.createUser({ name: '测试用户', email: 'test@test.com' })
   expect(mockEmailService.send).toHaveBeenCalledWith(
     'test@test.com',
-    expect.stringContaining('欢迎')
-  );
-});
+    expect.stringContaining('欢迎'),
+  )
+})
 ```
 
 ---
@@ -161,10 +161,10 @@ const heavyModule = defineModule({
   // 只在第一次使用时初始化
   lazy: true,
   async setup() {
-    const { HeavyLibrary } = await import('./heavy-library');
-    return new HeavyLibrary();
-  }
-});
+    const { HeavyLibrary } = await import('./heavy-library')
+    return new HeavyLibrary()
+  },
+})
 ```
 
 ### 不可变状态
@@ -178,7 +178,7 @@ handlers: {
       ...state,
       items: [...state.items, message.item]
     };
-    
+
     // ❌ 避免直接修改
     // state.items.push(message.item);
     // return state;

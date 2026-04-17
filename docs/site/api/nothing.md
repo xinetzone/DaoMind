@@ -21,30 +21,30 @@ pnpm add @daomind/nothing
 
 ```typescript
 interface ExistenceContract {
-  readonly existentialType: 'nothing' | 'anything';
+  readonly existentialType: 'nothing' | 'anything'
 }
 ```
 
-| 值 | 含义 |
-|----|------|
-| `'nothing'` | 处于"无名"状态（类型定义层） |
+| 值           | 含义                           |
+| ------------ | ------------------------------ |
+| `'nothing'`  | 处于"无名"状态（类型定义层）   |
 | `'anything'` | 处于"有名"状态（运行时实例层） |
 
 **示例**：
 
 ```typescript
-import type { ExistenceContract } from '@daomind/nothing';
+import type { ExistenceContract } from '@daomind/nothing'
 
 interface UserModule extends ExistenceContract {
-  readonly name: string;
-  readonly email: string;
+  readonly name: string
+  readonly email: string
 }
 
 const user: UserModule = {
-  existentialType: 'anything',  // 从"无名"到"有名"
+  existentialType: 'anything', // 从"无名"到"有名"
   name: 'Alice',
   email: 'alice@example.com',
-};
+}
 ```
 
 ---
@@ -55,7 +55,7 @@ const user: UserModule = {
 
 ```typescript
 interface EmptyInterface {
-  readonly [key: string]: never;
+  readonly [key: string]: never
 }
 ```
 
@@ -65,9 +65,9 @@ interface EmptyInterface {
 
 ```typescript
 interface MutabilityContract<T> {
-  readonly from: T;
-  readonly to: T;
-  readonly transition: 'gradual' | 'sudden' | 'cyclic';
+  readonly from: T
+  readonly to: T
+  readonly transition: 'gradual' | 'sudden' | 'cyclic'
 }
 ```
 
@@ -80,7 +80,7 @@ interface MutabilityContract<T> {
 全局事件总线单例，基于 Node.js `EventEmitter`。所有 DaoMind 包通过它静默通信。
 
 ```typescript
-import { daoNothingVoid } from '@daomind/nothing';
+import { daoNothingVoid } from '@daomind/nothing'
 ```
 
 #### `observe(event)`
@@ -92,7 +92,7 @@ daoNothingVoid.observe({
   type: 'my:event',
   source: 'my-module',
   data: { key: 'value' },
-});
+})
 ```
 
 #### `reflect()`
@@ -100,7 +100,7 @@ daoNothingVoid.observe({
 查询所有已写入的历史事件（只读快照）。
 
 ```typescript
-const events = daoNothingVoid.reflect();
+const events = daoNothingVoid.reflect()
 // => ReadonlyArray<DaoNothingEvent>
 ```
 
@@ -109,15 +109,15 @@ const events = daoNothingVoid.reflect();
 清空所有事件历史并移除所有监听器。**仅用于测试。**
 
 ```typescript
-daoNothingVoid.void();
+daoNothingVoid.void()
 ```
 
 #### 监听事件
 
 ```typescript
 daoNothingVoid.on('observed', (event: DaoNothingEvent) => {
-  console.log(event.type, event.source, event.data);
-});
+  console.log(event.type, event.source, event.data)
+})
 ```
 
 ---
@@ -128,10 +128,10 @@ daoNothingVoid.on('observed', (event: DaoNothingEvent) => {
 
 ```typescript
 interface DaoNothingEvent {
-  readonly type: string;       // 事件类型，如 'agent:lifecycle'
-  readonly source: string;     // 来源标识
-  readonly data: unknown;      // 事件载荷
-  readonly timestamp: number;  // 毫秒时间戳
+  readonly type: string // 事件类型，如 'agent:lifecycle'
+  readonly source: string // 来源标识
+  readonly data: unknown // 事件载荷
+  readonly timestamp: number // 毫秒时间戳
 }
 ```
 
@@ -144,7 +144,7 @@ interface DaoNothingEvent {
 判断值是否为"无名"状态。
 
 ```typescript
-import { daoIsNothing } from '@daomind/nothing';
+import { daoIsNothing } from '@daomind/nothing'
 
 if (daoIsNothing(obj)) {
   // obj 处于 nothing 状态
@@ -156,9 +156,9 @@ if (daoIsNothing(obj)) {
 从"无名"孵化，进入"有名"状态。
 
 ```typescript
-import { daoBirthFromNothing } from '@daomind/nothing';
+import { daoBirthFromNothing } from '@daomind/nothing'
 
-const entity = daoBirthFromNothing(rawData);
+const entity = daoBirthFromNothing(rawData)
 // entity.existentialType === 'anything'
 ```
 
@@ -171,57 +171,57 @@ const entity = daoBirthFromNothing(rawData);
 ### `DaoOption<T>` — 有值 / 无值
 
 ```typescript
-type DaoOption<T> = DaoSome<T> | DaoNone;
+type DaoOption<T> = DaoSome<T> | DaoNone
 ```
 
 #### 构造
 
 ```typescript
-import { daoSome, daoNone, daoFromNullable } from '@daomind/nothing';
+import { daoSome, daoNone, daoFromNullable } from '@daomind/nothing'
 
-const some = daoSome(42);          // { _tag: 'some', value: 42 }
-const none = daoNone();            // { _tag: 'none' }
-const opt  = daoFromNullable(maybeNull); // null/undefined → None，否则 → Some
+const some = daoSome(42) // { _tag: 'some', value: 42 }
+const none = daoNone() // { _tag: 'none' }
+const opt = daoFromNullable(maybeNull) // null/undefined → None，否则 → Some
 ```
 
 #### 判断
 
 ```typescript
-import { daoIsSome, daoIsNone } from '@daomind/nothing';
+import { daoIsSome, daoIsNone } from '@daomind/nothing'
 
 if (daoIsSome(opt)) {
-  console.log(opt.value);   // TypeScript 知道这里有值
+  console.log(opt.value) // TypeScript 知道这里有值
 }
 ```
 
 #### 操作
 
 ```typescript
-import { daoMap, daoUnwrap, daoUnwrapOrThrow } from '@daomind/nothing';
+import { daoMap, daoUnwrap, daoUnwrapOrThrow } from '@daomind/nothing'
 
 // 映射 Some 内部值，None 透传
-const doubled = daoMap(daoSome(3), x => x * 2); // Some(6)
+const doubled = daoMap(daoSome(3), (x) => x * 2) // Some(6)
 
 // 获取值，None 则返回 fallback
-const value = daoUnwrap(opt, 'default');
+const value = daoUnwrap(opt, 'default')
 
 // 获取值，None 则抛出错误
-const value2 = daoUnwrapOrThrow(opt, '找不到用户');
+const value2 = daoUnwrapOrThrow(opt, '找不到用户')
 ```
 
 **完整示例**：
 
 ```typescript
 function findUser(id: string): DaoOption<User> {
-  const user = db.find(id);
-  return daoFromNullable(user);
+  const user = db.find(id)
+  return daoFromNullable(user)
 }
 
-const userOpt = findUser('u-123');
+const userOpt = findUser('u-123')
 if (daoIsSome(userOpt)) {
-  console.log('找到用户:', userOpt.value.name);
+  console.log('找到用户:', userOpt.value.name)
 } else {
-  console.log('用户不存在');
+  console.log('用户不存在')
 }
 ```
 
@@ -230,52 +230,52 @@ if (daoIsSome(userOpt)) {
 ### `DaoResult<T, E>` — 成功 / 失败
 
 ```typescript
-type DaoResult<T, E = Error> = DaoOk<T> | DaoErr<E>;
+type DaoResult<T, E = Error> = DaoOk<T> | DaoErr<E>
 ```
 
 #### 构造
 
 ```typescript
-import { daoOk, daoErr, daoTry, daoTryAsync } from '@daomind/nothing';
+import { daoOk, daoErr, daoTry, daoTryAsync } from '@daomind/nothing'
 
-const ok  = daoOk('success');          // { _tag: 'ok', value: 'success' }
-const err = daoErr(new Error('失败'));  // { _tag: 'err', error: Error }
+const ok = daoOk('success') // { _tag: 'ok', value: 'success' }
+const err = daoErr(new Error('失败')) // { _tag: 'err', error: Error }
 
 // 自动捕获同步异常
-const result = daoTry(() => JSON.parse(input));
+const result = daoTry(() => JSON.parse(input))
 
 // 自动捕获异步异常
-const asyncResult = await daoTryAsync(() => fetch('/api/user'));
+const asyncResult = await daoTryAsync(() => fetch('/api/user'))
 ```
 
 #### 判断
 
 ```typescript
-import { daoIsOk, daoIsErr } from '@daomind/nothing';
+import { daoIsOk, daoIsErr } from '@daomind/nothing'
 
 if (daoIsOk(result)) {
-  console.log('成功:', result.value);
+  console.log('成功:', result.value)
 } else {
-  console.log('失败:', result.error.message);
+  console.log('失败:', result.error.message)
 }
 ```
 
 #### 操作
 
 ```typescript
-import { daoMapResult, daoMapErr, daoUnwrapResult, daoUnwrapOr } from '@daomind/nothing';
+import { daoMapResult, daoMapErr, daoUnwrapResult, daoUnwrapOr } from '@daomind/nothing'
 
 // 映射 Ok 值
-const upper = daoMapResult(daoOk('hello'), s => s.toUpperCase()); // Ok('HELLO')
+const upper = daoMapResult(daoOk('hello'), (s) => s.toUpperCase()) // Ok('HELLO')
 
 // 映射 Err 值
-const mapped = daoMapErr(daoErr(404), code => `HTTP ${code}`);
+const mapped = daoMapErr(daoErr(404), (code) => `HTTP ${code}`)
 
 // 获取值，Err 则抛出
-const value = daoUnwrapResult(result);
+const value = daoUnwrapResult(result)
 
 // 获取值，Err 则返回 fallback
-const safe = daoUnwrapOr(result, '默认值');
+const safe = daoUnwrapOr(result, '默认值')
 ```
 
 **完整示例**：
@@ -283,17 +283,17 @@ const safe = daoUnwrapOr(result, '默认值');
 ```typescript
 async function fetchUserData(id: string): Promise<DaoResult<User>> {
   return daoTryAsync(async () => {
-    const resp = await fetch(`/api/users/${id}`);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    return resp.json() as Promise<User>;
-  });
+    const resp = await fetch(`/api/users/${id}`)
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+    return resp.json() as Promise<User>
+  })
 }
 
-const result = await fetchUserData('u-123');
+const result = await fetchUserData('u-123')
 if (daoIsOk(result)) {
-  console.log(result.value.name);
+  console.log(result.value.name)
 } else {
-  console.error('请求失败:', result.error.message);
+  console.error('请求失败:', result.error.message)
 }
 ```
 
@@ -318,25 +318,42 @@ if (daoIsOk(result)) {
 
 ```typescript
 // 类型契约
-import type { ExistenceContract, EmptyInterface, MutabilityContract } from '@daomind/nothing';
-import type { WuWeiConstraint, ZiRanInvariant } from '@daomind/nothing';
-import type { Void, Potential, Origin } from '@daomind/nothing';
+import type { ExistenceContract, EmptyInterface, MutabilityContract } from '@daomind/nothing'
+import type { WuWeiConstraint, ZiRanInvariant } from '@daomind/nothing'
+import type { Void, Potential, Origin } from '@daomind/nothing'
 
 // 事件总线
-import type { DaoNothingEvent } from '@daomind/nothing';
-import { daoNothingVoid, DaoNothingVoid } from '@daomind/nothing';
+import type { DaoNothingEvent } from '@daomind/nothing'
+import { daoNothingVoid, DaoNothingVoid } from '@daomind/nothing'
 
 // 类型守卫
-import { daoIsNothing, daoBirthFromNothing } from '@daomind/nothing';
+import { daoIsNothing, daoBirthFromNothing } from '@daomind/nothing'
 
 // DaoOption
-import type { DaoSome, DaoNone, DaoOption } from '@daomind/nothing';
-import { daoSome, daoNone, daoIsSome, daoIsNone,
-         daoFromNullable, daoMap, daoUnwrap, daoUnwrapOrThrow } from '@daomind/nothing';
+import type { DaoSome, DaoNone, DaoOption } from '@daomind/nothing'
+import {
+  daoSome,
+  daoNone,
+  daoIsSome,
+  daoIsNone,
+  daoFromNullable,
+  daoMap,
+  daoUnwrap,
+  daoUnwrapOrThrow,
+} from '@daomind/nothing'
 
 // DaoResult
-import type { DaoOk, DaoErr, DaoResult } from '@daomind/nothing';
-import { daoOk, daoErr, daoIsOk, daoIsErr,
-         daoTry, daoTryAsync, daoMapResult, daoMapErr,
-         daoUnwrapResult, daoUnwrapOr } from '@daomind/nothing';
+import type { DaoOk, DaoErr, DaoResult } from '@daomind/nothing'
+import {
+  daoOk,
+  daoErr,
+  daoIsOk,
+  daoIsErr,
+  daoTry,
+  daoTryAsync,
+  daoMapResult,
+  daoMapErr,
+  daoUnwrapResult,
+  daoUnwrapOr,
+} from '@daomind/nothing'
 ```

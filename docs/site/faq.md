@@ -76,13 +76,13 @@ DaoMind 主要面向 **ES Modules**。CommonJS 支持通过构建配置处理：
 ```typescript
 // TypeScript 源码
 interface UserContract {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
-const user: UserContract = { id: '1', name: 'DaoMind' };
+const user: UserContract = { id: '1', name: 'DaoMind' }
 
 // 编译后 JavaScript（interface 完全消失）
-const user = { id: '1', name: 'DaoMind' };
+const user = { id: '1', name: 'DaoMind' }
 ```
 
 ### Q：如何处理循环依赖？
@@ -93,8 +93,10 @@ const user = { id: '1', name: 'DaoMind' };
 const moduleA = defineModule({
   id: 'a',
   deps: () => ({ b: moduleB }), // 函数形式，延迟求值
-  setup({ b }) { /* ... */ }
-});
+  setup({ b }) {
+    /* ... */
+  },
+})
 ```
 
 ### Q：Agent 系统的性能如何？
@@ -114,29 +116,33 @@ const moduleA = defineModule({
 ```typescript
 // ❌ 错误：实现不完整
 const myModule = {
-  id: 'test'
+  id: 'test',
   // 缺少 initialize 方法
-} satisfies ModuleContract;
+} satisfies ModuleContract
 
 // ✅ 修复：补全所有必需属性
 const myModule = {
   id: 'test',
-  async initialize() { /* ... */ },
-  async destroy() { /* ... */ }
-} satisfies ModuleContract;
+  async initialize() {
+    /* ... */
+  },
+  async destroy() {
+    /* ... */
+  },
+} satisfies ModuleContract
 ```
 
 ### 错误：模块未初始化就使用
 
 ```typescript
 // ❌ 错误
-const container = createContainer();
-container.register(myModule);
-const instance = container.get('my-module'); // 还未初始化！
+const container = createContainer()
+container.register(myModule)
+const instance = container.get('my-module') // 还未初始化！
 
 // ✅ 正确
-await container.initialize(); // 先初始化
-const instance = container.get('my-module');
+await container.initialize() // 先初始化
+const instance = container.get('my-module')
 ```
 
 ---

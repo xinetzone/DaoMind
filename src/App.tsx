@@ -1,50 +1,49 @@
-import React, { useState, useEffect } from "react";
-import { DaoLogo } from "./components/DaoLogo";
-import { ChatPage } from "./pages/ChatPage";
-import { DocsPage } from "./pages/DocsPage";
-import { NAV_SECTIONS } from "./data/navigation";
+import React, { useState, useEffect } from 'react'
+import { DaoLogo } from './components/DaoLogo'
+import { ChatPage } from './pages/ChatPage'
+import { DocsPage } from './pages/DocsPage'
+import { NAV_SECTIONS } from './data/navigation'
 
 // ── Hash routing helpers ────────────────────────────────────
 
-type PageState = { type: "chat" } | { type: "docs"; docPath: string };
+type PageState = { type: 'chat' } | { type: 'docs'; docPath: string }
 
 function getPageState(): PageState {
-  const hash = window.location.hash; // e.g. '#docs/guide/getting-started'
-  if (hash.startsWith("#docs")) {
-    const docPath = hash.slice(5) || "/guide/getting-started";
-    return { type: "docs", docPath };
+  const hash = window.location.hash // e.g. '#docs/guide/getting-started'
+  if (hash.startsWith('#docs')) {
+    const docPath = hash.slice(5) || '/guide/getting-started'
+    return { type: 'docs', docPath }
   }
-  return { type: "chat" };
+  return { type: 'chat' }
 }
 
 function navigateDocs(docPath: string): void {
-  window.location.hash = `docs${docPath}`;
+  window.location.hash = `docs${docPath}`
 }
 
 function navigateChat(): void {
-  window.location.hash = "chat";
+  window.location.hash = 'chat'
 }
 
 // ── App ─────────────────────────────────────────────────────
 
 export default function App(): React.JSX.Element {
-  const [pageState, setPageState] = useState<PageState>(getPageState);
+  const [pageState, setPageState] = useState<PageState>(getPageState)
 
   useEffect(() => {
-    const handler = (): void => setPageState(getPageState());
-    window.addEventListener("hashchange", handler);
-    return (): void => window.removeEventListener("hashchange", handler);
-  }, []);
+    const handler = (): void => setPageState(getPageState())
+    window.addEventListener('hashchange', handler)
+    return (): void => window.removeEventListener('hashchange', handler)
+  }, [])
 
-  const isOnDocs = pageState.type === "docs";
-  const activeDocPath = isOnDocs ? pageState.docPath : "";
+  const isOnDocs = pageState.type === 'docs'
+  const activeDocPath = isOnDocs ? pageState.docPath : ''
 
   const activeSection = NAV_SECTIONS.find((s) =>
     activeDocPath
-      ? s.items.some((item) => item.path === activeDocPath) ||
-        activeDocPath.startsWith(`/${s.key}`)
-      : false
-  );
+      ? s.items.some((item) => item.path === activeDocPath) || activeDocPath.startsWith(`/${s.key}`)
+      : false,
+  )
 
   return (
     <div className="app">
@@ -62,7 +61,7 @@ export default function App(): React.JSX.Element {
             <button
               key={section.key}
               className={`app-nav-link ${
-                isOnDocs && activeSection?.key === section.key ? "active" : ""
+                isOnDocs && activeSection?.key === section.key ? 'active' : ''
               }`}
               onClick={() => navigateDocs(section.defaultPath)}
             >
@@ -71,10 +70,7 @@ export default function App(): React.JSX.Element {
           ))}
         </div>
 
-        <button
-          className={`app-nav-chat-btn ${!isOnDocs ? "active" : ""}`}
-          onClick={navigateChat}
-        >
+        <button className={`app-nav-chat-btn ${!isOnDocs ? 'active' : ''}`} onClick={navigateChat}>
           <DaoLogo className="app-nav-chat-logo" />
           <span>道衍</span>
         </button>
@@ -82,12 +78,8 @@ export default function App(): React.JSX.Element {
 
       {/* ── Page content ────────────────────────────────────── */}
       <div className="app-content">
-        {isOnDocs ? (
-          <DocsPage docPath={activeDocPath} onNavigate={navigateDocs} />
-        ) : (
-          <ChatPage />
-        )}
+        {isOnDocs ? <DocsPage docPath={activeDocPath} onNavigate={navigateDocs} /> : <ChatPage />}
       </div>
     </div>
-  );
+  )
 }

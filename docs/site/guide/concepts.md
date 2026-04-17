@@ -11,15 +11,15 @@
 ```typescript
 // 无名：纯类型定义，编译后不存在
 type UserContract = {
-  id: string;
-  name: string;
-  email: string;
-};
+  id: string
+  name: string
+  email: string
+}
 
 interface ModuleContract {
-  readonly id: string;
-  initialize(): Promise<void>;
-  destroy(): Promise<void>;
+  readonly id: string
+  initialize(): Promise<void>
+  destroy(): Promise<void>
 }
 ```
 
@@ -41,12 +41,12 @@ interface ModuleContract {
 const userModule = {
   id: 'user-module',
   async initialize() {
-    console.log('用户模块已初始化');
+    console.log('用户模块已初始化')
   },
   async destroy() {
-    console.log('用户模块已销毁');
-  }
-} satisfies ModuleContract; // 与无名契约连接
+    console.log('用户模块已销毁')
+  },
+} satisfies ModuleContract // 与无名契约连接
 ```
 
 ### 有名的特性
@@ -72,13 +72,13 @@ abstract class Base     →  class Impl extends Base
 在 DaoMind 中，**道**代表**模块系统**——连接无名与有名的桥梁：
 
 ```typescript
-import { createModule } from '@daomind/core';
+import { createModule } from '@daomind/core'
 
 // 道：连接类型与实现的桥梁
 const userModule = createModule<UserContract>({
   id: 'user',
   // 实现...
-});
+})
 ```
 
 ## 下一步

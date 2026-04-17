@@ -7,7 +7,7 @@
 帛书《道德经》第一章：
 
 > **无名，万物之始；有名，万物之母。**
-> 
+>
 > 故常无欲，以观其妙；常有欲，以观其徼。
 
 在软件工程中：
@@ -22,7 +22,7 @@ TypeScript 天然具备这种二元性：
 ```typescript
 // ── 无名空间 ──────────────────────────────────────
 type Point = { x: number; y: number };        // type alias
-interface Shape { area(): number }             // interface  
+interface Shape { area(): number }             // interface
 enum Direction { Up, Down, Left, Right }       // const enum (类型用途)
 
 // 以上在编译后完全消失 → 零运行时
@@ -42,29 +42,43 @@ function distance(a: Point, b: Point) { ... } // 函数
 ```typescript
 // 无名：先定义"什么"
 interface CacheService {
-  get<T>(key: string): T | undefined;
-  set<T>(key: string, value: T, ttl?: number): void;
-  delete(key: string): void;
-  clear(): void;
+  get<T>(key: string): T | undefined
+  set<T>(key: string, value: T, ttl?: number): void
+  delete(key: string): void
+  clear(): void
 }
 
 // 有名：再实现"怎么做"
 const memoryCache: CacheService = {
   _store: new Map(),
-  get(key) { return this._store.get(key); },
-  set(key, value) { this._store.set(key, value); },
-  delete(key) { this._store.delete(key); },
-  clear() { this._store.clear(); }
-};
+  get(key) {
+    return this._store.get(key)
+  },
+  set(key, value) {
+    this._store.set(key, value)
+  },
+  delete(key) {
+    this._store.delete(key)
+  },
+  clear() {
+    this._store.clear()
+  },
+}
 ```
 
 ### 模式 2：多实现同一契约
 
 ```typescript
 // 同一个无名契约 → 多个有名实现
-const redisCache: CacheService = { /* Redis 实现 */ };
-const localStorageCache: CacheService = { /* LocalStorage 实现 */ };
-const nullCache: CacheService = { /* 空实现，用于测试 */ };
+const redisCache: CacheService = {
+  /* Redis 实现 */
+}
+const localStorageCache: CacheService = {
+  /* LocalStorage 实现 */
+}
+const nullCache: CacheService = {
+  /* 空实现，用于测试 */
+}
 ```
 
 ### 模式 3：泛型无名
@@ -100,22 +114,22 @@ interface ModuleContract { ... } // 这才是无名
 ```typescript
 // ❌ 为了无名而无名
 interface StringWrapper {
-  value: string;
-  toString(): string;
+  value: string
+  toString(): string
 }
 
 // ✅ 只有在需要多实现或测试时才提取契约
-const name = 'DaoMind'; // 直接使用 string 即可
+const name = 'DaoMind' // 直接使用 string 即可
 ```
 
 ## 何时使用无名
 
-| 场景 | 推荐 |
-|------|------|
-| 需要多个实现 | ✅ 定义接口 |
-| 需要测试替换 | ✅ 定义接口 |
-| 单一简单实现 | ❌ 直接写值 |
-| 配置对象 | ✅ 定义 type |
+| 场景         | 推荐         |
+| ------------ | ------------ |
+| 需要多个实现 | ✅ 定义接口  |
+| 需要测试替换 | ✅ 定义接口  |
+| 单一简单实现 | ❌ 直接写值  |
+| 配置对象     | ✅ 定义 type |
 | 函数签名共享 | ✅ 定义 type |
 
 ## 下一步

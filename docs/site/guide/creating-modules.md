@@ -16,34 +16,34 @@
 ## 创建基础模块
 
 ```typescript
-import { defineModule } from '@daomind/core';
+import { defineModule } from '@daomind/core'
 
 // 定义模块契约
 interface LoggerModule {
-  log(message: string, level?: 'info' | 'warn' | 'error'): void;
-  getLogs(): string[];
+  log(message: string, level?: 'info' | 'warn' | 'error'): void
+  getLogs(): string[]
 }
 
 // 创建模块
 const loggerModule = defineModule<LoggerModule>({
   id: '@myapp/logger',
   version: '1.0.0',
-  
+
   setup() {
-    const logs: string[] = [];
-    
+    const logs: string[] = []
+
     return {
       log(message, level = 'info') {
-        const entry = `[${level.toUpperCase()}] ${new Date().toISOString()} ${message}`;
-        logs.push(entry);
-        console[level](entry);
+        const entry = `[${level.toUpperCase()}] ${new Date().toISOString()} ${message}`
+        logs.push(entry)
+        console[level](entry)
       },
       getLogs() {
-        return [...logs];
-      }
-    };
-  }
-});
+        return [...logs]
+      },
+    }
+  },
+})
 ```
 
 ## 模块依赖
@@ -54,21 +54,21 @@ const loggerModule = defineModule<LoggerModule>({
 const analyticsModule = defineModule({
   id: '@myapp/analytics',
   version: '1.0.0',
-  
+
   // 声明依赖
   deps: {
     logger: loggerModule,
   },
-  
+
   setup({ logger }) {
     // 使用依赖的模块
     return {
       track(event: string, data?: Record<string, unknown>) {
-        logger.log(`Event: ${event} ${JSON.stringify(data ?? {})}`);
-      }
-    };
-  }
-});
+        logger.log(`Event: ${event} ${JSON.stringify(data ?? {})}`)
+      },
+    }
+  },
+})
 ```
 
 ## 异步初始化
@@ -77,45 +77,45 @@ const analyticsModule = defineModule({
 const dbModule = defineModule({
   id: '@myapp/database',
   version: '1.0.0',
-  
+
   async setup() {
     // 异步初始化
     const connection = await createConnection({
       host: 'localhost',
       port: 5432,
-      database: 'myapp'
-    });
-    
+      database: 'myapp',
+    })
+
     return {
       async query(sql: string, params?: unknown[]) {
-        return connection.execute(sql, params);
+        return connection.execute(sql, params)
       },
       async close() {
-        await connection.close();
-      }
-    };
-  }
-});
+        await connection.close()
+      },
+    }
+  },
+})
 ```
 
 ## 注册到容器
 
 ```typescript
-import { createContainer } from '@daomind/core';
+import { createContainer } from '@daomind/core'
 
-const container = createContainer();
+const container = createContainer()
 
 // 注册模块
-container.register(loggerModule);
-container.register(analyticsModule);
-container.register(dbModule);
+container.register(loggerModule)
+container.register(analyticsModule)
+container.register(dbModule)
 
 // 初始化所有模块（按依赖顺序）
-await container.initialize();
+await container.initialize()
 
 // 获取模块实例
-const logger = container.get('@myapp/logger');
-logger.log('应用启动成功！');
+const logger = container.get('@myapp/logger')
+logger.log('应用启动成功！')
 ```
 
 ## 模块生命周期
@@ -128,20 +128,20 @@ register  setup    use   teardown
 ```typescript
 const module = defineModule({
   id: '@myapp/worker',
-  
+
   async setup() {
-    const worker = new Worker('./worker.js');
-    
+    const worker = new Worker('./worker.js')
+
     return {
       execute: (task) => worker.postMessage(task),
-      
+
       // 清理钩子
       [Symbol.asyncDispose]: async () => {
-        worker.terminate();
-      }
-    };
-  }
-});
+        worker.terminate()
+      },
+    }
+  },
+})
 ```
 
 ## 下一步

@@ -9,7 +9,8 @@
     "build:app": "pnpx vite build",
     "dev": "pnpx vite",
     "test": "jest",
-    "lint": "eslint . --ignore-pattern 'coverage/**'"
+    "lint": "eslint . --ignore-pattern 'coverage/**'",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"supabase/functions/**/*.ts\" \"docs/site/**/*.md\""
   },
   "engines": {
     "node": ">=18.0.0"
@@ -24,6 +25,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^10.2.0",
     "jest": "^30.0.0",
+    "prettier": "^3.8.3",
     "ts-jest": "^29.4.9",
     "typescript": "^5.7.2",
     "vite": "^5.4.11"

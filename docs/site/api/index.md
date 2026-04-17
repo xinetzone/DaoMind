@@ -42,11 +42,7 @@ npm install @daomind/nothing
 #### 导入
 
 ```typescript
-import type {
-  ExistenceContract,
-  EmptyInterface,
-  MutabilityContract,
-} from '@daomind/nothing';
+import type { ExistenceContract, EmptyInterface, MutabilityContract } from '@daomind/nothing'
 ```
 
 ---
@@ -57,17 +53,18 @@ import type {
 
 ```typescript
 interface ExistenceContract {
-  readonly existentialType: 'nothing' | 'anything';
+  readonly existentialType: 'nothing' | 'anything'
 }
 ```
 
 **字段说明**:
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
+| 字段              | 类型                      | 说明           |
+| ----------------- | ------------------------- | -------------- |
 | `existentialType` | `'nothing' \| 'anything'` | 存在性类型标记 |
 
 **哲学含义**:
+
 - `'nothing'`: 处于"无名"状态（类型定义）
 - `'anything'`: 处于"有名"状态（实例化）
 
@@ -76,19 +73,20 @@ interface ExistenceContract {
 ```typescript
 // 定义一个模块类型
 interface UserModule extends ExistenceContract {
-  readonly name: string;
-  readonly email: string;
+  readonly name: string
+  readonly email: string
 }
 
 // 创建实例（从"无名"到"有名"）
 const user: UserModule = {
-  existentialType: 'anything',  // 标记为"有名"状态
+  existentialType: 'anything', // 标记为"有名"状态
   name: 'Alice',
   email: 'alice@example.com',
-};
+}
 ```
 
 **最佳实践**:
+
 - ✅ 所有自定义类型都应继承 `ExistenceContract`
 - ✅ 实例化时始终设置 `existentialType: 'anything'`
 - ✅ 使用 `type` 导入以确保零运行时
@@ -101,11 +99,12 @@ const user: UserModule = {
 
 ```typescript
 interface EmptyInterface {
-  readonly [key: string]: never;
+  readonly [key: string]: never
 }
 ```
 
 **使用场景**:
+
 - 表示完全空的对象
 - 作为泛型约束的基础
 - 哲学概念的技术映射
@@ -114,11 +113,11 @@ interface EmptyInterface {
 
 ```typescript
 // 空对象表示"无"的状态
-const nothingness: EmptyInterface = {};
+const nothingness: EmptyInterface = {}
 
 // 作为泛型约束
 function createEmpty<T extends EmptyInterface>(): T {
-  return {} as T;
+  return {} as T
 }
 ```
 
@@ -130,21 +129,22 @@ function createEmpty<T extends EmptyInterface>(): T {
 
 ```typescript
 interface MutabilityContract<T> {
-  readonly from: T;
-  readonly to: T;
-  readonly transition: 'gradual' | 'sudden' | 'cyclic';
+  readonly from: T
+  readonly to: T
+  readonly transition: 'gradual' | 'sudden' | 'cyclic'
 }
 ```
 
 **字段说明**:
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `from` | `T` | 变化前的状态 |
-| `to` | `T` | 变化后的状态 |
-| `transition` | `'gradual' \| 'sudden' \| 'cyclic'` | 变化方式 |
+| 字段         | 类型                                | 说明         |
+| ------------ | ----------------------------------- | ------------ |
+| `from`       | `T`                                 | 变化前的状态 |
+| `to`         | `T`                                 | 变化后的状态 |
+| `transition` | `'gradual' \| 'sudden' \| 'cyclic'` | 变化方式     |
 
 **变化类型**:
+
 - `'gradual'`: 渐进式变化（如温度缓慢升高）
 - `'sudden'`: 突变（如状态切换）
 - `'cyclic'`: 循环往复（如昼夜交替）
@@ -154,15 +154,15 @@ interface MutabilityContract<T> {
 ```typescript
 // 描述用户状态变化
 interface UserState {
-  status: 'active' | 'inactive';
-  lastLogin: number;
+  status: 'active' | 'inactive'
+  lastLogin: number
 }
 
 const stateChange: MutabilityContract<UserState> = {
   from: { status: 'inactive', lastLogin: 0 },
   to: { status: 'active', lastLogin: Date.now() },
   transition: 'sudden',
-};
+}
 ```
 
 ---
@@ -182,13 +182,9 @@ npm install @daomind/anything
 #### 导入
 
 ```typescript
-import type {
-  DaoModuleMeta,
-  ModuleLifecycle,
-  DaoModuleRegistration,
-} from '@daomind/anything';
+import type { DaoModuleMeta, ModuleLifecycle, DaoModuleRegistration } from '@daomind/anything'
 
-import { DaoAnythingContainer } from '@daomind/anything';
+import { DaoAnythingContainer } from '@daomind/anything'
 ```
 
 ---
@@ -199,36 +195,36 @@ import { DaoAnythingContainer } from '@daomind/anything';
 
 ```typescript
 interface DaoModuleMeta extends ExistenceContract {
-  readonly id: string;
-  readonly name: string;
-  readonly lifecycle: ModuleLifecycle;
-  readonly createdAt: number;
-  readonly registeredAt: number;
-  readonly activatedAt?: number;
+  readonly id: string
+  readonly name: string
+  readonly lifecycle: ModuleLifecycle
+  readonly createdAt: number
+  readonly registeredAt: number
+  readonly activatedAt?: number
 }
 ```
 
 **字段说明**:
 
-| 字段 | 类型 | 必需 | 说明 |
-|------|------|------|------|
-| `id` | `string` | ✅ | 唯一标识符（建议使用 UUID） |
-| `name` | `string` | ✅ | 模块名称 |
-| `lifecycle` | `ModuleLifecycle` | ✅ | 生命周期状态 |
-| `createdAt` | `number` | ✅ | 创建时间戳（毫秒） |
-| `registeredAt` | `number` | ✅ | 注册时间戳（毫秒） |
-| `activatedAt` | `number` | ❌ | 激活时间戳（可选） |
+| 字段           | 类型              | 必需 | 说明                        |
+| -------------- | ----------------- | ---- | --------------------------- |
+| `id`           | `string`          | ✅   | 唯一标识符（建议使用 UUID） |
+| `name`         | `string`          | ✅   | 模块名称                    |
+| `lifecycle`    | `ModuleLifecycle` | ✅   | 生命周期状态                |
+| `createdAt`    | `number`          | ✅   | 创建时间戳（毫秒）          |
+| `registeredAt` | `number`          | ✅   | 注册时间戳（毫秒）          |
+| `activatedAt`  | `number`          | ❌   | 激活时间戳（可选）          |
 
 **使用示例**:
 
 ```typescript
 interface TodoModule extends DaoModuleMeta {
-  readonly title: string;
-  readonly completed: boolean;
+  readonly title: string
+  readonly completed: boolean
 }
 
 function createTodo(title: string): TodoModule {
-  const now = Date.now();
+  const now = Date.now()
   return {
     existentialType: 'anything',
     id: crypto.randomUUID(),
@@ -239,7 +235,7 @@ function createTodo(title: string): TodoModule {
     activatedAt: now,
     title,
     completed: false,
-  };
+  }
 }
 ```
 
@@ -251,11 +247,11 @@ function createTodo(title: string): TodoModule {
 
 ```typescript
 type ModuleLifecycle =
-  | 'registered'    // 已注册
-  | 'initialized'   // 已初始化
-  | 'active'        // 活跃中
-  | 'suspending'    // 暂停中
-  | 'terminated';   // 已终止
+  | 'registered' // 已注册
+  | 'initialized' // 已初始化
+  | 'active' // 活跃中
+  | 'suspending' // 暂停中
+  | 'terminated' // 已终止
 ```
 
 **状态流转图**:
@@ -268,13 +264,13 @@ registered → initialized → active → suspending → terminated
 
 **状态说明**:
 
-| 状态 | 说明 | 可执行操作 |
-|------|------|-----------|
-| `registered` | 模块已创建，未初始化 | 初始化、注销 |
-| `initialized` | 初始化完成，未激活 | 激活、注销 |
-| `active` | 正常运行中 | 暂停、终止 |
-| `suspending` | 暂时挂起 | 恢复、终止 |
-| `terminated` | 已销毁 | 无（终态） |
+| 状态          | 说明                 | 可执行操作   |
+| ------------- | -------------------- | ------------ |
+| `registered`  | 模块已创建，未初始化 | 初始化、注销 |
+| `initialized` | 初始化完成，未激活   | 激活、注销   |
+| `active`      | 正常运行中           | 暂停、终止   |
+| `suspending`  | 暂时挂起             | 恢复、终止   |
+| `terminated`  | 已销毁               | 无（终态）   |
 
 ---
 
@@ -284,15 +280,15 @@ registered → initialized → active → suspending → terminated
 
 ```typescript
 class DaoAnythingContainer {
-  constructor();
-  
-  register<T extends DaoModuleMeta>(module: T): void;
-  get<T extends DaoModuleMeta>(id: string): T | undefined;
-  has(id: string): boolean;
-  remove(id: string): boolean;
-  clear(): void;
-  size(): number;
-  list(): DaoModuleMeta[];
+  constructor()
+
+  register<T extends DaoModuleMeta>(module: T): void
+  get<T extends DaoModuleMeta>(id: string): T | undefined
+  has(id: string): boolean
+  remove(id: string): boolean
+  clear(): void
+  size(): number
+  list(): DaoModuleMeta[]
 }
 ```
 
@@ -303,16 +299,18 @@ class DaoAnythingContainer {
 注册一个模块到容器。
 
 ```typescript
-const container = new DaoAnythingContainer();
-const todo = createTodo('学习 DaoMind');
+const container = new DaoAnythingContainer()
+const todo = createTodo('学习 DaoMind')
 
-container.register(todo);
+container.register(todo)
 ```
 
 **参数**:
+
 - `module`: 要注册的模块实例
 
 **异常**:
+
 - 如果 `id` 已存在，抛出错误
 
 ---
@@ -322,16 +320,18 @@ container.register(todo);
 根据 ID 获取模块。
 
 ```typescript
-const todo = container.get<TodoModule>('todo-id-123');
+const todo = container.get<TodoModule>('todo-id-123')
 if (todo) {
-  console.log(todo.title);
+  console.log(todo.title)
 }
 ```
 
 **参数**:
+
 - `id`: 模块唯一标识
 
 **返回**:
+
 - 模块实例，如果不存在返回 `undefined`
 
 ---
@@ -342,7 +342,7 @@ if (todo) {
 
 ```typescript
 if (container.has('todo-id-123')) {
-  console.log('模块存在');
+  console.log('模块存在')
 }
 ```
 
@@ -353,11 +353,12 @@ if (container.has('todo-id-123')) {
 移除模块。
 
 ```typescript
-const removed = container.remove('todo-id-123');
-console.log(removed ? '移除成功' : '模块不存在');
+const removed = container.remove('todo-id-123')
+console.log(removed ? '移除成功' : '模块不存在')
 ```
 
 **返回**:
+
 - `true`: 移除成功
 - `false`: 模块不存在
 
@@ -368,8 +369,8 @@ console.log(removed ? '移除成功' : '模块不存在');
 清空容器。
 
 ```typescript
-container.clear();
-console.log(container.size()); // 0
+container.clear()
+console.log(container.size()) // 0
 ```
 
 ---
@@ -379,8 +380,8 @@ console.log(container.size()); // 0
 获取容器中模块数量。
 
 ```typescript
-const count = container.size();
-console.log(`共有 ${count} 个模块`);
+const count = container.size()
+console.log(`共有 ${count} 个模块`)
 ```
 
 ---
@@ -390,8 +391,8 @@ console.log(`共有 ${count} 个模块`);
 列出所有模块。
 
 ```typescript
-const modules = container.list();
-modules.forEach(m => console.log(m.name));
+const modules = container.list()
+modules.forEach((m) => console.log(m.name))
 ```
 
 ---
@@ -409,9 +410,9 @@ npm install @daomind/agents
 #### 导入
 
 ```typescript
-import type { DaoAgent, DaoAgentCapability, AgentState } from '@daomind/agents';
-import { DaoBaseAgent, daoAgentMessenger, daoAgentRegistry } from '@daomind/agents';
-import { TaskAgent, ObserverAgent, CoordinatorAgent } from '@daomind/agents';
+import type { DaoAgent, DaoAgentCapability, AgentState } from '@daomind/agents'
+import { DaoBaseAgent, daoAgentMessenger, daoAgentRegistry } from '@daomind/agents'
+import { TaskAgent, ObserverAgent, CoordinatorAgent } from '@daomind/agents'
 ```
 
 ---
@@ -422,41 +423,41 @@ import { TaskAgent, ObserverAgent, CoordinatorAgent } from '@daomind/agents';
 
 ```typescript
 interface DaoAgent extends ExistenceContract {
-  readonly id: string;
-  readonly agentType: string;
-  readonly state: AgentState;
-  readonly createdAt: number;
-  readonly capabilities: ReadonlyArray<DaoAgentCapability>;
-  
-  initialize(): Promise<void>;
-  activate(): Promise<void>;
-  rest(): Promise<void>;
-  terminate(): Promise<void>;
-  execute<T>(action: string, payload?: unknown): Promise<T>;
-  send(to: string | '*', action: string, payload?: unknown): void;
-  onMessage(handler: MessageHandler): void;
+  readonly id: string
+  readonly agentType: string
+  readonly state: AgentState
+  readonly createdAt: number
+  readonly capabilities: ReadonlyArray<DaoAgentCapability>
+
+  initialize(): Promise<void>
+  activate(): Promise<void>
+  rest(): Promise<void>
+  terminate(): Promise<void>
+  execute<T>(action: string, payload?: unknown): Promise<T>
+  send(to: string | '*', action: string, payload?: unknown): void
+  onMessage(handler: MessageHandler): void
 }
 ```
 
 **字段说明**:
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `id` | `string` | Agent 唯一标识 |
-| `agentType` | `string` | Agent 类型（如 'translator', 'analyzer'） |
-| `state` | `AgentState` | 当前状态 |
-| `createdAt` | `number` | 创建时间戳 |
-| `capabilities` | `ReadonlyArray<DaoAgentCapability>` | 能力列表 |
+| 字段           | 类型                                | 说明                                      |
+| -------------- | ----------------------------------- | ----------------------------------------- |
+| `id`           | `string`                            | Agent 唯一标识                            |
+| `agentType`    | `string`                            | Agent 类型（如 'translator', 'analyzer'） |
+| `state`        | `AgentState`                        | 当前状态                                  |
+| `createdAt`    | `number`                            | 创建时间戳                                |
+| `capabilities` | `ReadonlyArray<DaoAgentCapability>` | 能力列表                                  |
 
 **方法说明**:
 
-| 方法 | 说明 |
-|------|------|
-| `initialize()` | 初始化 Agent |
-| `activate()` | 激活 Agent |
-| `rest()` | 使 Agent 休眠 |
-| `terminate()` | 终止 Agent |
-| `execute<T>(action, payload?)` | 执行特定动作 |
+| 方法                           | 说明          |
+| ------------------------------ | ------------- |
+| `initialize()`                 | 初始化 Agent  |
+| `activate()`                   | 激活 Agent    |
+| `rest()`                       | 使 Agent 休眠 |
+| `terminate()`                  | 终止 Agent    |
+| `execute<T>(action, payload?)` | 执行特定动作  |
 
 ---
 
@@ -466,11 +467,11 @@ interface DaoAgent extends ExistenceContract {
 
 ```typescript
 type AgentState =
-  | 'dormant'     // 休眠
-  | 'awakening'   // 唤醒中
-  | 'active'      // 活跃
-  | 'resting'     // 休息中
-  | 'deceased';   // 已终止
+  | 'dormant' // 休眠
+  | 'awakening' // 唤醒中
+  | 'active' // 活跃
+  | 'resting' // 休息中
+  | 'deceased' // 已终止
 ```
 
 **状态流转**:
@@ -489,9 +490,9 @@ dormant → awakening → active → resting → deceased
 
 ```typescript
 interface DaoAgentCapability {
-  readonly name: string;
-  readonly version: string;
-  readonly description?: string;
+  readonly name: string
+  readonly version: string
+  readonly description?: string
 }
 ```
 
@@ -502,7 +503,7 @@ const translateCapability: DaoAgentCapability = {
   name: 'translate',
   version: '1.0.0',
   description: '翻译文本的能力',
-};
+}
 
 const agent: DaoAgent = {
   id: crypto.randomUUID(),
@@ -511,16 +512,24 @@ const agent: DaoAgent = {
   state: 'active',
   createdAt: Date.now(),
   capabilities: [translateCapability],
-  
-  async initialize() { /* ... */ },
-  async activate() { /* ... */ },
-  async rest() { /* ... */ },
-  async terminate() { /* ... */ },
+
+  async initialize() {
+    /* ... */
+  },
+  async activate() {
+    /* ... */
+  },
+  async rest() {
+    /* ... */
+  },
+  async terminate() {
+    /* ... */
+  },
   async execute<T>(action: string, payload?: unknown): Promise<T> {
     // 执行逻辑
-    return {} as T;
+    return {} as T
   },
-};
+}
 ```
 
 ---
@@ -543,35 +552,35 @@ npm install @modulux/qi
 
 ```typescript
 class QiBus {
-  constructor();
-  
-  publish(message: QiMessage): void;
-  subscribe(type: string, handler: (msg: QiMessage) => void): () => void;
-  unsubscribe(type: string, handler: (msg: QiMessage) => void): void;
+  constructor()
+
+  publish(message: QiMessage): void
+  subscribe(type: string, handler: (msg: QiMessage) => void): () => void
+  unsubscribe(type: string, handler: (msg: QiMessage) => void): void
 }
 ```
 
 **使用示例**:
 
 ```typescript
-import { QiBus } from '@modulux/qi';
+import { QiBus } from '@modulux/qi'
 
-const bus = new QiBus();
+const bus = new QiBus()
 
 // 订阅消息
 const unsubscribe = bus.subscribe('user.created', (msg) => {
-  console.log('新用户:', msg.payload);
-});
+  console.log('新用户:', msg.payload)
+})
 
 // 发布消息
 bus.publish({
   type: 'user.created',
   payload: { userId: '001', username: 'Alice' },
   source: 'user-service',
-});
+})
 
 // 取消订阅
-unsubscribe();
+unsubscribe()
 ```
 
 ---
@@ -588,13 +597,13 @@ npm install @daomind/verify
 
 #### 检查项
 
-| 检查 | 说明 | 哲学依据 |
-|------|------|----------|
-| `wu-you-balance` | 检查"无"与"有"的平衡 | 无名与有名 |
-| `yin-yang-balance` | 检查阴阳平衡 | 阴阳调和 |
-| `qi-fluency` | 检查"气"的流动性 | 气的畅通 |
-| `wu-wei-verification` | 检查"无为"原则 | 无为而治 |
-| `naming-convention` | 检查命名规范 | 正名 |
+| 检查                  | 说明                 | 哲学依据   |
+| --------------------- | -------------------- | ---------- |
+| `wu-you-balance`      | 检查"无"与"有"的平衡 | 无名与有名 |
+| `yin-yang-balance`    | 检查阴阳平衡         | 阴阳调和   |
+| `qi-fluency`          | 检查"气"的流动性     | 气的畅通   |
+| `wu-wei-verification` | 检查"无为"原则       | 无为而治   |
+| `naming-convention`   | 检查命名规范         | 正名       |
 
 #### 使用
 
@@ -653,15 +662,11 @@ npx dao-benchmark
 ### 类型守卫
 
 ```typescript
-import {
-  isExistenceContract,
-  isDaoModuleMeta,
-  isDaoAgent,
-} from '@daomind/nothing';
+import { isExistenceContract, isDaoModuleMeta, isDaoAgent } from '@daomind/nothing'
 
 // 运行时类型检查
 if (isExistenceContract(obj)) {
-  console.log(obj.existentialType);
+  console.log(obj.existentialType)
 }
 ```
 
@@ -672,14 +677,14 @@ if (isExistenceContract(obj)) {
 ### 模式 1: 创建模块工厂函数
 
 ```typescript
-import type { DaoModuleMeta } from '@daomind/anything';
+import type { DaoModuleMeta } from '@daomind/anything'
 
 interface MyModule extends DaoModuleMeta {
-  readonly data: string;
+  readonly data: string
 }
 
 function createMyModule(data: string): MyModule {
-  const now = Date.now();
+  const now = Date.now()
   return {
     existentialType: 'anything',
     id: crypto.randomUUID(),
@@ -689,50 +694,50 @@ function createMyModule(data: string): MyModule {
     registeredAt: now,
     activatedAt: now,
     data,
-  };
+  }
 }
 ```
 
 ### 模式 2: 实现 Agent
 
 ```typescript
-import type { DaoAgent, DaoAgentCapability } from '@daomind/agents';
+import type { DaoAgent, DaoAgentCapability } from '@daomind/agents'
 
 class MyAgent implements DaoAgent {
-  readonly id: string;
-  readonly existentialType = 'anything' as const;
-  readonly agentType = 'custom';
-  readonly createdAt: number;
-  readonly capabilities: ReadonlyArray<DaoAgentCapability>;
-  state: AgentState = 'dormant';
-  
+  readonly id: string
+  readonly existentialType = 'anything' as const
+  readonly agentType = 'custom'
+  readonly createdAt: number
+  readonly capabilities: ReadonlyArray<DaoAgentCapability>
+  state: AgentState = 'dormant'
+
   constructor(capabilities: DaoAgentCapability[]) {
-    this.id = crypto.randomUUID();
-    this.createdAt = Date.now();
-    this.capabilities = capabilities;
+    this.id = crypto.randomUUID()
+    this.createdAt = Date.now()
+    this.capabilities = capabilities
   }
-  
+
   async initialize(): Promise<void> {
-    this.state = 'awakening';
+    this.state = 'awakening'
     // 初始化逻辑
-    this.state = 'active';
+    this.state = 'active'
   }
-  
+
   async activate(): Promise<void> {
-    this.state = 'active';
+    this.state = 'active'
   }
-  
+
   async rest(): Promise<void> {
-    this.state = 'resting';
+    this.state = 'resting'
   }
-  
+
   async terminate(): Promise<void> {
-    this.state = 'deceased';
+    this.state = 'deceased'
   }
-  
+
   async execute<T>(action: string, payload?: unknown): Promise<T> {
     // 执行逻辑
-    return {} as T;
+    return {} as T
   }
 }
 ```
@@ -740,25 +745,25 @@ class MyAgent implements DaoAgent {
 ### 模式 3: 使用消息总线
 
 ```typescript
-import { QiBus } from '@modulux/qi';
+import { QiBus } from '@modulux/qi'
 
 class EventDrivenSystem {
-  private bus = new QiBus();
-  
+  private bus = new QiBus()
+
   setupHandlers(): void {
-    this.bus.subscribe('event.type', this.handleEvent.bind(this));
+    this.bus.subscribe('event.type', this.handleEvent.bind(this))
   }
-  
+
   private handleEvent(msg: QiMessage): void {
-    console.log('收到事件:', msg);
+    console.log('收到事件:', msg)
   }
-  
+
   publishEvent(data: unknown): void {
     this.bus.publish({
       type: 'event.type',
       payload: data,
       source: 'system',
-    });
+    })
   }
 }
 ```
@@ -767,10 +772,10 @@ class EventDrivenSystem {
 
 ## 版本兼容性
 
-| 包版本 | TypeScript | Node.js |
-|--------|-----------|---------|
-| 2.x | >=5.0.0 | >=18.0.0 |
-| 1.x | >=4.5.0 | >=16.0.0 |
+| 包版本 | TypeScript | Node.js  |
+| ------ | ---------- | -------- |
+| 2.x    | >=5.0.0    | >=18.0.0 |
+| 1.x    | >=4.5.0    | >=16.0.0 |
 
 ---
 

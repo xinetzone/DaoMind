@@ -1,66 +1,68 @@
-import React, { useEffect, useRef } from "react";
-import { Send, Square, RotateCcw, MessageCircle, X } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { useAIChat, SUPABASE_URL, SUPABASE_ANON_KEY } from "../hooks/useAIChat";
-import { DaoLogo } from "../components/DaoLogo";
+import React, { useEffect, useRef } from 'react'
+import { Send, Square, RotateCcw, MessageCircle, X } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { useAIChat, SUPABASE_URL, SUPABASE_ANON_KEY } from '../hooks/useAIChat'
+import { DaoLogo } from '../components/DaoLogo'
 
 const SUGGESTIONS = [
-  "帛书版与通行本《道德经》有哪些核心差异？",
-  "「中气以为和」中，「中气」是什么含义？",
-  "三才（天地人）思想在《道德经》中如何体现？",
-  "如何将「无为」的智慧应用到现代生活中？",
-];
+  '帛书版与通行本《道德经》有哪些核心差异？',
+  '「中气以为和」中，「中气」是什么含义？',
+  '三才（天地人）思想在《道德经》中如何体现？',
+  '如何将「无为」的智慧应用到现代生活中？',
+]
 
 export function ChatPage(): React.JSX.Element {
   const { messages, isLoading, error, sendMessage, stopStreaming, clearMessages, dismissError } =
-    useAIChat();
+    useAIChat()
 
-  const [input, setInput] = React.useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [input, setInput] = React.useState('')
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Pre-warm the Edge Function on mount to eliminate cold-start delay
   useEffect(() => {
-    const controller = new AbortController();
+    const controller = new AbortController()
     fetch(`${SUPABASE_URL}/functions/v1/ai-chat-8c107efce1b0`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({ ping: true }),
       signal: controller.signal,
-    }).catch(() => {}); // fire-and-forget, ignore all errors
-    return (): void => { controller.abort(); };
-  }, []);
+    }).catch(() => {}) // fire-and-forget, ignore all errors
+    return (): void => {
+      controller.abort()
+    }
+  }, [])
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   useEffect(() => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    ta.style.height = "auto";
-    ta.style.height = Math.min(ta.scrollHeight, 120) + "px";
-  }, [input]);
+    const ta = textareaRef.current
+    if (!ta) return
+    ta.style.height = 'auto'
+    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
+  }, [input])
 
   const handleSubmit = (e: React.FormEvent): void => {
-    e.preventDefault();
-    if (!input.trim()) return;
-    sendMessage(input);
-    setInput("");
-  };
+    e.preventDefault()
+    if (!input.trim()) return
+    sendMessage(input)
+    setInput('')
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      if (!input.trim()) return;
-      sendMessage(input);
-      setInput("");
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      if (!input.trim()) return
+      sendMessage(input)
+      setInput('')
     }
-  };
+  }
 
   return (
     <div className="chat-layout">
@@ -98,7 +100,7 @@ export function ChatPage(): React.JSX.Element {
           <div className="chat-messages">
             {messages.map((msg, i) => (
               <div key={i} className={`chat-row chat-row-${msg.role}`}>
-                {msg.role === "assistant" ? (
+                {msg.role === 'assistant' ? (
                   <div className="chat-avatar chat-avatar-ai">
                     <DaoLogo className="chat-avatar-logo" />
                   </div>
@@ -106,7 +108,7 @@ export function ChatPage(): React.JSX.Element {
                   <div className="chat-avatar chat-avatar-user">人</div>
                 )}
                 <div className={`chat-bubble chat-bubble-${msg.role}`}>
-                  {msg.role === "assistant" && !msg.content && msg.isStreaming ? (
+                  {msg.role === 'assistant' && !msg.content && msg.isStreaming ? (
                     <div className="chat-dots">
                       <span />
                       <span />
@@ -114,11 +116,9 @@ export function ChatPage(): React.JSX.Element {
                     </div>
                   ) : (
                     <>
-                      {msg.role === "assistant" ? (
+                      {msg.role === 'assistant' ? (
                         <div className="chat-md">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {msg.content}
-                          </ReactMarkdown>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                         </div>
                       ) : (
                         <div className="chat-bubble-text">{msg.content}</div>
@@ -165,12 +165,7 @@ export function ChatPage(): React.JSX.Element {
               <Square size={16} />
             </button>
           ) : (
-            <button
-              type="submit"
-              className="chat-send-btn"
-              disabled={!input.trim()}
-              title="发送"
-            >
+            <button type="submit" className="chat-send-btn" disabled={!input.trim()} title="发送">
               <Send size={16} />
             </button>
           )}
@@ -178,5 +173,5 @@ export function ChatPage(): React.JSX.Element {
         <p className="chat-footer-note">道衍基于帛书《道德经》智慧，由 GLM 5 驱动</p>
       </footer>
     </div>
-  );
+  )
 }
