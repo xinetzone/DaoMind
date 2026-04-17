@@ -148,22 +148,24 @@ export function ChatPage(): React.JSX.Element {
     ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
   }, [input])
 
+  // Shared send: ensure session, dispatch, clear input
+  const doSend = (text: string): void => {
+    if (!currentSessionId) createSession()
+    sendMessage(text)
+    setInput('')
+  }
+
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault()
     if (!input.trim()) return
-    // Ensure a session exists before first send
-    if (!currentSessionId) createSession()
-    sendMessage(input)
-    setInput('')
+    doSend(input)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       if (!input.trim()) return
-      if (!currentSessionId) createSession()
-      sendMessage(input)
-      setInput('')
+      doSend(input)
     }
   }
 
@@ -254,7 +256,7 @@ export function ChatPage(): React.JSX.Element {
               <p className="chat-welcome-source">— 帛书《道德经》四十二章</p>
               <div className="chat-suggestions">
                 {SUGGESTIONS.map((s) => (
-                  <button key={s} className="chat-suggestion" onClick={() => sendMessage(s)}>
+                  <button key={s} className="chat-suggestion" onClick={() => doSend(s)}>
                     <MessageCircle size={13} />
                     <span>{s}</span>
                   </button>
@@ -372,7 +374,7 @@ export function ChatPage(): React.JSX.Element {
               </button>
             )}
           </form>
-          <p className="chat-footer-note">道衍基于帛书《道德经》智慧，由 GLM 5 驱动</p>
+          <p className="chat-footer-note">道衍基于帛书《道德经》智慧，由 {model.name} 驱动</p>
         </footer>
       </div>
       {showMindMap && (

@@ -6,7 +6,7 @@
       "category": "wu-you-balance",
       "passed": true,
       "score": 91,
-      "details": "有无平衡检验通过。daoNothing: 366 行，daoAnything: 386 行，比值: 0.948（合理范围 0.125 ~ 2.000）\n  · daoNothing 类型定义占比: 86%",
+      "details": "有无平衡检验通过。daoNothing: 400 行，daoAnything: 386 行，比值: 1.036（合理范围 0.125 ~ 2.000）\n  · daoNothing 类型定义占比: 88%",
       "timestamp": 1744895800001
     },
     {

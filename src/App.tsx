@@ -11,13 +11,23 @@ import { StatsPage } from './pages/StatsPage'
 
 type Page = 'chat' | 'audit' | 'monitor' | 'collective' | 'stats'
 
+const HASH_TO_PAGE: Record<string, Page> = {
+  '#audit': 'audit',
+  '#monitor': 'monitor',
+  '#collective': 'collective',
+  '#stats': 'stats',
+  '#chat': 'chat',
+}
+const PAGE_TO_HASH: Record<Page, string> = {
+  audit: '#audit',
+  monitor: '#monitor',
+  collective: '#collective',
+  stats: '#stats',
+  chat: '#chat',
+}
+
 function getInitialPage(): Page {
-  const h = window.location.hash
-  if (h === '#audit')      return 'audit'
-  if (h === '#monitor')    return 'monitor'
-  if (h === '#collective') return 'collective'
-  if (h === '#stats')      return 'stats'
-  return 'chat'
+  return HASH_TO_PAGE[window.location.hash] ?? 'chat'
 }
 
 export default function App(): React.JSX.Element {
@@ -27,20 +37,14 @@ export default function App(): React.JSX.Element {
   // Sync hash ↔ page state
   React.useEffect(() => {
     const handler = (): void => {
-      const h = window.location.hash
-      if (h === '#audit')           setPage('audit')
-      else if (h === '#monitor')    setPage('monitor')
-      else if (h === '#collective') setPage('collective')
-      else if (h === '#stats')      setPage('stats')
-      else setPage('chat')
+      setPage(HASH_TO_PAGE[window.location.hash] ?? 'chat')
     }
     window.addEventListener('hashchange', handler)
     return (): void => window.removeEventListener('hashchange', handler)
   }, [])
 
   const navigate = (p: Page): void => {
-    const hash = p === 'audit' ? '#audit' : p === 'monitor' ? '#monitor' : p === 'collective' ? '#collective' : p === 'stats' ? '#stats' : '#chat'
-    window.location.hash = hash
+    window.location.hash = PAGE_TO_HASH[p]
     setPage(p)
   }
 

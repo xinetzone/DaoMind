@@ -1,6 +1,4 @@
 // 测试 DaoMonitor 监控系统
-console.log('开始加载 DaoMonitor 模块...');
-
 import { 
   DaoHeatmapEngine, 
   DaoVectorField, 
@@ -9,8 +7,6 @@ import {
   DaoDiagnosisEngine, 
   DaoSnapshotAggregator 
 } from '@daomind/monitor';
-
-console.log('DaoMonitor 模块加载成功');
 
 async function testMonitorSystem() {
   try {
@@ -220,7 +216,6 @@ async function testMonitorSystem() {
   }
 }
 
-console.log('开始执行测试...');
 test('DaoMonitor 监控系统集成测试', async () => {
   await testMonitorSystem();
 }, 30000);
