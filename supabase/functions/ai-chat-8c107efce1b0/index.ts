@@ -7,6 +7,8 @@ const ALLOWED_MODELS = new Set([
   'z-ai/glm-5',
   'deepseek/deepseek-chat',
   'qwen/qwen-max',
+  'anthropic/claude-opus-4.7',
+  'openai/gpt-5.4',
 ])
 
 const DEFAULT_MODEL = 'z-ai/glm-5'

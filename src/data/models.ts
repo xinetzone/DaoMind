@@ -26,6 +26,20 @@ export const AI_MODELS: AIModel[] = [
     vendor: '阿里云',
     desc: '通义千问，广博中文知识储备',
   },
+  {
+    id: 'anthropic/claude-opus-4.7',
+    name: 'Claude Opus 4.7',
+    vendor: 'Anthropic',
+    desc: '最强推理与复杂任务处理，适合深度道德哲学分析',
+    badge: 'New',
+  },
+  {
+    id: 'openai/gpt-5.4',
+    name: 'GPT 5.4',
+    vendor: 'OpenAI',
+    desc: '前沿综合能力，复杂推理与高质量输出',
+    badge: 'New',
+  },
 ]
 
 export const DEFAULT_MODEL_ID = 'z-ai/glm-5'
