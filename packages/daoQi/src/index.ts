@@ -26,3 +26,6 @@ export type {
   YinYangPair,
   ChongQiResult,
 } from './channels/chong-qi.js';
+
+// dao 前缀别名 — 命名规范对齐
+export * from './dao-aliases.js';

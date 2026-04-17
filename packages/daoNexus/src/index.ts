@@ -24,3 +24,6 @@ export const daoNexusInfo = {
   name: '@dao/nexus',
   description: '枢纽中心 — 连接与协调的核心',
 }
+
+// dao 前缀别名 — 命名规范对齐
+export * from './dao-aliases.js';

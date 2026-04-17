@@ -17,3 +17,6 @@ export const daomindAgents = {
   name: '@daomind/agents',
   description: 'DaoMind Agents — 自主行动的实体',
 };
+
+// dao 前缀别名 — 命名规范对齐
+export * from './dao-aliases';

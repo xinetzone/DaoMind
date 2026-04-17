@@ -10,3 +10,4 @@ export * from './exports/transport';    // 传输层
 export * from './exports/operations';   // 运营层
 export * from './exports/advanced';     // 高级功能层
 export * from './exports/universe';     // 宇宙门面层
+export * from './exports/aliases';      // dao 前缀别名 — 命名规范对齐

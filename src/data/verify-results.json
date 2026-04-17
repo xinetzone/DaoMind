@@ -1,5 +1,5 @@
 {
-  "generatedAt": 1744893960000,
+  "generatedAt": 1744895800000,
   "results": [
     {
       "name": "有无平衡检验",
@@ -7,7 +7,7 @@
       "passed": true,
       "score": 91,
       "details": "有无平衡检验通过。daoNothing: 366 行，daoAnything: 386 行，比值: 0.948（合理范围 0.125 ~ 2.000）\n  · daoNothing 类型定义占比: 86%",
-      "timestamp": 1744893960001
+      "timestamp": 1744895800001
     },
     {
       "name": "反馈完整性检验",
@@ -15,15 +15,15 @@
       "passed": true,
       "score": 100,
       "details": "@dao/feedback 包存在，四阶段检查结果：\n  · 感知（观其妙） (stage1-perceive.ts): ✓ 已实现\n  · 聚合（大曰逝） (stage2-aggregate.ts): ✓ 已实现\n  · 中和（中气以为和） (stage3-harmonize.ts): ✓ 已实现\n  · 归元（远曰反） (stage4-return.ts): ✓ 已实现\n  · lifecycle.ts 阶段串联: ✓ 完整串联\n\n  帛书依据：《道德经》乙本·四十章「反也者，道之动也」— 反馈循环是道的运动形式",
-      "timestamp": 1744893960002
+      "timestamp": 1744895800002
     },
     {
       "name": "气流通畅性检验",
       "category": "qi-fluency",
       "passed": true,
       "score": 100,
-      "details": "@dao/qi 包存在，气机通道检查结果：\n  · 天气通道（天道） (tian-qi.ts): ✓ 已实现\n  · 地气通道（地道） (di-qi.ts): ✓ 已实现\n  · 人气通道（人道） (ren-qi.ts): ✓ 已实现\n  · 冲气通道（调和） (chong-qi.ts): ✓ 已实现\n  · HunyuanBus 核心类: ✓ 已实现\n  · 消息协议 DaoMessage: ✓ 已定义\n  · 通道类型 QiChannelType: ✓ 已定义\n\n  帛书依据：《道德经》乙本·四十二章「万物负阴而抱阳，中气以为和」— 三才路由通道（天/地/人）+ 中气调和机制，构成完整气机传输网络。\n  帛书二十五章「人法地，地法天，天法道」确立三才，四十二章帛书「中气以为和」确立调和机制",
-      "timestamp": 1744893960003
+      "details": "@dao/qi 包存在，气机通道检查结果：\n  · 天气通道（天道） (tian-qi.ts): ✓ 已实现\n  · 地气通道（地道） (di-qi.ts): ✓ 已实现\n  · 人气通道（人道） (ren-qi.ts): ✓ 已实现\n  · 冲气通道（调和） (chong-qi.ts): ✓ 已实现\n  · HunyuanBus 核心类: ✓ 已实现\n  · 消息协议 DaoMessage: ✓ 已定义\n  · 通道类型 QiChannelType: ✓ 已定义\n\n  帛书依据：《道德经》乙本·四十二章「万物负阴而抱阳，中气以为和」",
+      "timestamp": 1744895800003
     },
     {
       "name": "阴阳平衡检验",
@@ -31,7 +31,7 @@
       "passed": true,
       "score": 100,
       "details": "chong-qi.ts 存在，阴阳对分析结果：\n  · 阴阳对总数: 5（期望 ≥5）\n  · 完整对数: 5/5\n\n  · 对 [nothing-anything]: yinNode=✓ yangNode=✓ idealRatio=✓ threshold=✓ (完整)\n  · 对 [chronos-times]: yinNode=✓ yangNode=✓ idealRatio=✓ threshold=✓ (完整)\n  · 对 [spaces-agents]: yinNode=✓ yangNode=✓ idealRatio=✓ threshold=✓ (完整)\n  · 对 [skills-nexus]: yinNode=✓ yangNode=✓ idealRatio=✓ threshold=✓ (完整)\n  · 对 [docs-apps]: yinNode=✓ yangNode=✓ idealRatio=✓ threshold=✓ (完整)\n\n  ChongQiRegulator 方法检查:\n  · regulateAll(): ✓ 已实现\n  · converge(): ✓ 已实现\n\n  帛书依据：《道德经》乙本·四十二章「万物负阴而抱阳，中气以为和」",
-      "timestamp": 1744893960004
+      "timestamp": 1744895800004
     },
     {
       "name": "无为验证",
@@ -39,30 +39,28 @@
       "passed": true,
       "score": 100,
       "details": "daoCollective/index.ts 无为分析结果：\n  · 有效代码行数: 7\n  · 导出风格: mixed\n  · 协调导向（非直接控制）: ✓ 符合\n  · 事件驱动模式: ✓ 采用事件驱动（observer / subscribe / listen）\n  · 避免直接控制调用: ✓ 无直接控制模式\n  · 自组织结构支撑: ✓ 支持自组织（self-organizing）\n\n  帛书依据：《道德经》「道常无为而无不为」— 根节点应做协调者而非控制者",
-      "timestamp": 1744893960005
+      "timestamp": 1744895800005
     },
     {
       "name": "命名规范检验",
       "category": "naming-convention",
       "passed": true,
-      "score": 61,
-      "details": "命名规范扫描结果（扫描 129 个文件，278 个公共导出）：\n  · dao 前缀合规率: 57% (159/278)\n  · 武力隐喻违规: 0 处\n  · 自然意象使用: 9 处\n\n  非 dao 前缀导出: AssignmentRecord, CoordinatorSnapshot, CoordinatorAgent, Observation, SystemSnapshot, ObserverAgent, AgentTask, TaskResult, QueueSnapshot, TaskAgent, AGENT_LIFECYCLE_EVENT, AgentMessage, MessageHandler, MessageFilter, AgentState... 等 119 个\n\n  帛书依据：「道可道，非常名」— 命名应体现道的自然本性，避免暴力隐喻",
-      "timestamp": 1744893960006
+      "score": 81,
+      "details": "命名规范扫描结果（扫描 133 个文件，370 个公共导出）：\n  · dao 前缀合规率: 68% (251/370)\n  · 武力隐喻违规: 0 处\n  · 自然意象使用: 15 处（flow/harmony/rhythm/stream/pulse/void/potential 等）\n\n  非 dao 前缀导出: MessageHandler, AgentState, AgentTask, TaskResult, LifecycleStatus, ConsensusVote, QiChannelType, ChongQiSignal... 等 119 个\n\n  帛书依据：「道可道，非常名」— 命名应体现道的自然本性，避免暴力隐喻",
+      "timestamp": 1744895800006
     }
   ],
-  "overallScore": 92,
+  "overallScore": 95,
   "passedCount": 6,
   "failedCount": 0,
-  "warnings": [
-    "[命名规范] 得分 61，有改进空间"
-  ],
+  "warnings": [],
   "philosophyDepth": {
     "ontologyScore": 71,
-    "epistemologyScore": 86,
+    "epistemologyScore": 93,
     "methodologyScore": 100,
-    "ethicsScore": 84,
-    "aestheticsScore": 87,
-    "culturalScore": 92,
-    "weightedTotal": 86
+    "ethicsScore": 92,
+    "aestheticsScore": 93,
+    "culturalScore": 95,
+    "weightedTotal": 90
   }
 }
