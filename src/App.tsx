@@ -1,16 +1,18 @@
 import React from 'react'
-import { MessageCircle, FlaskConical, Activity } from 'lucide-react'
+import { MessageCircle, FlaskConical, Activity, Layers } from 'lucide-react'
 import { DaoLogo } from './components/DaoLogo'
 import { ChatPage } from './pages/ChatPage'
 import { AuditPage } from './pages/AuditPage'
 import { MonitorPage } from './pages/MonitorPage'
+import { CollectivePage } from './pages/CollectivePage'
 
-type Page = 'chat' | 'audit' | 'monitor'
+type Page = 'chat' | 'audit' | 'monitor' | 'collective'
 
 function getInitialPage(): Page {
   const h = window.location.hash
-  if (h === '#audit')   return 'audit'
-  if (h === '#monitor') return 'monitor'
+  if (h === '#audit')      return 'audit'
+  if (h === '#monitor')    return 'monitor'
+  if (h === '#collective') return 'collective'
   return 'chat'
 }
 
@@ -21,8 +23,9 @@ export default function App(): React.JSX.Element {
   React.useEffect(() => {
     const handler = (): void => {
       const h = window.location.hash
-      if (h === '#audit')   setPage('audit')
-      else if (h === '#monitor') setPage('monitor')
+      if (h === '#audit')           setPage('audit')
+      else if (h === '#monitor')    setPage('monitor')
+      else if (h === '#collective') setPage('collective')
       else setPage('chat')
     }
     window.addEventListener('hashchange', handler)
@@ -30,7 +33,8 @@ export default function App(): React.JSX.Element {
   }, [])
 
   const navigate = (p: Page): void => {
-    window.location.hash = p === 'audit' ? '#audit' : p === 'monitor' ? '#monitor' : '#chat'
+    const hash = p === 'audit' ? '#audit' : p === 'monitor' ? '#monitor' : p === 'collective' ? '#collective' : '#chat'
+    window.location.hash = hash
     setPage(p)
   }
 
@@ -66,13 +70,21 @@ export default function App(): React.JSX.Element {
             <Activity size={14} />
             <span>道监</span>
           </button>
+          <button
+            className={`app-nav-tab ${page === 'collective' ? 'active' : ''}`}
+            onClick={() => navigate('collective')}
+          >
+            <Layers size={14} />
+            <span>道集</span>
+          </button>
         </div>
       </nav>
 
       <div className="app-content">
-        {page === 'chat'    ? <ChatPage />    :
-         page === 'audit'   ? <AuditPage />   :
-                              <MonitorPage />}
+        {page === 'chat'       ? <ChatPage />       :
+         page === 'audit'      ? <AuditPage />      :
+         page === 'collective' ? <CollectivePage /> :
+                                 <MonitorPage />}
       </div>
     </div>
   )
