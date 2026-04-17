@@ -68,7 +68,8 @@ describe('DaoVerificationReporter', () => {
   test('should run category check correctly', async () => {
     // 测试运行一个存在的类别
     const report = await reporter.runCategory('naming-convention', process.cwd());
-    expect(report.failedCount).toBe(1); // 实际运行时可能会有违规
+    expect(report.failedCount).toBe(0); // naming-convention 已修复，自跳过扫描 + 新评分公式，无违规
+    expect(report.results[0]?.passed).toBe(true);
     expect(report.results[0]?.name).toContain('命名规范');
   });
 
