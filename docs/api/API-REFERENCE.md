@@ -2,7 +2,7 @@
 
 完整的 API 参考文档，涵盖所有核心包、功能包和 DaoUniverse* 桥接体系。
 
-> **版本**: 2.27.2  
+> **版本**: 2.46.3  
 > **更新日期**: 2026-04-17  
 > **测试**: 1000 个测试，52 个套件，全部通过
 
@@ -156,6 +156,36 @@ const daoNothingVoid: DaoNothingVoid;
 
 ---
 
+#### `DaoModuleGraphNode` / `DaoModuleGraphSnapshot` （v2.46.3）
+
+依赖图节点与快照的纯类型描述，属于"无名"类型空间（零运行时）。
+
+```typescript
+/** 依赖图单节点 */
+interface DaoModuleGraphNode {
+  readonly name:         string
+  readonly dependencies: readonly string[]  // 此节点直接依赖的模块
+  readonly dependents:   readonly string[]  // 直接依赖此节点的模块
+  readonly depth:        number             // 拓扑深度（从根节点的最长路径）
+}
+
+/** 依赖图全图不可变快照 */
+interface DaoModuleGraphSnapshot {
+  readonly nodes:            ReadonlyArray<DaoModuleGraphNode>
+  readonly topologicalOrder: ReadonlyArray<string>  // Kahn 算法结果；有环时为 []
+  readonly hasCycle:         boolean
+  readonly cycleNodes:       ReadonlyArray<string>  // 参与循环的节点；无环时为 []
+  readonly totalModules:     number
+  readonly maxDepth:         number
+}
+```
+
+```typescript
+import type { DaoModuleGraphNode, DaoModuleGraphSnapshot } from '@daomind/nothing';
+```
+
+---
+
 ### @daomind/anything
 
 **模块容器包**，实现"有名"（Named）哲学层。
@@ -166,7 +196,7 @@ pnpm add @daomind/anything
 
 ```typescript
 import type { DaoModuleRegistration, ModuleLifecycle, DaoModuleMeta } from '@daomind/anything';
-import { DaoAnythingContainer, daoContainer } from '@daomind/anything';
+import { DaoAnythingContainer, daoContainer, DaoModuleGraph, daoModuleGraph } from '@daomind/anything';
 ```
 
 ---
@@ -204,6 +234,64 @@ class DaoAnythingContainer {
 ```
 
 > `daoContainer` 是全局单例。在 `DaoUniverseModules` 中使用独立 `new DaoAnythingContainer()` 以避免污染全局。
+
+---
+
+#### `DaoModuleGraph` / `daoModuleGraph` （v2.46.3）
+
+模块依赖图引擎，建立有向无环图（DAG），通过拓扑排序给出初始化顺序，检测循环依赖。
+
+```typescript
+class DaoModuleGraph {
+  // 添加模块及其依赖（幂等）
+  addModule(name: string, deps?: readonly string[]): void
+  addFromRegistrations(regs: ReadonlyArray<DaoModuleRegistration>): void
+
+  // 查询
+  getDependencies(name: string): ReadonlyArray<string>       // 直接依赖
+  getDependents(name: string): ReadonlyArray<string>         // 直接被依赖者
+  getTransitiveDependencies(name: string): ReadonlySet<string> // 所有传递性依赖（BFS）
+
+  // 拓扑排序（Kahn 算法）
+  topologicalOrder(): ReadonlyArray<string> | null  // 有环返回 null
+
+  // 循环检测（DFS 颜色标记法）
+  hasCycle(): boolean
+  findCycleNodes(): ReadonlyArray<string>
+
+  // 管理
+  removeModule(name: string): boolean
+  has(name: string): boolean
+  get size(): number
+  moduleNames(): ReadonlyArray<string>
+  clear(): void
+
+  // 生成不可变快照
+  snapshot(): DaoModuleGraphSnapshot
+}
+
+const daoModuleGraph: DaoModuleGraph;  // 全局单例
+```
+
+**示例**：
+
+```typescript
+import { DaoModuleGraph, DaoAnythingContainer } from '@daomind/anything';
+
+const graph = new DaoModuleGraph();
+graph.addModule('db',   []);
+graph.addModule('auth', ['db']);
+graph.addModule('api',  ['auth', 'db']);
+
+const order = graph.topologicalOrder()!; // ['db', 'auth', 'api']
+
+const container = new DaoAnythingContainer();
+for (const name of order) {
+  container.register({ name, version: '1.0.0', path: `./${name}` });
+  await container.initialize(name);
+  await container.activate(name);
+}
+```
 
 ---
 
@@ -1390,6 +1478,7 @@ console.log(times.windowOverlaps(winA, winB)); // true（重叠）
 
 | 版本 | TypeScript | Node.js | 测试数 |
 |------|-----------|---------|--------|
+| v2.46.3 | >=5.9.0 | >=18.0.0 | 1000 |
 | v2.27.2 | >=5.9.0 | >=18.0.0 | 1000 |
 | v2.27.0 | >=5.9.0 | >=18.0.0 | 1000 |
 | v2.26.0 | >=5.9.0 | >=18.0.0 | 971 |
@@ -1414,6 +1503,6 @@ console.log(times.windowOverlaps(winA, winB)); // true（重叠）
 
 ---
 
-**文档版本**: 2.24.0  
-**最后更新**: 2026-04-16  
+**文档版本**: 2.46.3  
+**最后更新**: 2026-04-17  
 **维护者**: DaoMind Team

@@ -2,7 +2,7 @@
 
 完整的 API 参考文档，涵盖所有核心包和接口。
 
-> 📘 **版本**: 2.27.2  
+> 📘 **版本**: 2.46.3  
 > 📅 **更新日期**: 2026-04-17
 
 ---
@@ -29,7 +29,7 @@
 
 ### @daomind/nothing
 
-**零运行时类型定义包**，实现"无名"（Nameless）哲学层。v2.5.0 起新增 `DaoOption<T>` 和 `DaoResult<T,E>` 函数式类型工具。
+**零运行时类型定义包**，实现"无名"（Nameless）哲学层。v2.5.0 起新增 `DaoOption<T>` 和 `DaoResult<T,E>` 函数式类型工具。v2.46.3 起新增 `DaoModuleGraphNode` / `DaoModuleGraphSnapshot` 依赖图纯类型。
 
 > 🎯 **设计理念**: 纯类型定义 + 虚空事件总线 + 函数式错误处理，零魔法、显式优先。
 
@@ -169,7 +169,7 @@ const stateChange: MutabilityContract<UserState> = {
 
 ### @daomind/anything
 
-**模块系统包**，实现"有名"（Named）哲学层。
+**模块系统包**，实现"有名"（Named）哲学层。v2.46.3 起新增 `DaoModuleGraph` 依赖图引擎，提供拓扑排序与循环检测。
 
 > 🎯 **设计理念**: 具体实现，运行时实体，管理模块生命周期。
 
@@ -789,6 +789,6 @@ class EventDrivenSystem {
 
 ---
 
-**文档版本**: 2.5.0  
-**最后更新**: 2026-04-16  
+**文档版本**: 2.46.3  
+**最后更新**: 2026-04-17  
 **维护者**: DaoMind Team

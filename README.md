@@ -25,6 +25,7 @@
 - **零运行时开销**：类型定义编译后完全消失
 - **哲学一致**：每一个 API 命名都有对应的道家哲学根据
 - **DaoOption\<T\> + DaoResult\<T,E\>**：函数式错误处理，无 null/undefined 异常
+- **DaoModuleGraph**：模块依赖图引擎，Kahn 拓扑排序 + DFS 循环检测，安全驱动初始化顺序
 - **DaoUniverse* 桥接体系**：17 个分层桥接器，将所有子包统一融入宇宙门面
 - **消费者层**：DaoUniverseFacade（一行构建全栈）→ HealthBoard（健康蒸馏）→ Optimizer（建议引擎）
 
@@ -179,14 +180,51 @@ console.log(times.snapshot());
 times.clearAllForApp('worker'); // → 返回 3（已清除数量）
 ```
 
-## 包生态（v2.27.0）
+### 方式五：DaoModuleGraph 依赖图引擎（v2.46.3）
+
+```typescript
+import { DaoModuleGraph, DaoAnythingContainer } from '@daomind/anything';
+
+// 构建依赖图
+const graph = new DaoModuleGraph();
+graph.addModule('db',      []);
+graph.addModule('cache',   ['db']);
+graph.addModule('auth',    ['db', 'cache']);
+graph.addModule('api',     ['auth']);
+graph.addModule('web',     ['api']);
+
+// 循环检测（DFS 颜色标记法）
+if (graph.hasCycle()) {
+  throw new Error(`循环依赖: ${graph.findCycleNodes().join(', ')}`);
+}
+
+// 拓扑排序（Kahn 算法）
+const order = graph.topologicalOrder()!;
+// → ['db', 'cache', 'auth', 'api', 'web']
+
+// 按顺序启动容器
+const container = new DaoAnythingContainer();
+for (const name of order) {
+  container.register({ name, version: '1.0.0', path: `./${name}` });
+  await container.initialize(name);
+  await container.activate(name);
+}
+
+// 查看完整快照
+const snap = graph.snapshot();
+console.log(snap.maxDepth);    // 4
+console.log(snap.hasCycle);    // false
+console.log(snap.totalModules); // 5
+```
+
+## 包生态（v2.46.3）
 
 ### 核心包
 
 | 包名 | 层级 | 描述 |
 |------|------|------|
 | `@daomind/nothing` | 无（类型空间） | 类型契约、DaoOption、DaoResult、虚空事件总线 |
-| `@daomind/anything` | 有（值空间） | 模块容器、生命周期管理（registered → active → terminated） |
+| `@daomind/anything` | 有（值空间） | 模块容器 `DaoAnythingContainer`、生命周期管理、`DaoModuleGraph` 依赖图引擎（v2.46.3） |
 | `@daomind/agents` | 行动层 | DaoBaseAgent、TaskAgent、ObserverAgent、CoordinatorAgent |
 | `@daomind/apps` | 应用层 | DaoAppContainer、DaoLifecycleManager，状态机驱动应用生命周期 |
 | `@daomind/times` | 时序层 | DaoTimer、DaoScheduler、daoTimeWindow，定时器与任务调度 |
@@ -368,6 +406,10 @@ pnpm dev
 
 | 版本 | 测试数 | 亮点 |
 |------|--------|------|
+| v2.46.3 | 1000 | `DaoModuleGraph` 依赖图引擎（Kahn 拓扑排序 + DFS 循环检测），`DaoModuleGraphNode/Snapshot` 纯类型，wu-you-balance 检查修复 |
+| v2.46.2 | 1000 | `daoCollective/index.ts` 重构为 6 个桶文件（无为验证通过，根节点精简为 7 行有效代码） |
+| v2.46.1 | 1000 | 迁移 `DaoModuleRegistration`/`ModuleLifecycle`/`DaoModuleMeta` 纯类型至 `daoNothing`（有无平衡） |
+| v2.46.0 | 1000 | 道衍 AI 多模型切换（GLM-5 / DeepSeek V3 / Qwen Max），localStorage 持久化 |
 | v2.30.1 | 1000 | Edge Function 预热机制，消除 Deno 冷启动延迟（ChatPage mount 时 fire-and-forget ping）|
 | v2.30.0 | 1000 | Bug 修复：rehype-raw admonition 渲染 / 聊天 Markdown / SSE openWhenHidden / 文档滚动复位 |
 | v2.29.1 | 1000 | AI 响应时间优化：系统提示词 280→80 tokens，TTFB ↓ 60% |

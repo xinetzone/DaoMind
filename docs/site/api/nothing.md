@@ -299,6 +299,59 @@ if (daoIsOk(result)) {
 
 ---
 
+## 模块图类型（v2.46.3）
+
+> 帛书依据："知常曰明"——了解模块间的依赖关系是系统自明之道
+
+### `DaoModuleGraphNode`
+
+依赖图节点的纯类型描述（零运行时）。
+
+```typescript
+interface DaoModuleGraphNode {
+  readonly name:         string
+  readonly dependencies: readonly string[]   // 此节点依赖的模块列表
+  readonly dependents:   readonly string[]   // 依赖此节点的模块列表
+  readonly depth:        number              // 拓扑深度（从根节点出发的最长路径）
+}
+```
+
+---
+
+### `DaoModuleGraphSnapshot`
+
+依赖图的不可变快照，由 `DaoModuleGraph.snapshot()` 生成。
+
+```typescript
+interface DaoModuleGraphSnapshot {
+  readonly nodes:            ReadonlyArray<DaoModuleGraphNode>
+  readonly topologicalOrder: ReadonlyArray<string>  // Kahn 算法结果；有环时为 []
+  readonly hasCycle:         boolean
+  readonly cycleNodes:       ReadonlyArray<string>  // 参与循环的节点；无环时为 []
+  readonly totalModules:     number
+  readonly maxDepth:         number
+}
+```
+
+**示例**：
+
+```typescript
+import type { DaoModuleGraphSnapshot } from '@daomind/nothing'
+import { DaoModuleGraph } from '@daomind/anything'
+
+const graph = new DaoModuleGraph()
+graph.addModule('core', [])
+graph.addModule('auth', ['core'])
+graph.addModule('api',  ['auth', 'core'])
+
+const snap: DaoModuleGraphSnapshot = graph.snapshot()
+console.log(snap.topologicalOrder) // ['core', 'auth', 'api']
+console.log(snap.hasCycle)         // false
+console.log(snap.maxDepth)         // 2
+```
+
+---
+
 ## TypeScript 要求
 
 `@daomind/nothing` 需要 TypeScript **5.0+**，建议配置：
@@ -321,6 +374,12 @@ if (daoIsOk(result)) {
 import type { ExistenceContract, EmptyInterface, MutabilityContract } from '@daomind/nothing'
 import type { WuWeiConstraint, ZiRanInvariant } from '@daomind/nothing'
 import type { Void, Potential, Origin } from '@daomind/nothing'
+
+// 模块相关纯类型
+import type { DaoModuleRegistration, ModuleLifecycle, DaoModuleMeta } from '@daomind/nothing'
+
+// 模块图纯类型（v2.46.3）
+import type { DaoModuleGraphNode, DaoModuleGraphSnapshot } from '@daomind/nothing'
 
 // 事件总线
 import type { DaoNothingEvent } from '@daomind/nothing'
