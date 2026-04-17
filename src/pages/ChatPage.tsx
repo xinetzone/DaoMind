@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { Send, Square, RotateCcw, MessageCircle, X } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useAIChat } from "../hooks/useAIChat";
 import { DaoLogo } from "../components/DaoLogo";
 
@@ -96,7 +98,15 @@ export function ChatPage(): React.JSX.Element {
                     </div>
                   ) : (
                     <>
-                      <div className="chat-bubble-text">{msg.content}</div>
+                      {msg.role === "assistant" ? (
+                        <div className="chat-md">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {msg.content}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <div className="chat-bubble-text">{msg.content}</div>
+                      )}
                       {msg.isStreaming && <span className="chat-cursor" />}
                     </>
                   )}

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useRef, useEffect } from "react";
 import { DocSidebar } from "../components/DocSidebar";
 import { MystRenderer } from "../components/MystRenderer";
 import { pathToGlobKey, getSectionForPath } from "../data/navigation";
@@ -17,6 +17,11 @@ interface DocsPageProps {
 
 export function DocsPage({ docPath, onNavigate }: DocsPageProps): React.JSX.Element {
   const currentSection = useMemo(() => getSectionForPath(docPath), [docPath]);
+  const scrollRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0);
+  }, [docPath]);
 
   const content = useMemo(() => {
     const key = pathToGlobKey(docPath);
@@ -33,7 +38,7 @@ export function DocsPage({ docPath, onNavigate }: DocsPageProps): React.JSX.Elem
         currentSection={currentSection}
         onNavigate={onNavigate}
       />
-      <main className="docs-content">
+      <main className="docs-content" ref={scrollRef}>
         <MystRenderer content={content} onNavigate={onNavigate} />
       </main>
     </div>

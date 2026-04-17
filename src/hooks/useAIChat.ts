@@ -64,6 +64,7 @@ export function useAIChat() {
             },
             body: JSON.stringify({ messages: apiMessages }),
             signal: abortRef.current.signal,
+            openWhenHidden: true,
 
             // Level 0: Parse errors from non-2xx SSE responses
             async onopen(response) {
