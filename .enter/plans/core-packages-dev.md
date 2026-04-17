@@ -1,126 +1,83 @@
-# Plan: VitePress 代码样式对齐 (v2.30.4)
+# v2.30.5 — 代码缩进格式统一
 
 ## Context
 
-用户要求参考 https://xinetzone.github.io/DaoMind/examples/hello-world.html（VitePress 官方文档站）的代码样式，优化当前 SPA 文档站 (https://8c107efce1b05ae5bb6ccdf5860fba38.prod.enter.pro)。
+项目根目录存在 `.prettierrc`（`semi:false, singleQuote:true, tabWidth:2`），但：
+- `prettier` **未列入** `package.json` devDependencies（导致格式化工具未固定）
+- `prettier --check` 发现 **17 个文件** 格式不符（15 src/ + 2 supabase/functions/）
+- 主要差异：源文件用双引号 + 分号，而 Prettier 要求单引号 + 无分号 + 2 空格缩进
+- `docs/site/**/*.md` 内的代码块也有少量格式不一致（分号、表格对齐等）
 
-### 差异分析（Reference vs Current）
+## 根本原因
 
-| 元素 | 参考站 (VitePress) | 当前站 |
-|------|-------------------|--------|
-| 代码块背景 | 深靛蓝 `#1a1b26` (Tokyo Night) | 纯黑 `#0f1117` |
-| 代码块顶部 | 右上角显示语言标签 "typescript" / "bash" | 红/黄/绿终端三点（不符合文档风格）|
-| 代码字体 | JetBrains Mono / ui-monospace | Courier New |
-| 语法高亮主题 | Shiki tokyo-night-dark 风格颜色 | highlight.js github-dark.css |
-| 行内代码 | 浅绿/青绿 badge（`Greeter`） | 蓝色 badge |
-| h2 左侧 accent bar | 3px indigo 竖条 ✓ | 已有（v2.30.3）✓ |
+`prettier` 没有作为项目依赖安装，导致每次手写代码时没有自动化格式化约束。
 
 ---
 
-## Implementation
+## 实施步骤
 
-### 文件 1: `src/components/MystRenderer.tsx`
+### Step 1 — 安装 prettier 为 devDependency
 
-**A. 更换 hljs 主题**
-```diff
-- import "highlight.js/styles/github-dark.css";
-+ import "highlight.js/styles/tokyo-night-dark.css";
+```bash
+pnpm add -D prettier@latest -w
 ```
 
-**B. 修改 `pre` 组件：提取语言名称 → 写入 `data-lang`**
-```tsx
-pre({ children }) {
-  const codeEl = React.Children.toArray(children)[0] as React.ReactElement<{ className?: string }>;
-  const className = (codeEl?.props?.className as string) ?? '';
-  const langMatch = className.match(/language-(\w+)/);
-  const lang = langMatch ? langMatch[1] : '';
-  return (
-    <div className="doc-pre" data-lang={lang || undefined}>
-      {children}
-    </div>
-  );
-},
+### Step 2 — 添加 format 脚本到 package.json
+
+在 `scripts` 中添加：
+```json
+"format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"supabase/functions/**/*.ts\" \"docs/site/**/*.md\""
 ```
+
+### Step 3 — 运行 prettier --write 修复全部文件
+
+```bash
+pnpm prettier --write "src/**/*.{ts,tsx,css}" "supabase/functions/**/*.ts" "docs/site/**/*.md"
+```
+
+涉及文件（17+ 个）：
+- `src/App.tsx`
+- `src/components/DaoLogo.tsx`
+- `src/components/DocSidebar.tsx`
+- `src/components/MystRenderer.tsx`
+- `src/data/navigation.ts`
+- `src/hooks/useAIChat.ts`
+- `src/index.css`
+- `src/integrations/supabase/client.ts`
+- `src/integrations/supabase/types.ts`
+- `src/main.tsx`
+- `src/pages/ChatPage.tsx`
+- `src/pages/DocsPage.tsx`
+- `src/__tests__/` 下 3 个测试文件
+- `supabase/functions/ai-chat-8c107efce1b0/index.ts`
+- `supabase/functions/get-secrets/index.ts`
+- `docs/site/**/*.md`（内部代码块格式化）
+
+### Step 4 — 验证构建
+
+```bash
+pnpm build
+```
+
+确认 2244 modules 构建成功，无错误。
+
+### Step 5 — git commit + tag + push
+
+```
+style(v2.30.5): prettier 格式化 — 统一全量代码缩进与引号风格
+
+  · 安装 prettier@latest 为 devDependency
+  · 添加 package.json format 脚本
+  · src/**/*.{ts,tsx,css}：双引号→单引号，移除分号，2 空格缩进
+  · supabase/functions/**/*.ts：同上
+  · docs/site/**/*.md：代码块内统一格式（移除多余分号）
+```
+
+tag: `v2.30.5`
 
 ---
 
-### 文件 2: `src/index.css`
+## 风险说明
 
-**A. 添加 JetBrains Mono 字体到 Google Fonts import**
-```css
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-```
-
-**B. 定义 `--code-font` token**
-```css
-:root {
-  /* ... existing ... */
-  --code-font: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-}
-```
-
-**C. 替换 `.doc-pre` 样式（移除终端三点，改为 VitePress 风格）**
-```css
-.doc-pre {
-  position: relative;
-  background: #1a1b26;           /* Tokyo Night background */
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin: 1.25rem 0;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-}
-/* 移除 .doc-pre::before 终端三点（整段删除） */
-/* 语言标签（右上角，通过 data-lang） */
-.doc-pre[data-lang]::after {
-  content: attr(data-lang);
-  position: absolute;
-  top: 0.65rem;
-  right: 1rem;
-  font-size: 0.72rem;
-  font-family: var(--code-font);
-  color: rgba(180, 190, 220, 0.4);
-  letter-spacing: 0.05em;
-  pointer-events: none;
-  z-index: 1;
-}
-```
-
-**D. 更新 `.doc-code-block` 字体**
-```css
-.doc-code-block {
-  display: block;
-  padding: 1.35rem 1.5rem 1.35rem;
-  font-family: var(--code-font);   /* 替换 Courier New */
-  font-size: 0.855rem;
-  line-height: 1.7;
-  overflow-x: auto;
-  background: transparent !important;
-}
-```
-
-**E. 更新 `.doc-inline-code`（浅绿/青绿 VitePress 风格）**
-```css
-.doc-inline-code {
-  font-family: var(--code-font);
-  font-size: 0.85em;
-  color: #7ee787;                           /* GitHub-style green，清晰可辨 */
-  background: rgba(126, 231, 135, 0.1);
-  border: 1px solid rgba(126, 231, 135, 0.2);
-  padding: 0.15em 0.5em;
-  border-radius: 4px;
-}
-```
-
----
-
-## Verification
-
-1. `pnpm build` 无 error
-2. 截图对比代码块：语言标签显示正确 / 背景为深靛蓝 / 字体为 JetBrains Mono
-3. 截图确认行内代码为浅绿色（非蓝色）
-4. `git commit + tag v2.30.4 + push`
-
-## Files Modified
-
-- `src/components/MystRenderer.tsx` — 主题切换 + pre 组件语言提取
-- `src/index.css` — 字体 / 代码块 / 行内代码三处 CSS 改动
+- `.md` 文件中的表格 Prettier 会重新对齐列宽（去除多余空格）——渲染结果不变，纯格式变化
+- 不改变任何业务逻辑，仅格式化
