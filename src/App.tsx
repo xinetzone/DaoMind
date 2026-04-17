@@ -1,5 +1,5 @@
 import React from 'react'
-import { MessageCircle, FlaskConical, Activity, Layers } from 'lucide-react'
+import { MessageCircle, FlaskConical, Activity, Layers, BarChart2 } from 'lucide-react'
 import { DaoLogo } from './components/DaoLogo'
 import { ThemeToggle } from './components/ThemeToggle'
 import { useTheme } from './hooks/useTheme'
@@ -7,14 +7,16 @@ import { ChatPage } from './pages/ChatPage'
 import { AuditPage } from './pages/AuditPage'
 import { MonitorPage } from './pages/MonitorPage'
 import { CollectivePage } from './pages/CollectivePage'
+import { StatsPage } from './pages/StatsPage'
 
-type Page = 'chat' | 'audit' | 'monitor' | 'collective'
+type Page = 'chat' | 'audit' | 'monitor' | 'collective' | 'stats'
 
 function getInitialPage(): Page {
   const h = window.location.hash
   if (h === '#audit')      return 'audit'
   if (h === '#monitor')    return 'monitor'
   if (h === '#collective') return 'collective'
+  if (h === '#stats')      return 'stats'
   return 'chat'
 }
 
@@ -29,6 +31,7 @@ export default function App(): React.JSX.Element {
       if (h === '#audit')           setPage('audit')
       else if (h === '#monitor')    setPage('monitor')
       else if (h === '#collective') setPage('collective')
+      else if (h === '#stats')      setPage('stats')
       else setPage('chat')
     }
     window.addEventListener('hashchange', handler)
@@ -36,7 +39,7 @@ export default function App(): React.JSX.Element {
   }, [])
 
   const navigate = (p: Page): void => {
-    const hash = p === 'audit' ? '#audit' : p === 'monitor' ? '#monitor' : p === 'collective' ? '#collective' : '#chat'
+    const hash = p === 'audit' ? '#audit' : p === 'monitor' ? '#monitor' : p === 'collective' ? '#collective' : p === 'stats' ? '#stats' : '#chat'
     window.location.hash = hash
     setPage(p)
   }
@@ -80,6 +83,13 @@ export default function App(): React.JSX.Element {
             <Layers size={14} />
             <span>道集</span>
           </button>
+          <button
+            className={`app-nav-tab ${page === 'stats' ? 'active' : ''}`}
+            onClick={() => navigate('stats')}
+          >
+            <BarChart2 size={14} />
+            <span>道数</span>
+          </button>
         </div>
 
         <div className="app-nav-right">
@@ -91,6 +101,7 @@ export default function App(): React.JSX.Element {
         {page === 'chat'       ? <ChatPage />       :
          page === 'audit'      ? <AuditPage />      :
          page === 'collective' ? <CollectivePage /> :
+         page === 'stats'      ? <StatsPage />      :
                                  <MonitorPage />}
       </div>
     </div>
