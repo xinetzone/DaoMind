@@ -33,3 +33,22 @@ export interface DaoModuleMeta extends ExistenceContract {
   readonly registeredAt: number;
   readonly activatedAt?: number;
 }
+
+/** DaoModuleGraphNode —— 依赖图节点的纯类型描述
+ * 帛书："知常曰明"——了解模块间的依赖关系是系统自明之道 */
+export interface DaoModuleGraphNode {
+  readonly name: string;
+  readonly dependencies: readonly string[];
+  readonly dependents: readonly string[];
+  readonly depth: number;
+}
+
+/** DaoModuleGraphSnapshot —— 依赖图的不可变快照 */
+export interface DaoModuleGraphSnapshot {
+  readonly nodes: ReadonlyArray<DaoModuleGraphNode>;
+  readonly topologicalOrder: ReadonlyArray<string>;
+  readonly hasCycle: boolean;
+  readonly cycleNodes: ReadonlyArray<string>;
+  readonly totalModules: number;
+  readonly maxDepth: number;
+}

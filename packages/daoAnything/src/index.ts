@@ -9,6 +9,7 @@ export type {
 } from '@daomind/nothing';
 
 export { daoContainer, DaoAnythingContainer } from './container';
+export { DaoModuleGraph, daoModuleGraph } from './module-graph';
 
 export const daoAnything = {
   name: '@dao/anything',

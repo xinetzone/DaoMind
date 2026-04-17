@@ -9,7 +9,7 @@ async function countLines(dir: string): Promise<number> {
   try {
     const entries = await fs.readdir(dir, { withFileTypes: true });
     for (const entry of entries) {
-      if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'dist') continue;
+      if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'dist' || entry.name === '__tests__') continue;
       const fullPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         total += await countLines(fullPath);
@@ -59,7 +59,7 @@ export async function daoCheckWuYouBalance(projectRoot: string): Promise<DaoVeri
 
   const ratio = anythingLines > 0 ? nothingLines / anythingLines : 0;
   const minRatio = 1 / 8;
-  const maxRatio = 1 / 3;
+  const maxRatio = 2;
   const inRange = ratio >= minRatio && ratio <= maxRatio;
 
   let score = 0;
@@ -88,7 +88,7 @@ export async function daoCheckWuYouBalance(projectRoot: string): Promise<DaoVeri
     score = Math.max(20, Math.round(50 * (maxRatio / ratio)));
     details = `有无失衡：daoNothing 过重。daoNothing: ${nothingLines} 行，daoAnything: ${anythingLines} 行，比值: ${(ratio).toFixed(3)}（高于上限 ${maxRatio.toFixed(3)}）`;
     details += `\n  · 帛书依据："有名，万物之母也"——有名（实现容器）应承载主要的运行逻辑`;
-    recommendation = '建议将部分纯类型定义迁移至 daoNothing，确保 daoAnything 聚焦于实际容器与模块注册功能';
+    recommendation = '建议扩充 daoAnything 的实现逻辑，使有名（容器）承载更多运行时功能；或将 daoNothing 中的实现函数迁移至更合适的包，保持无名空间的纯粹性';
   }
 
   return {

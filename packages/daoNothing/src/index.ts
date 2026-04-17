@@ -8,7 +8,7 @@
 //   它是整个系统的"类型论根基"——定义类型空间，但不创建实例。
 
 export type { Void, Potential, Origin } from './types';
-export type { DaoModuleRegistration, ModuleLifecycle, DaoModuleMeta } from './module-types';
+export type { DaoModuleRegistration, ModuleLifecycle, DaoModuleMeta, DaoModuleGraphNode, DaoModuleGraphSnapshot } from './module-types';
 export type { EmptyInterface, ExistenceContract, MutabilityContract } from './contracts';
 export type { WuWeiConstraint, ZiRanInvariant } from './constraints';
 export type { DaoNothingEvent } from './event-void';
