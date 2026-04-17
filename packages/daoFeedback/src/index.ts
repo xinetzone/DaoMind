@@ -6,7 +6,7 @@
  * 四阶段反馈回归机制：
  * - 阶段一：感知（Guan Zhi）— 叶节点捕获运行态
  * - 阶段二：聚合（Ju He）— Nexus 级智能聚合
- * - 阶段三：冲和（Chong He）— Anything 层调和处理
+ * - 阶段三：中和（Zhōng Hé）— Anything 层调和处理
  * - 阶段四：归元（Gui Yuan）— Collective 层本体更新
  */
 
@@ -31,7 +31,7 @@ export { DaoPerceiver } from './stage1-perceive.js';
 /** 阶段二：聚合（Ju He） */
 export { DaoAggregator } from './stage2-aggregate.js';
 
-/** 阶段三：冲和（Chong He） */
+/** 阶段三：中和（Zhōng Hé） */
 export type { ChongQiSignal, HarmonizeResult, NothingConstraint } from './stage3-harmonize.js';
 export { DaoHarmonizer } from './stage3-harmonize.js';
 

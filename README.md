@@ -3,7 +3,7 @@
 > 道家哲学遇见现代 TypeScript —— "无名，万物之始也；有名，万物之母也。" — 帛书《道德经》
 
 [![npm](https://img.shields.io/npm/v/@daomind/nothing?label=%40daomind%2Fnothing)](https://www.npmjs.com/package/@daomind/nothing)
-[![Tests](https://img.shields.io/badge/tests-908%20passed-brightgreen)](https://github.com/xinetzone/DaoMind)
+[![Tests](https://img.shields.io/badge/tests-1000%20passed-brightgreen)](https://github.com/xinetzone/DaoMind)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
 
@@ -26,6 +26,7 @@
 - **哲学一致**：每一个 API 命名都有对应的道家哲学根据
 - **DaoOption\<T\> + DaoResult\<T,E\>**：函数式错误处理，无 null/undefined 异常
 - **DaoUniverse* 桥接体系**：17 个分层桥接器，将所有子包统一融入宇宙门面
+- **消费者层**：DaoUniverseFacade（一行构建全栈）→ HealthBoard（健康蒸馏）→ Optimizer（建议引擎）
 
 ## 快速开始
 
@@ -178,7 +179,7 @@ console.log(times.snapshot());
 times.clearAllForApp('worker'); // → 返回 3（已清除数量）
 ```
 
-## 包生态（v2.24.0）
+## 包生态（v2.27.0）
 
 ### 核心包
 
@@ -229,6 +230,14 @@ times.clearAllForApp('worker'); // → 返回 3（已清除数量）
 | `DaoUniverseBenchmark` | v2.23.0 | `DaoUniverseMonitor × @daomind/benchmark`（性能基准 × 宇宙健康感知） |
 | `DaoUniverseDiagnostic` | v2.24.0 | `DaoUniverseAudit × DaoUniverseBenchmark`（宇宙综合诊断） |
 
+### 消费者层（Consumer Layer）
+
+| 类 | 版本 | 职责 |
+|----|------|------|
+| `DaoUniverseFacade` | v2.25.0 | 一行自动装配全部 17 桥接器（Builder） |
+| `DaoUniverseHealthBoard` | v2.26.0 | 健康蒸馏 + 趋势感知（纯消费者） |
+| `DaoUniverseOptimizer` | v2.27.0 | 6 条建议规则，优化引擎（二级消费者） |
+
 ## 架构概览
 
 ```
@@ -264,7 +273,32 @@ daoCollective ───── 根节点（DaoUniverse 统一门面 + DaoUniverse
           ├── DaoUniverseAudit (v2.11.0)
           │       └── DaoUniverseDocs (v2.15.0)
           └─────── DaoUniverseDiagnostic (v2.24.0) ← Audit × Benchmark 综合诊断
+
+消费者层（不创建子系统，只读取数据）：
+  DaoUniverseFacade (v2.25.0) ─── 自动装配全部 17 桥接器
+    └──▶ DaoUniverseHealthBoard (v2.26.0) ─── 健康蒸馏 + 趋势感知
+               └──▶ DaoUniverseOptimizer (v2.27.0) ─── 6条建议规则
 ```
+
+## 帛书宇宙生成论映射
+
+> "道生一，一生二，二生三，三生万物。万物负阴而抱阳，**中气以为和**。"
+> — 帛书《道德经》乙本·四十二章
+>
+> 注：帛书（马王堆乙本）作"**中气**"（居间调和之气）；通行本（王弼）作"冲气"。
+> 中气者，阴阳在平衡、居间状态下自然交融而成和，体现道家"守中清静"底色。
+
+| 帛书层次 | 哲学含义 | DaoMind 对应 |
+|---------|---------|-------------|
+| **道** | 不可名的本源，超越有无 | `DaoUniverse`（根节点，全局宇宙门面） |
+| **一** | 混然整体，未分阴阳 | `DaoUniverseFacade`（整体门面，一行构建全栈） |
+| **二** | 阴阳分化，极性对偶 | `DaoUniverseMonitor`（阴阳仪表盘）× `DaoUniverseScheduler`（时序对偶） |
+| **三（中气）** | 阴阳居间调和之力 | `DaoUniverseQi`（混元气总线，天/地/人/中气四通道） |
+| **万物** | 三者共构，万物生成 | 17 个桥接器运行时实例 + 消费者层 |
+
+**有无相生（两层次）**：
+- 本体论层：`daoNothing`（无名，类型空间）为 `daoAnything`（有名，值空间）之本源
+- 现象层：有与无通过 `DaoAgentContainerBridge` 生命周期同步相互依存
 
 ## 开发环境
 
@@ -284,7 +318,7 @@ pnpm install
 # 构建所有包
 pnpm -r run build
 
-# 运行全量测试（908 个，49 套件）
+# 运行全量测试（1000 个，52 套件）
 pnpm test
 
 # 运行单包测试
@@ -312,6 +346,9 @@ npm 发布通过 GitHub Actions 手动触发（`workflow_dispatch`），防止 2
 
 | 版本 | 测试数 | 亮点 |
 |------|--------|------|
+| v2.27.0 | 1000 | DaoUniverseOptimizer — 宇宙优化建议引擎，6条建议规则，**1000 测试里程碑** |
+| v2.26.0 | 971 | DaoUniverseHealthBoard — 宇宙健康仪表盘，纯消费者模式，趋势感知 |
+| v2.25.0 | 941 | DaoUniverseFacade — 全栈自动装配门面，一行构建全部 17 桥接器 |
 | v2.24.0 | 908 | DaoUniverseDiagnostic — DaoUniverseAudit × DaoUniverseBenchmark 宇宙综合诊断 |
 | v2.23.0 | 877 | DaoUniverseBenchmark — @daomind/benchmark × DaoUniverseMonitor 性能基准 |
 | v2.22.0 | 847 | DaoUniverseQi — @modulux/qi × DaoUniverseNexus 混元气总线 × 服务网格 |

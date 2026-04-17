@@ -1,10 +1,12 @@
 /** DaoUniverseQi — 道宇宙混元气总线 × 宇宙服务网格
- * 帛书依据："万物负阴而抱阳，冲气以为和"（德经·四十二章）
+ * 帛书依据："万物负阴而抱阳，中气以为和"（德经·四十二章）
  *           "为学日益，为道日损"（德经·四十八章）
+ * [注] 帛书（马王堆乙本）作"中气"（居间调和）；通行本（王弼）作"冲气"（激荡冲突）。
+ *      DaoUniverseQi 对应宇宙生成论"三"的层次——中气作为阴阳居间调和之力，化生万物。
  *
  * 架构：DaoUniverseNexus → DaoUniverseQi
  *       独立 HunyuanBus（不污染任何全局单例），
- *       内置天/地/人/冲 四气通道，
+ *       内置天/地/人/中气 四通道（'chong' 标识符维持 API 兼容，含义为中气调和），
  *       节点注册与 DaoRouter 路由同步，
  *       snapshot() 暴露消息总线运行时指标。
  *
@@ -200,7 +202,7 @@ export class DaoUniverseQi {
     return this._ren;
   }
 
-  /** 冲气调节器（阴阳平衡，动态调和） */
+  /** 中气调节器（阴阳居间调和，守中清静）— API兼容名chong */
   get chong(): ChongQiRegulator {
     return this._chong;
   }

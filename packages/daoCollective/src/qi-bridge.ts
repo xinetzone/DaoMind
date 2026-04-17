@@ -1,5 +1,5 @@
 /** DaoQiAgentBridge — 气桥接器
- * 帛书依据："万物负阴而抱阳，冲气以为和"（乙本·四十二章）
+ * 帛书依据："万物负阴而抱阳，中气以为和"（乙本·四十二章）
  * 设计原则：将 HunyuanBus（天地人冲四气传输层）与 DaoAgentMessenger（Agent 内部虚空通信）
  *           双向桥接，Agent 无需感知底层传输，仍通过 send/onMessage 使用 */
 

@@ -80,7 +80,7 @@ export class DaoFeedbackLifecycle {
       }
     });
 
-    /** Stage 3: 冲和（Chong He）— 万物负阴而抱阳，冲气以为和 */
+    /** Stage 3: 中和（Zhōng Hé）— 万物负阴而抱阳，中气以为和 */
     const harmonized = this.harmonizer.harmonize(aggregated, options?.nothingConstraints);
 
     auditTrail.push({

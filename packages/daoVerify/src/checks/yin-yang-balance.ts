@@ -115,7 +115,7 @@ export async function daoCheckYinYangBalance(projectRoot: string): Promise<DaoVe
   details += `\n  ChongQiRegulator 方法检查:\n`;
   details += `  · regulateAll(): ${methodCheck.hasRegulateAll ? '✓ 已实现' : '✗ 缺失'}\n`;
   details += `  · converge(): ${methodCheck.hasConverge ? '✓ 已实现' : '✗ 缺失'}\n`;
-  details += `\n  帛书依据：《道德经》乙本·四十二章「万物负阴而抱阳，冲气以为和」`;
+  details += `\n  帛书依据：《道德经》乙本·四十二章「万物负阴而抱阳，中气以为和」`;
 
   let recommendation: string | undefined;
   if (!passed) {

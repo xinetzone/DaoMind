@@ -67,7 +67,7 @@ export class DaoReturner {
             timestamp,
             nodeId: operationId,
             action: 'skip_no_action_needed',
-            data: { reason: '冲和判断无需行动', score: harmonizedResult.score }
+            data: { reason: '中和判断无需行动', score: harmonizedResult.score }
           }
         ],
         status: 'rejected',

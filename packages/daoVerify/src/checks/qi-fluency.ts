@@ -109,7 +109,7 @@ export async function daoCheckQiFluency(projectRoot: string): Promise<DaoVerific
   details += `  · HunyuanBus 核心类: ${hunyuanExists ? (hasHunyuanBus ? '✓ 已实现' : '⚠ 文件存在但缺少 HunyuanBus 类') : '✗ 缺失'}\n`;
   details += `  · 消息协议 DaoMessage: ${protocolInfo.hasMessageInterface ? '✓ 已定义' : '✗ 缺失'}\n`;
   details += `  · 通道类型 QiChannelType: ${protocolInfo.hasChannelType ? '✓ 已定义' : '✗ 缺失'}\n`;
-  details += `\n  帛书依据：《道德经》乙本·四十二章「万物负阴而抱阳，冲气以为和」— 四通道构成完整气机循环`;
+  details += `\n  帛书依据：《道德经》乙本·四十二章「万物负阴而抱阳，中气以为和」— 四通道构成完整气机循环`;
 
   let recommendation: string | undefined;
   if (!passed) {

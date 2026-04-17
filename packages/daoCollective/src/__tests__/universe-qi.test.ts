@@ -1,6 +1,6 @@
 /**
  * DaoUniverseQi 测试套件
- * "万物负阴而抱阳，冲气以为和"（德经·四十二章）
+ * "万物负阴而抱阳，中气以为和"（德经·四十二章）
  *
  * 验证：构建 / addNode-removeNode / broadcast / report / subscribe / probe / snapshot / E2E
  */

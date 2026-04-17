@@ -1,5 +1,5 @@
 /** DaoUniverseNexus — 道宇宙服务网格 × 健康监控
- * 帛书依据："万物负阴而抱阳，冲气以为和"（德经·四十二章）
+ * 帛书依据："万物负阴而抱阳，中气以为和"（德经·四十二章）
  *           "知人者智，自知者明"（德经·三十三章）
  *
  * 架构：DaoUniverseMonitor.health() + DaoUniverseClock.onTick() → Nexus 健康快照

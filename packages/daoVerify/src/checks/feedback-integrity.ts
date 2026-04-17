@@ -14,7 +14,7 @@ const REQUIRED_STAGES = [
 const STAGE_LABELS: Record<string, string> = {
   'stage1-perceive.ts': '感知（观其妙）',
   'stage2-aggregate.ts': '聚合（大曰逝）',
-  'stage3-harmonize.ts': '冲和（冲气以为和）',
+  'stage3-harmonize.ts': '中和（中气以为和）',
   'stage4-return.ts': '归元（远曰反）',
 };
 
@@ -96,7 +96,7 @@ export async function daoCheckFeedbackIntegrity(projectRoot: string): Promise<Da
   if (!passed) {
     const missing = stageResults.filter((r) => !r.exists).map((r) => r.label);
     if (missing.length > 0) {
-      recommendation = `缺失阶段: ${missing.join('、')}。请按感知→聚合→冲和→归元的顺序补全实现`;
+      recommendation = `缺失阶段: ${missing.join('、')}。请按感知→聚合→中和→归元的顺序补全实现`;
     }
     if (!lifecycleIntegrates && lifecycleExists) {
       recommendation = (recommendation ?? '') + ' lifecycle.ts 未完整串联所有阶段，请在 submit() 方法中调用全部四个阶段';

@@ -3,14 +3,14 @@ import type {
   SignalCategory
 } from './types.js';
 
-/** 冲气信号 — 帛书《道德经》乙本·四十二章：万物负阴而抱阳，冲气以为和 */
+/** 冲气信号 — 帛书《道德经》乙本·四十二章：万物负阴而抱阳，中气以为和 */
 export interface ChongQiSignal {
   pairId: string;
   direction: string;
   magnitude: number;
 }
 
-/** 冲和结果 */
+/** 中和结果 */
 export interface HarmonizeResult {
   shouldAct: boolean;
   chongQiSignals: ChongQiSignal[];
@@ -25,7 +25,7 @@ export interface NothingConstraint {
 
 const DEFAULT_NOISE_THRESHOLD = 5; // 默认噪声过滤阈值
 
-/** 阶段三：冲和（Chong He）— Anything 层接收聚合反馈，进行"有无相生"层面的调和处理 */
+/** 阶段三：中和（Zhōng Hé）— Anything 层接收聚合反馈，进行"有无相生"层面的调和处理 */
 export class DaoHarmonizer {
   private noiseThreshold: number;
 
@@ -33,7 +33,7 @@ export class DaoHarmonizer {
     this.noiseThreshold = noiseThreshold ?? DEFAULT_NOISE_THRESHOLD;
   }
 
-  /** 冲和处理 — 查询理想约束、计算偏差、生成冲气建议、过滤噪声 */
+  /** 中和处理 — 查询理想约束、计算偏差、生成中气调和建议、过滤噪声 */
   harmonize(
     aggregated: DaoAggregatedFeedback,
     nothingConstraints?: Record<string, NothingConstraint>
@@ -94,7 +94,7 @@ export class DaoHarmonizer {
     return { isWithinTolerance, deviation };
   }
 
-  /** 计算综合平衡分数 — 帛书原文：冲气以为和 */
+  /** 计算综合平衡分数 — 帛书原文：中气以为和 */
   calculateBalanceScore(
     dimensions: Record<string, number>,
     deviations?: ChongQiSignal[]
