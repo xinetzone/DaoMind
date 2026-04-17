@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { Send, Square, RotateCcw, MessageCircle, X, History, Download, Network, LayoutTemplate } from 'lucide-react'
+import { Send, Square, RotateCcw, MessageCircle, X, History, Download, Network, LayoutTemplate, Share2 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -15,6 +15,7 @@ import { downloadMarkdown } from '../utils/exportChat'
 import { useMindMap } from '../hooks/useMindMap'
 import { MindMapModal } from '../components/MindMapModal'
 import { PromptPanel } from '../components/PromptPanel'
+import { ShareCardModal } from '../components/ShareCardModal'
 import type { Message } from '../hooks/useAIChat'
 
 const SUGGESTIONS = [
@@ -31,6 +32,7 @@ export function ChatPage(): React.JSX.Element {
   const [messages, setMessages] = React.useState<Message[]>(() => currentSession?.messages ?? [])
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
   const [showPromptPanel, setShowPromptPanel] = React.useState(false)
+  const [showShareCard, setShowShareCard] = React.useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -228,6 +230,10 @@ export function ChatPage(): React.JSX.Element {
                 <Network size={14} />
                 <span>导图</span>
               </button>
+              <button className="chat-icon-btn" onClick={() => setShowShareCard(true)} title="分享卡片">
+                <Share2 size={14} />
+                <span>分享</span>
+              </button>
             </>
           )}
         </div>
@@ -370,6 +376,13 @@ export function ChatPage(): React.JSX.Element {
           loading={mindLoading}
           error={mindError}
           onClose={handleCloseMindMap}
+        />
+      )}
+      {showShareCard && (
+        <ShareCardModal
+          sessionTitle={currentSession?.title ?? '道衍对话'}
+          messages={messages}
+          onClose={() => setShowShareCard(false)}
         />
       )}
     </div>
