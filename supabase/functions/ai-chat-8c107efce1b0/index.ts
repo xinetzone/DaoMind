@@ -13,7 +13,6 @@ const ALLOWED_MODELS = new Set([
 
 const DEFAULT_MODEL = 'z-ai/glm-5'
 
-// Concise system prompt — shorter input = faster TTFB
 const SYSTEM_PROMPT =
   '你是「道衍」，帛书《道德经》智慧引导者。' +
   '帛书关键：德经在前；「中气以为和」非「冲气」；三才（天地人）× 中气；道生一→二→三→万物。' +
@@ -30,7 +29,6 @@ Deno.serve(async (req) => {
 
     const body = await req.json()
 
-    // Ping handler — pre-warm the Deno container without calling AI API
     if (body.ping === true) {
       return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -38,8 +36,6 @@ Deno.serve(async (req) => {
     }
 
     const { messages, model: requestedModel } = body
-
-    // Validate model — only allow known models to prevent injection
     const model = ALLOWED_MODELS.has(requestedModel) ? requestedModel : DEFAULT_MODEL
 
     const response = await fetch('https://api.enter.pro/code/api/v1/ai/messages', {
@@ -67,9 +63,7 @@ Deno.serve(async (req) => {
           const d = JSON.parse(m[1])
           errorMessage = d.error?.message || errorMessage
           errorCode = d.error?.type || errorCode
-        } catch {
-          /* use defaults */
-        }
+        } catch { /* use defaults */ }
       }
       return new Response(
         `event: error\ndata: ${JSON.stringify({ type: 'error', error: { type: errorCode, message: errorMessage } })}\n\n`,
