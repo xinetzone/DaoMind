@@ -1204,8 +1204,8 @@ img {
 
 .audit-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.1rem;
 }
 .audit-card {
   background: var(--bg-card);
@@ -1255,10 +1255,11 @@ img {
   line-height: 1;
 }
 .audit-score-bar-track {
-  height: 5px;
+  height: 6px;
   background: var(--surface);
   border-radius: 3px;
   overflow: hidden;
+  margin-bottom: 0.1rem;
 }
 .audit-score-bar-fill {
   height: 100%;
@@ -1275,19 +1276,19 @@ img {
 .audit-detail-body {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
-  font-size: 0.8rem;
+  gap: 0.5rem;
+  font-size: 0.79rem;
 }
 .audit-detail-section {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
 }
 .audit-detail-summary {
-  color: var(--text);
-  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-size: 0.77rem;
   margin: 0;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 .audit-detail-list {
   list-style: none;
@@ -1295,16 +1296,13 @@ img {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.18rem;
 }
 .audit-detail-bullet {
-  display: flex;
-  align-items: baseline;
-  gap: 0;
   font-size: 0.74rem;
   color: var(--text-muted);
-  line-height: 1.4;
-  padding-left: 0.85rem;
+  line-height: 1.45;
+  padding-left: 0.9rem;
   position: relative;
 }
 .audit-detail-bullet::before {
@@ -1313,25 +1311,104 @@ img {
   left: 0.1rem;
   color: var(--secondary);
   font-weight: 900;
-  font-size: 1.1em;
+  font-size: 1.15em;
+  line-height: 1.2;
 }
+
+/* Bullet row: label + badge layout */
+.audit-bullet-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+}
+.audit-bullet-label {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+  color: var(--text-muted);
+}
+.audit-bullet-badge {
+  flex-shrink: 0;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--secondary);
+  background: rgba(107, 144, 128, 0.14);
+  border: 1px solid rgba(107, 144, 128, 0.28);
+  padding: 0.1rem 0.38rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  margin-top: 0.05rem;
+  letter-spacing: 0.01em;
+}
+
+/* Yin-yang pair row */
+.audit-pair-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+.audit-pair-name {
+  font-size: 0.7rem;
+  font-family: var(--code-font);
+  color: var(--text);
+  font-weight: 500;
+}
+.audit-pair-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.18rem;
+}
+.audit-check-tag {
+  font-size: 0.62rem;
+  color: var(--secondary);
+  background: rgba(107, 144, 128, 0.12);
+  border: 1px solid rgba(107, 144, 128, 0.22);
+  padding: 0.06rem 0.28rem;
+  border-radius: 3px;
+  white-space: nowrap;
+  font-family: var(--code-font);
+}
+.audit-badge-complete {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--secondary);
+  padding: 0.06rem 0.28rem;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+/* Inline filename code tag */
+.audit-filename {
+  font-family: var(--code-font);
+  font-size: 0.68em;
+  color: var(--primary);
+  background: var(--primary-glow);
+  padding: 0.05rem 0.22rem;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+/* Checkmark highlight */
 .audit-check {
   color: var(--secondary);
   font-weight: 700;
-  font-size: 0.82em;
 }
+
 .audit-detail-citation {
   display: flex;
   align-items: flex-start;
-  gap: 0.4rem;
+  gap: 0.45rem;
   font-size: 0.72rem;
   color: var(--primary);
   background: var(--primary-glow);
   border-left: 2px solid var(--primary);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  padding: 0.3rem 0.55rem;
-  line-height: 1.45;
+  padding: 0.35rem 0.6rem;
+  line-height: 1.5;
   font-style: italic;
+  margin-top: 0.1rem;
 }
 .audit-citation-icon {
   flex-shrink: 0;
