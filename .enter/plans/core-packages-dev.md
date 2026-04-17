@@ -1,226 +1,112 @@
-# P3 功能实现计划 — 道集 · 宇宙健康板（daoCollective）
-
-## Context
-P1（会话/高亮/道审）、P2（五感仪表盘）已完成。  
-P3 目标：将 `@daomind/collective` 的 `DaoUniverseFacade` + `DaoUniverseHealthBoard` 
-可视化为"宇宙全局健康板"，展示 5 个维度：
-- **system**：agents / apps / modules / events 计数
-- **monitor**：systemHealth 综合分（0-100）
-- **qi**：混元气总线（tian/di/ren/chong 消息量、节点数）
-- **bench**：性能基准历次运行摘要
-- **diagnostic**：综合诊断历史摘要
-- **healthBoard**：trend（improving/stable/degrading/unknown）+ 历史曲线
-
-### 关键约束
-同 P2：monorepo 包无法在 Edge Function 导入 → 使用 `Math.floor(Date.now() / 5000)` 
-作为种子，内联仿真所有数据。  
-调用模式：`fetch(${SUPABASE_URL}/functions/v1/dao-collective, { headers })` 复用 `useAIChat.ts` 的常量（避免 supabase-js 依赖）。
+# DaoMind 核心包开发计划
 
 ---
 
-## 架构
+## P4 · 道反 · 消息反馈（当前任务）
 
+### Context
+连接 `daoFeedback` 包的"反也者，道之动"理念，让用户对 AI 回复进行点赞/踩评分，持久化到 Supabase，形成可追溯的反馈信号流。
+
+### 数据模型
+
+**Supabase 新表 `message_feedback`**
+```sql
+create table message_feedback (
+  id            uuid        primary key default gen_random_uuid(),
+  session_id    text        not null,
+  message_index integer     not null,
+  message_content text      not null,
+  rating        text        not null check (rating in ('up','down')),
+  created_at    timestamptz default now()
+);
+alter table message_feedback enable row level security;
+create policy "anon_insert" on message_feedback for insert with check (true);
+create policy "anon_select" on message_feedback for select using (true);
 ```
-CollectivePage.tsx（新建）
-  │  每 10 秒 fetch
-  └──► supabase/functions/dao-collective/index.ts（新建）
-           returns CollectiveSnapshot（含 system/monitor/qi/bench/diagnostic/healthBoard）
-```
 
-App.tsx → 第 4 个 Tab "道集"（Layers 图标，`#collective` 路由）
+### 架构：4 个文件变更
 
----
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `src/hooks/useFeedback.ts` | 新建 | 提交反馈 + localStorage 乐观更新 |
+| `src/components/MessageFeedback.tsx` | 新建 | 点赞/踩按钮组件（ThumbsUp/ThumbsDown） |
+| `src/pages/ChatPage.tsx` | 修改 | 在 assistant 消息末尾挂载 MessageFeedback |
+| `src/index.css` | 修改 | `.msg-feedback*` 按钮样式 |
 
-## 一、Edge Function: `dao-collective`
-
-**路径**：`supabase/functions/dao-collective/index.ts`
-
-### 输出类型
+### useFeedback.ts 设计
 
 ```typescript
-interface AgentsByState { active: number; dormant: number; error: number }
-interface AgentsByType  { [type: string]: number }
-interface AppsByState   { running: number; stopped: number; idle: number }
-interface ModulesByLifecycle { created: number; initialized: number; disposed: number }
+// localStorage key: `daomind-feedback`
+// feedbackMap: Record<string, 'up'|'down'>  // key = `${sessionId}:${messageIndex}`
 
-interface SystemSim {
-  agents: { total: number; byState: AgentsByState; byType: AgentsByType }
-  apps:   { total: number; byState: AppsByState }
-  modules:{ total: number; byLifecycle: ModulesByLifecycle }
-  events: { total: number; byType: Record<string, number> }
-}
-interface QiSim {
-  totalEmitted: number; totalDropped: number
-  channelsStats: { tian: number; di: number; ren: number; chong: number }
-  registeredNodes: number
-}
-interface BenchSim   { totalRuns: number; lastRunAt: number; lastHealth: number }
-interface DiagSim    { totalDiagnoses: number; lastAuditScore: number; lastBenchHealth: number }
-interface HealthEntry { timestamp: number; monitorScore: number; qiNodes: number }
-interface HealthBoard {
-  trend: 'improving'|'stable'|'degrading'|'unknown'
-  latestScore: number; totalChecks: number
-  history: HealthEntry[]   // 最近 5 条
-}
-interface CollectiveSnapshot {
-  timestamp: number
-  system:      SystemSim
-  monitorHealth: number      // 0-100（复用 P2 仿真公式）
-  qi:          QiSim
-  bench:       BenchSim
-  diagnostic:  DiagSim
-  healthBoard: HealthBoard
+export function useFeedback(sessionId: string | null): {
+  getFeedback(index: number): 'up' | 'down' | null
+  submitFeedback(index: number, content: string, rating: 'up'|'down'): Promise<void>
 }
 ```
 
-### 仿真策略（同 P2 — 5 秒 seed）
+提交流程：
+1. 乐观更新 localStorage → 触发 React 状态刷新
+2. `fetch POST ${SUPABASE_URL}/rest/v1/message_feedback`（与现有代码同 anon-key 方式）
+3. 失败静默（不阻塞 UI）
 
-```typescript
-const seed = Math.floor(Date.now() / 5000)
-const rand = makeRand(seed)  // 与 dao-monitor 相同的 makeRand 实现
+daoFeedback 概念映射（代码注释体现）：
+- `rating='up'` → `SignalLevel='opportunity'`, `category='behavior'`
+- `rating='down'` → `SignalLevel='warning'`, `category='behavior'`
+
+### MessageFeedback.tsx 设计
+
+```tsx
+// Props: sessionId, messageIndex, content, isStreaming
+// 仅在 !isStreaming && content.length > 0 时显示
+// 图标: ThumbsUp / ThumbsDown (lucide-react, size=13)
+// 状态: null | 'up' | 'down'
+// 点击已评分 → 切换（重新提交新 rating）
 ```
 
-**system 仿真**：
-- `activeAgents = 3 + rand(1, 5)`, `dormantAgents = 1 + rand(2, 3)`, `errorAgents = rand(3, 2)`
-- `agentsByType = { coordinator: rand(4, 3)+1, observer: rand(5, 2)+1, worker: rand(6, 4)+1 }`
-- `runningApps = 2 + rand(7, 4)`, `stoppedApps = rand(8, 2)`, `idleApps = rand(9, 1)`
-- `modules.created = 5 + rand(10, 5)`, `modules.initialized = 3 + rand(11, 4)`, `modules.disposed = rand(12, 2)`
-- `events.total = 80 + rand(13, 40)`, byType: `{ lifecycle: rand(14, 30)+20, message: rand(15, 25)+15, ... }`
+### ChatPage.tsx 修改
 
-**qi 仿真**：
-- `totalEmitted = 200 + rand(20, 80)`, `totalDropped = rand(21, 5)`
-- `channelsStats = { tian: 40+rand(22,20), di: 30+rand(23,15), ren: 50+rand(24,25), chong: 20+rand(25,10) }`
-- `registeredNodes = 4 + rand(26, 4)`
-
-**bench**：`totalRuns = 5 + rand(30, 10)`, `lastHealth = 60 + rand(31, 30)`
-
-**diagnostic**：`lastAuditScore = 55 + rand(40, 35)`, `lastBenchHealth = bench.lastHealth`
-
-**healthBoard.history**（近 5 条，时间间隔 5 秒）：
-```typescript
-for (let i = 4; i >= 0; i--) {
-  const pastSeed = seed - i
-  const pastRand = makeRand(pastSeed)
-  history.push({
-    timestamp:    now - i * 5000,
-    monitorScore: 60 + pastRand(50, 30),
-    qiNodes:      4 + pastRand(51, 4),
-  })
-}
-```
-**healthBoard.trend** — 比较 history 最后 3 条 monitorScore 增减判断。
-
----
-
-## 二、CollectivePage.tsx（新建）
-
-**路径**：`src/pages/CollectivePage.tsx`
-
-### 面板布局
-
-```
-collective-layout
-  ├── collective-header
-  │     ├── 健康总环（SVG）+ trend badge
-  │     └── 4 stat cards（活跃体 / 运行应用 / 气机节点 / 总诊断）
-  └── collective-body (grid 2col)
-       ├── QiPanel        — 混元气总线（4 通道条 + 丢包率）
-       ├── AgentsPanel    — 智能体状态（active/dormant/error 横条）+ 类型分布
-       ├── AppsModules    — 应用 + 模块双合并面板
-       ├── HealthHistory  — 健康趋势迷你折线（5 点 SVG path）
-       ├── BenchDiag      — 基准 & 诊断上次评分 + 运行次数
-       └── EventsPanel    — 事件总线类型分布（span 无；适中小卡片）
+```tsx
+// 在 assistant bubble 的 ReactMarkdown 下方追加：
+{!msg.isStreaming && msg.role === 'assistant' && msg.content && (
+  <MessageFeedback
+    sessionId={currentSessionId}
+    messageIndex={i}
+    content={msg.content}
+  />
+)}
 ```
 
-### 关键视觉
+以及在 ChatPage 引入 `useFeedback` hook，传入 `currentSessionId`。
 
-- **健康总环**：与 MonitorPage 相同的 SVG 圆弧组件（复用 CSS 变量）
-- **Trend badge**：`improving`=绿色↑，`stable`=蓝色→，`degrading`=红色↓，`unknown`=灰色?
-- **迷你折线**：纯 SVG `<polyline>`，5 个时间点，无第三方库
-- **通道条**：与 P2 monitor 类似的横向 progress bar，颜色映射天(blue)/地(green)/人(amber)/冲(purple)
-
-### 数据拉取
-
-```typescript
-const res = await fetch(`${SUPABASE_URL}/functions/v1/dao-collective`, {
-  headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
-})
-const data: CollectiveSnapshot = await res.json()
-```
-
-自动刷新间隔：**10 秒**（宇宙层变化较慢）。
-
----
-
-## 三、App.tsx（修改）
-
-```diff
-- import { MessageCircle, FlaskConical, Activity } from 'lucide-react'
-+ import { MessageCircle, FlaskConical, Activity, Layers } from 'lucide-react'
-+ import { CollectivePage } from './pages/CollectivePage'
-
-- type Page = 'chat' | 'audit' | 'monitor'
-+ type Page = 'chat' | 'audit' | 'monitor' | 'collective'
-
-  // getInitialPage：+ 'collective' → '#collective'
-  // navigate：+ '#collective'
-  // handler：+ '#collective' → setPage('collective')
-
-  // 新 Tab：
-  <Layers size={14} /> <span>道集</span>
-
-  // 渲染：
-  page === 'collective' ? <CollectivePage /> : <MonitorPage />
-```
-
----
-
-## 四、index.css（追加）
+### CSS 设计
 
 ```css
-/* Collective Layout */
-.collective-layout        /* flex col, scroll */
-.collective-header        /* health ring + 4 stat cards */
-.collective-stat-card     /* 单个指标卡 */
-.collective-body          /* grid 2-col */
-.collective-panel         /* card：bg-card border radius */
-.collective-panel-title   /* 面板标题 */
-
-/* Trend badge */
-.trend-improving / .trend-stable / .trend-degrading / .trend-unknown
-
-/* Qi channels */
-.qi-channel-row           /* 通道行 */
-.qi-tian/.qi-di/.qi-ren/.qi-chong  /* 颜色条 */
-
-/* Agents / Apps */
-.coll-state-bar-active/.coll-state-bar-dormant/.coll-state-bar-error
-.coll-state-bar-running/.coll-state-bar-stopped
-
-/* Health History sparkline */
-.sparkline-wrap           /* SVG 容器 */
+.msg-feedback { display: flex; gap: 0.3rem; margin-top: 0.4rem; }
+.msg-fb-btn   { 圆角小按钮, 默认 muted 色 }
+.msg-fb-btn.up.active   { color: var(--col-good) }
+.msg-fb-btn.down.active { color: var(--col-crit) }
+/* hover: 轻微放大 scale(1.15) */
 ```
 
+### Supabase 迁移步骤
+
+1. 执行 `supabase_migration` 创建 `message_feedback` 表 + RLS
+2. 确认 `supabase_configure_auth` auto_confirm = true（已有）
+
+### 验证
+
+- 发送 AI 消息 → 流结束后出现点赞/踩按钮
+- 点击按钮 → 按钮变色、localStorage 更新
+- 切换会话再回来 → 评分状态保留（从 localStorage 恢复）
+- 刷新页面 → 评分状态保留
+- Supabase 表中可见 `message_feedback` 记录
+
 ---
 
-## 文件变更清单
+## 已完成
 
-| 文件 | 操作 |
-|---|---|
-| `supabase/functions/dao-collective/index.ts` | **新建** — Edge Function |
-| `src/pages/CollectivePage.tsx` | **新建** — 宇宙健康板 |
-| `src/App.tsx` | **修改** — 加第 4 Tab + collective 路由 |
-| `src/index.css` | **修改** — collective 样式追加 |
-
----
-
-## 验证
-
-1. 顶栏出现"道集" Tab，点击跳转到宇宙健康板
-2. 健康总环显示 0-100 分数，trend badge 有合理值
-3. 4 个 stat card 展示智能体数、应用数、节点数、诊断次数
-4. 气机总线 4 通道（天/地/人/冲）显示消息量横条
-5. 智能体状态（活跃/休眠/出错）横条及类型分布
-6. 健康趋势 5 点 SVG 折线正常渲染
-7. 自动刷新 10 秒（可暂停），手动刷新按钮有效
-8. Edge Function 返回正确 JSON（200 status）
+### P1 · 多会话 + 代码高亮 + 道审 Tab（v2.32.0）
+### P2 · 道监 · 五感仪表盘（v2.32.0）
+### P3 · 道集 · 宇宙健康板（v2.33.0）
+### 优化 · useEdgeFetch 共享 hook（v2.33.0+）
