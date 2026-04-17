@@ -66,6 +66,7 @@ export function ChatPage(): React.JSX.Element {
     <div className="chat-layout">
       {/* Sub-header: model tag + clear */}
       <div className="chat-subheader">
+        <span className="chat-subheader-name">道衍 AI</span>
         <span className="chat-model-tag">GLM 5</span>
         {messages.length > 0 && (
           <button className="chat-icon-btn" onClick={clearMessages} title="新对话">
