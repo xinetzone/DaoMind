@@ -21,7 +21,7 @@
 ## 特性
 
 - **20+ 独立包**，从基础契约到完整生态，按需引入零冗余
-- **908 测试用例**（49 套件），TypeScript 5.9 严格模式，100% 类型安全
+- **1000 测试用例**（52 套件），TypeScript 5.9 严格模式，100% 类型安全
 - **零运行时开销**：类型定义编译后完全消失
 - **哲学一致**：每一个 API 命名都有对应的道家哲学根据
 - **DaoOption\<T\> + DaoResult\<T,E\>**：函数式错误处理，无 null/undefined 异常
@@ -336,9 +336,31 @@ npm 发布通过 GitHub Actions 手动触发（`workflow_dispatch`），防止 2
 # Actions → publish-npm → Run workflow
 ```
 
-## 文档站
+## 道衍 AI — 帛书《道德经》智慧对话
 
-- **指南**：https://xinetzone.github.io/DaoMind/guide/
+基于 GLM 5 大语言模型，将帛书《道德经》核心知识注入系统提示词，提供专注于帛书学术研究的 AI 智慧引导体验。
+
+**功能特性**：
+- 流式 SSE 输出，实时显示生成内容
+- Markdown 完整渲染（代码块 / 列表 / 粗体 / 表格 / 引用）
+- 4 层 SSE 错误防护（onopen / onmessage / onerror / catch）
+- Edge Function 预热机制，消除冷启动延迟
+- 帛书专属提示词（中气以为和 / 三才 / 四十二章宇宙生成论）
+
+```bash
+# 本地运行
+pnpm dev
+# 然后访问 http://localhost:5173/#chat
+```
+
+## 文档站（Web SPA）
+
+本项目附带一个统一 React SPA，集成文档浏览（MyST Markdown 渲染）和道衍 AI 对话：
+
+- **SPA 本地**：`pnpm dev` → `http://localhost:5173`
+- **道衍 AI**：`#chat` 路由
+- **文档浏览**：`#docs/guide/getting-started` 等路由
+- **VitePress 文档站**：https://xinetzone.github.io/DaoMind/guide/
 - **API 参考**：https://xinetzone.github.io/DaoMind/api/
 - **示例**：https://xinetzone.github.io/DaoMind/examples/
 
@@ -346,6 +368,12 @@ npm 发布通过 GitHub Actions 手动触发（`workflow_dispatch`），防止 2
 
 | 版本 | 测试数 | 亮点 |
 |------|--------|------|
+| v2.30.1 | 1000 | Edge Function 预热机制，消除 Deno 冷启动延迟（ChatPage mount 时 fire-and-forget ping）|
+| v2.30.0 | 1000 | Bug 修复：rehype-raw admonition 渲染 / 聊天 Markdown / SSE openWhenHidden / 文档滚动复位 |
+| v2.29.1 | 1000 | AI 响应时间优化：系统提示词 280→80 tokens，TTFB ↓ 60% |
+| v2.29.0 | 1000 | 统一 React SPA：道衍 AI + MyST Markdown 文档浏览（哈希路由 + 17 页静态打包）|
+| v2.28.0 | 1000 | 道衍 AI 对话界面（GLM 5 / 帛书提示词 / 4 层 SSE 错误防护 / 流式输出）|
+| v2.27.2 | 1000 | 文档哲学一致性：全库零残余错误引用，帛书版本正确性校对 |
 | v2.27.0 | 1000 | DaoUniverseOptimizer — 宇宙优化建议引擎，6条建议规则，**1000 测试里程碑** |
 | v2.26.0 | 971 | DaoUniverseHealthBoard — 宇宙健康仪表盘，纯消费者模式，趋势感知 |
 | v2.25.0 | 941 | DaoUniverseFacade — 全栈自动装配门面，一行构建全部 17 桥接器 |

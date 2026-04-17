@@ -58,14 +58,38 @@ const user: User = {
 
 ```
 DaoMind 生态系统
-├── @daomind/nothing      - 零运行时核心（类型定义）
-├── @daomind/anything     - 模块容器系统
-├── @daomind/agents       - Agent 智能体系统
-├── @daomind/space        - 时空管理
-├── @daomind/messages     - 消息系统
-├── @daomind/qi           - 气流（数据流）
-├── @daomind/verify       - 验证工具
+├── @daomind/nothing      - 零运行时核心（类型定义 + DaoOption/DaoResult + 虚空事件总线）
+├── @daomind/anything     - 模块容器系统（有名层，生命周期管理）
+├── @daomind/agents       - Agent 智能体系统（TaskAgent / ObserverAgent / CoordinatorAgent）
+├── @daomind/apps         - 应用层（DaoAppContainer，状态机驱动）
+├── @daomind/times        - 时序层（DaoTimer、DaoScheduler，per-app 追踪）
+├── @daomind/collective   - 根节点（DaoUniverse 门面 + 17 个 DaoUniverse* 桥接器）
+├── @modulux/qi           - 消息总线（四通道：天/地/人/中气）
+├── @daomind/monitor      - 监控（阴阳仪表盘、热力图、告警引擎）
+├── @daomind/verify       - 验证（哲学契约验证）
+├── @daomind/chronos      - 时钟（高精度心跳，DaoChronos）
+├── @daomind/feedback     - 反馈（四阶段闭环调节）
+├── @daomind/nexus        - 连接（服务发现、负载均衡）
+├── @daomind/spaces       - 空间（命名空间管理）
+├── @daomind/skills       - 技能（能力组合、动态扩展）
+├── @daomind/pages        - 组件（组件树与状态绑定）
+├── @daomind/docs         - 文档（知识图谱与 API 文档追踪）
 └── @daomind/benchmark    - 性能基准测试
+```
+
+## 道衍 AI
+
+本项目附带一个基于 GLM 5 的 AI 对话界面——**道衍**，专注于帛书《道德经》学术研究：
+
+- 帛书版本结构（德经在前，故又称《德道经》）
+- 关键异文解读（「中气以为和」非通行本「冲气」）
+- 三才（天地人）× 中气调和理论
+- 四十二章宇宙生成论（道→一→二→三→万物）
+
+```bash
+# 启动后访问道衍 AI 界面
+pnpm dev
+# http://localhost:5173/#chat
 ```
 
 ## 为什么选择 DaoMind？
@@ -87,6 +111,9 @@ DaoMind 生态系统
 
 ### 📚 完整文档
 50+ 份文档，4 个完整示例，详细的视频教程。
+
+### 🤖 道衍 AI
+内置基于 GLM 5 的帛书《道德经》智慧对话 AI，支持流式输出与 Markdown 渲染。
 
 ## 快速体验
 
