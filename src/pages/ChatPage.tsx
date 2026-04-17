@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { Send, Square, RotateCcw, MessageCircle, X, History, Download } from 'lucide-react'
+import { Send, Square, RotateCcw, MessageCircle, X, History, Download, Network } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -11,6 +11,8 @@ import { SessionSidebar } from '../components/SessionSidebar'
 import { MessageFeedback } from '../components/MessageFeedback'
 import { DaoLogo } from '../components/DaoLogo'
 import { downloadMarkdown } from '../utils/exportChat'
+import { useMindMap } from '../hooks/useMindMap'
+import { MindMapModal } from '../components/MindMapModal'
 import type { Message } from '../hooks/useAIChat'
 
 const SUGGESTIONS = [
@@ -37,6 +39,9 @@ export function ChatPage(): React.JSX.Element {
   )
 
   const { getFeedback, submitFeedback } = useFeedback(currentSessionId)
+
+  const { tree: mindTree, loading: mindLoading, error: mindError, generate: generateMind, reset: resetMind } = useMindMap()
+  const [showMindMap, setShowMindMap] = React.useState(false)
 
   // Persist messages to current session whenever they change
   useEffect(() => {
@@ -69,6 +74,16 @@ export function ChatPage(): React.JSX.Element {
       messages,
       getFeedback,
     })
+  }
+
+  const handleMindMap = (): void => {
+    setShowMindMap(true)
+    void generateMind(messages)
+  }
+
+  const handleCloseMindMap = (): void => {
+    setShowMindMap(false)
+    resetMind()
   }
 
   // Pre-warm the Edge Function on mount
@@ -175,6 +190,10 @@ export function ChatPage(): React.JSX.Element {
               <button className="chat-icon-btn" onClick={handleExport} title="导出 Markdown">
                 <Download size={14} />
                 <span>导出</span>
+              </button>
+              <button className="chat-icon-btn" onClick={handleMindMap} title="思维导图">
+                <Network size={14} />
+                <span>导图</span>
               </button>
             </>
           )}
@@ -294,6 +313,14 @@ export function ChatPage(): React.JSX.Element {
           <p className="chat-footer-note">道衍基于帛书《道德经》智慧，由 GLM 5 驱动</p>
         </footer>
       </div>
+      {showMindMap && (
+        <MindMapModal
+          tree={mindTree}
+          loading={mindLoading}
+          error={mindError}
+          onClose={handleCloseMindMap}
+        />
+      )}
     </div>
   )
 }
