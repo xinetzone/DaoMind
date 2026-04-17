@@ -1,4 +1,4 @@
-import type { DaoModuleMeta, DaoModuleRegistration, ModuleLifecycle } from './types';
+import type { DaoModuleMeta, DaoModuleRegistration, ModuleLifecycle } from '@daomind/nothing';
 
 type ModuleInstance = unknown;
 

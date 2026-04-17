@@ -6,7 +6,7 @@ export type {
   DaoModuleRegistration,
   ModuleLifecycle,
   DaoModuleMeta,
-} from './types';
+} from '@daomind/nothing';
 
 export { daoContainer, DaoAnythingContainer } from './container';
 
