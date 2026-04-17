@@ -1,11 +1,12 @@
 /**
  * 统一导出
  * 帛书《道德经》乙本·四十二章："万物负阴而抱阳，中气以为和"
- * 气通道基础设施包 —— 道宇宙之生命线
+ * 帛书二十五章："人法地，地法天，天法道，道法自然"
+ * 三才（天/地/人）× 中气调和 四维传输基础设施 —— 道宇宙之生命线
  */
 
 export type { DaoMessagePriority, DaoEncoding, DaoMessageHeader, DaoMessageBody, DaoMessage } from './types/message.js';
-export type { QiChannelType, QiDirection, QiChannelMeta } from './types/channel.js';
+export type { QiChannelType, ZhongQiChannelType, QiDirection, QiChannelMeta } from './types/channel.js';
 export type { BackpressureConfig } from './backpressure.js';
 export { DaoSerializer } from './codec/serializer.js';
 export { DaoRouter } from './router.js';

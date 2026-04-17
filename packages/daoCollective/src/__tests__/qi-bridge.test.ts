@@ -1,6 +1,6 @@
 /**
  * DaoQiAgentBridge 测试
- * 验证 HunyuanBus（四气通道）与 daoAgentMessenger（Agent 虚空通信）的桥接行为
+ * 验证 HunyuanBus（三才路由 × 中气调和 四维通道）与 daoAgentMessenger（Agent 虚空通信）的桥接行为
  */
 
 import { daoNothingVoid } from '@daomind/nothing';

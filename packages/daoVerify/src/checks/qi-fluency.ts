@@ -73,7 +73,7 @@ export async function daoCheckQiFluency(projectRoot: string): Promise<DaoVerific
       passed: false,
       score: 0,
       details: '@dao/qi 包不存在，无法执行气流通畅性检验',
-      recommendation: '请创建 @dao/qi 包并实现天地人冲四通道及混元气总线',
+      recommendation: '请创建 @dao/qi 包并实现三才（天/地/人）路由通道 + 中气调和通道 × 混元气总线',
       timestamp,
     };
   }
@@ -109,7 +109,8 @@ export async function daoCheckQiFluency(projectRoot: string): Promise<DaoVerific
   details += `  · HunyuanBus 核心类: ${hunyuanExists ? (hasHunyuanBus ? '✓ 已实现' : '⚠ 文件存在但缺少 HunyuanBus 类') : '✗ 缺失'}\n`;
   details += `  · 消息协议 DaoMessage: ${protocolInfo.hasMessageInterface ? '✓ 已定义' : '✗ 缺失'}\n`;
   details += `  · 通道类型 QiChannelType: ${protocolInfo.hasChannelType ? '✓ 已定义' : '✗ 缺失'}\n`;
-  details += `\n  帛书依据：《道德经》乙本·四十二章「万物负阴而抱阳，中气以为和」— 四通道构成完整气机循环`;
+  details += `\n  帛书依据：《道德经》乙本·四十二章「万物负阴而抱阳，中气以为和」— 三才路由通道（天/地/人）+ 中气调和机制，构成完整气机传输网络。
+                    帛书二十五章「人法地，地法天，天法道」确立三才，四十二章帛书「中气以为和」确立调和机制`;
 
   let recommendation: string | undefined;
   if (!passed) {

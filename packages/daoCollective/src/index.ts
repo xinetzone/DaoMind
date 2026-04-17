@@ -66,9 +66,9 @@ export type { DaoSystemSnapshot } from './universe';
 export { DaoUniverse, daoUniverse } from './universe';
 
 // ============================================================
-// @modulux/qi — 气通道层（四气传输基础设施）
+// @modulux/qi — 气通道层（三才 × 中气 四维传输基础设施）
 // ============================================================
-export type { DaoMessage, QiChannelType, DaoMessagePriority } from '@modulux/qi';
+export type { DaoMessage, QiChannelType, ZhongQiChannelType, DaoMessagePriority } from '@modulux/qi';
 export {
   HunyuanBus, DaoRouter, DaoSerializer, DaoSigner, DaoBackpressure,
   TianQiChannel, DiQiChannel, RenQiChannel, ChongQiRegulator,
