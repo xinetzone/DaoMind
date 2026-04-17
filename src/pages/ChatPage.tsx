@@ -6,7 +6,9 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { useAIChat, SUPABASE_URL, SUPABASE_ANON_KEY } from '../hooks/useAIChat'
 import { useSessions } from '../hooks/useSessions'
+import { useFeedback } from '../hooks/useFeedback'
 import { SessionSidebar } from '../components/SessionSidebar'
+import { MessageFeedback } from '../components/MessageFeedback'
 import { DaoLogo } from '../components/DaoLogo'
 import type { Message } from '../hooks/useAIChat'
 
@@ -32,6 +34,8 @@ export function ChatPage(): React.JSX.Element {
     messages,
     setMessages,
   )
+
+  const { getFeedback, submitFeedback } = useFeedback(currentSessionId)
 
   // Persist messages to current session whenever they change
   useEffect(() => {
@@ -209,6 +213,15 @@ export function ChatPage(): React.JSX.Element {
                           <div className="chat-bubble-text">{msg.content}</div>
                         )}
                         {msg.isStreaming && <span className="chat-cursor" />}
+                        {msg.role === 'assistant' && (
+                          <MessageFeedback
+                            index={i}
+                            content={msg.content}
+                            isStreaming={msg.isStreaming ?? false}
+                            currentRating={getFeedback(i)}
+                            onRate={submitFeedback}
+                          />
+                        )}
                       </>
                     )}
                   </div>

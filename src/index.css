@@ -2113,3 +2113,59 @@ img {
 
 /* ── Health Ring (shared with Monitor, but scoped) ───────── */
 .coll-health-ring { display: block; }
+
+/* ═══════════════════════════════════════════════════════════
+   P4 · 道反 · 消息反馈按钮
+   ══════════════════════════════════════════════════════════ */
+
+.msg-feedback {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--border);
+  opacity: 0;
+  animation: fb-appear 0.4s ease 0.2s forwards;
+}
+@keyframes fb-appear {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.msg-fb-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.msg-fb-btn:hover {
+  background: var(--muted);
+  color: var(--foreground);
+  transform: scale(1.12);
+}
+.msg-fb-btn.active.up {
+  color: var(--col-good);
+  border-color: var(--col-good);
+  background: #14532d1a;
+  transform: scale(1.1);
+}
+.msg-fb-btn.active.down {
+  color: var(--col-crit);
+  border-color: var(--col-crit);
+  background: #4c0a0a1a;
+  transform: scale(1.1);
+}
+.msg-fb-thanks {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-left: 0.25rem;
+  animation: fb-appear 0.3s ease forwards;
+}

@@ -1,0 +1,21 @@
+-- P4 · 道反 · 消息反馈表
+create table message_feedback (
+  id              uuid        primary key default gen_random_uuid(),
+  session_id      text        not null,
+  message_index   integer     not null,
+  message_content text        not null,
+  rating          text        not null check (rating in ('up','down')),
+  created_at      timestamptz default now()
+);
+
+alter table message_feedback enable row level security;
+
+-- 允许匿名提交和读取反馈
+create policy "anon_insert" on message_feedback
+  for insert with check (true);
+
+create policy "anon_select" on message_feedback
+  for select using (true);
+
+-- 索引：按 session 快速查询
+create index message_feedback_session_idx on message_feedback (session_id);
