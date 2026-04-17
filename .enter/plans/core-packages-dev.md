@@ -1,141 +1,160 @@
-# 方案：统一 SPA — MyST 文档 + 道衍 AI 聊天
+# DaoMind v2.30.0 — 复盘 + Bug 修复 + 聊天 Markdown 渲染
 
-## 背景
+## Context（为什么做这件事）
 
-用户要求在当前 React 应用中集成 MyST Markdown 文档渲染，与已有的「道衍」AI 聊天界面共用同一个 SPA。
-文档来源：`docs/site/` 下的现有 VitePress 内容（20 个 .md 文件）。
-
----
-
-## 最终架构
-
-```
-React SPA
-├── TopNav (DaoMind logo · 文档 · 示例 · API · FAQ · 道衍)
-├── DocsPage  ←  路由: #/docs/*
-│   ├── DocSidebar (左侧导航树, 可折叠)
-│   └── DocContent (MystRenderer 渲染)
-└── ChatPage  ←  路由: #/chat (默认)
-    └── 现有道衍 AI 聊天界面
-```
-
-路由方案：**URL hash 状态** (`#/chat`, `#/docs/guide/getting-started` 等)，无需 react-router，零额外依赖。
+v2.29.x 交付了统一 SPA（道衍 AI 聊天 + MyST markdown 文档）。现在通过代码审查发现了 3 个 Bug + 1 个体验短板，需要在 v2.30.0 修复。
 
 ---
 
-## MyST 渲染方案
+## Bug 清单（代码审查发现）
 
-使用 **`react-markdown` + `remark-gfm` + `remark-directive` + `rehype-highlight`** 组合：
+| # | 文件 | 问题 | 影响 |
+|---|------|------|------|
+| B1 | `MystRenderer.tsx` | `rehype-raw` 未安装，`preprocessDirectives()` 输出的 `<div class="admonition">` HTML 被 react-markdown 转义为纯文本 | `docs/site/videos/index.md` 的 `:::info` 块显示为 HTML 源码文字 |
+| B2 | `ChatPage.tsx` | AI 响应用 `{msg.content}` 纯文本渲染，不解析 markdown | 代码块、列表、粗体等直接显示星号/反引号原始字符 |
+| B3 | `useAIChat.ts` | `fetchEventSource` 缺少 `openWhenHidden: true` | 用户切换浏览器标签时 SSE 流暂停/重启 |
+| B4 | `DocsPage.tsx` | 切换文档页面后 `.docs-content` 保留上一页滚动位置 | 跳转新页时不从顶部开始阅读 |
 
-| 层 | 包 | 作用 |
-|----|-----|------|
-| 解析 | `remark-gfm` | GFM: 表格、任务列表、删除线 |
-| 解析 | `remark-directive` | MyST `:::note` `:::warning` 等 admonition 指令 |
-| 高亮 | `rehype-highlight` + `highlight.js` | 代码块语法着色 |
-| 渲染 | `react-markdown` | Markdown → React 元素 |
-| 自定义 | `MystRenderer.tsx` | 自定义组件：admonition、代码块、表格、内联代码、链接 |
+---
 
-**内容加载：** Vite `import.meta.glob` 在构建时注入所有 .md 文件为 raw 字符串，零运行时 fetch。
-```typescript
-const docs = import.meta.glob('/docs/site/**/*.md', { as: 'raw', eager: true });
+## v2.30.0 实施计划
+
+### 步骤 0：复盘文档
+**新文件：** `retrospectives/2026-04-17-daomind-v2.29.x.md`
+- 覆盖 v2.29.0（MyST 统一 SPA）和 v2.29.1（perf 优化）
+- 记录架构决策、遇到的错误及修复方法
+
+**git 操作：** 
+- commit: `"retrospective: v2.29.x — MyST markdown SPA + AI 响应速度优化"`
+- 暂不打 tag（v2.29.x 里程碑已完结，复盘是附属文档）
+
+---
+
+### 步骤 1：安装依赖
+```
+pnpm add rehype-raw -w
 ```
 
 ---
 
-## 导航结构（来自 VitePress config.ts）
+### 步骤 2：修复 B1 — `MystRenderer.tsx`（rehype-raw）
 
-```
-指南 /guide/
-  ├── 介绍
-  ├── 快速开始
-  ├── 核心概念
-  ├── 第一个示例
-  ├── 理解无名与有名
-  ├── 创建模块
-  └── Agent 系统
-API /api/
-  ├── @daomind/nothing
-  ├── @daomind/anything
-  └── @daomind/agents
-示例 /examples/
-  ├── Hello World
-  ├── Counter
-  └── Todo List
-FAQ /faq.md
+**文件：** `src/components/MystRenderer.tsx`
+
+```diff
++ import rehypeRaw from "rehype-raw";
+...
+  rehypePlugins={[rehypeRaw, rehypeHighlight]}
+  // rehypeRaw 必须在 rehypeHighlight 之前，先把 HTML 节点解析出来再做语法高亮
 ```
 
 ---
 
-## 文件变更清单
+### 步骤 3：修复 B2 — `ChatPage.tsx`（聊天 Markdown 渲染）
 
-### 新增依赖
-- `react-markdown` ^9
-- `remark-gfm`
-- `remark-directive`
-- `rehype-highlight`
-- `highlight.js` (仅 CSS theme 用到)
+**文件：** `src/pages/ChatPage.tsx`
 
-### 新增/修改文件
-
-| 文件 | 类型 | 描述 |
-|------|------|------|
-| `src/App.tsx` | 修改 | 路由 shell：hash 监听 + TopNav + 渲染 ChatPage 或 DocsPage |
-| `src/pages/ChatPage.tsx` | 新增 | 从当前 App.tsx 提取道衍聊天界面 |
-| `src/pages/DocsPage.tsx` | 新增 | 文档查看器：sidebar + content + 内容加载 |
-| `src/components/DocSidebar.tsx` | 新增 | 可折叠左侧导航（分组、当前页高亮） |
-| `src/components/MystRenderer.tsx` | 新增 | react-markdown 包装器，自定义 admonition/code/table 组件 |
-| `src/data/navigation.ts` | 新增 | 导航树定义（来自 VitePress config.ts） + 路径→文件 映射 |
-| `src/index.css` | 修改 | 新增文档布局 + MyST admonition 样式（沿用靛蓝/鼠尾草绿系统） |
+```diff
++ import ReactMarkdown from "react-markdown";
++ import remarkGfm from "remark-gfm";
+...
+- <div className="chat-bubble-text">{msg.content}</div>
++ <div className="chat-md">
++   <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
++ </div>
+  {msg.isStreaming && <span className="chat-cursor" />}
+```
 
 ---
 
-## 关键实现细节
+### 步骤 4：修复 B3 — `useAIChat.ts`（openWhenHidden）
 
-### 1. Hash 路由（`src/App.tsx`）
-```typescript
-// 读取 hash
-const getPage = () => window.location.hash.slice(1) || '/chat';
-// 切换
-const navigate = (path: string) => { window.location.hash = path; };
-// 监听
-useEffect(() => {
-  const handler = () => setPage(getPage());
-  window.addEventListener('hashchange', handler);
-  return () => window.removeEventListener('hashchange', handler);
-}, []);
-```
+**文件：** `src/hooks/useAIChat.ts`
 
-### 2. 内容加载（`src/pages/DocsPage.tsx`）
-```typescript
-const allDocs = import.meta.glob('/docs/site/**/*.md', { as: 'raw', eager: true });
-// path: '/docs/guide/getting-started' → key: '/docs/site/guide/getting-started.md'
+```diff
+  await fetchEventSource(..., {
++   openWhenHidden: true,
+    ...
+  })
 ```
-
-### 3. Admonition 渲染（`src/components/MystRenderer.tsx`）
-`remark-directive` 将 `:::note` 转为 `containerDirective` 节点，自定义组件将其映射为带颜色边框的卡片（note=蓝、warning=橙、tip=绿）。
-
-### 4. TopNav 设计
-```
-[太极Logo] DaoMind    [文档] [API] [示例] [FAQ]  [分隔]  [道衍 AI]
-```
-当前 section 高亮，道衍按钮使用 primary 渐变色，区别于文档链接。
 
 ---
 
-## 样式设计（沿用现有 Design System）
-- 文档区域最大宽度：`1200px`，左侧 sidebar `260px`，内容区 `flex:1`
-- `h1~h4` 使用 `var(--text)` + 不同 `font-size`
-- 代码块：深色背景 `#0f1117`（与现有 `.code-block` 一致）
-- Admonition：左 `4px` 色条 + `var(--surface)` 背景 + 对应主题色
-- 响应式：`<= 768px` 时 sidebar 默认收起（hamburger 按钮展开）
+### 步骤 5：修复 B4 — `DocsPage.tsx`（滚动到顶部）
+
+**文件：** `src/pages/DocsPage.tsx`
+
+```diff
++ import { useRef, useEffect } from "react";
+...
++ const scrollRef = useRef<HTMLElement>(null);
++
++ useEffect(() => {
++   scrollRef.current?.scrollTo(0, 0);
++ }, [docPath]);
+...
+- <main className="docs-content">
++ <main className="docs-content" ref={scrollRef}>
+```
 
 ---
 
-## 验证步骤
-1. `pnpm vite build` 无 TS 错误
-2. 所有 20 个 .md 文件都能正确映射并渲染
-3. 文档内代码块有语法高亮
-4. `:::note/warning/tip` 指令正确渲染为 admonition 卡片
-5. 道衍聊天（ChatPage）功能保持不变（流式、停止、清空、错误处理）
-6. 移动端 sidebar 收起/展开正常
-7. TopNav 文档 ↔ 道衍 切换流畅
+### 步骤 6：聊天 Markdown 样式 — `index.css`
+
+新增 `.chat-md` 下的 markdown 元素样式（紧凑风格，与气泡背景色协调）：
+```
+.chat-md p                — 段落间距
+.chat-md code             — 内联代码（圆角背景色）
+.chat-md pre              — 代码块（深色背景）
+.chat-md pre code         — 代码块内 code 重置
+.chat-md ul / ol          — 列表缩进
+.chat-md li               — 列表项
+.chat-md strong           — 粗体
+.chat-md em               — 斜体
+.chat-md blockquote       — 引用块左边线
+.chat-md a                — 链接颜色
+.chat-md h1/h2/h3         — 标题（较小字号，适合气泡内）
+```
+所有颜色使用语义化 token（`hsl(var(--*))`)，不写死颜色。
+
+---
+
+### 步骤 7：git commit + tag v2.30.0 + push
+
+```
+git add -A
+git commit -m "fix(v2.30.0): rehype-raw + 聊天 MD 渲染 + SSE 稳定性 + 文档滚动复位
+
+  B1: MystRenderer — 添加 rehype-raw，修复 admonition HTML 被转义显示的问题
+  B2: ChatPage — 使用 react-markdown 渲染 AI 响应（支持代码/列表/粗体等）
+  B3: useAIChat — fetchEventSource 添加 openWhenHidden: true，避免切换标签中断流
+  B4: DocsPage — docPath 变化时 scrollRef.scrollTo(0,0)，新页面从顶部开始
+
+  依赖：pnpm add rehype-raw"
+
+git tag -a v2.30.0 -m "v2.30.0 — 聊天 Markdown 渲染 + 文档 Bug 修复"
+git push origin main --tags
+```
+
+---
+
+## 关键文件
+
+| 文件 | 操作 |
+|------|------|
+| `retrospectives/2026-04-17-daomind-v2.29.x.md` | 新建 |
+| `src/components/MystRenderer.tsx` | 修改（B1） |
+| `src/pages/ChatPage.tsx` | 修改（B2） |
+| `src/hooks/useAIChat.ts` | 修改（B3） |
+| `src/pages/DocsPage.tsx` | 修改（B4） |
+| `src/index.css` | 追加 `.chat-md` 样式 |
+
+---
+
+## 验证方法
+
+1. `docs/site/videos/index.md` 的 `:::info` 块显示为蓝色信息框（非 HTML 源码）  
+2. 道衍回复中的 `` `代码` ``、`**粗体**`、列表 正确渲染  
+3. 切换浏览器标签后回来，流式输出继续而不重新请求  
+4. 点击文档侧边栏切换页面，内容区滚动到顶部  
+5. `pnpm build` 零 TS 错误
