@@ -686,6 +686,48 @@ img {
     grid-template-columns: 1fr;
     max-width: 420px;
   }
+
+  /* ── Mobile drawer sidebar ── */
+  .session-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0;
+    z-index: 150;
+    border-right: none;
+    box-shadow: none;
+    /* keep transition from base rule */
+  }
+  .session-sidebar.open {
+    width: 280px;
+    min-width: 280px;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.28);
+    border-right: 1px solid var(--border);
+  }
+
+  /* Hide button text labels to save space */
+  .chat-icon-btn span {
+    display: none;
+  }
+  .chat-icon-btn {
+    padding: 0.3rem 0.45rem;
+  }
+
+  /* Show backdrop on mobile */
+  .sidebar-backdrop {
+    display: block;
+  }
+}
+
+/* Sidebar backdrop — hidden on desktop, shown via media query above */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 149;
+  animation: fb-appear 0.2s ease forwards;
 }
 
 /* ─── App Shell ──────────────────────────────────────────── */

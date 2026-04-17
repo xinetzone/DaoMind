@@ -168,6 +168,12 @@ export function ChatPage(): React.JSX.Element {
         onDelete={deleteSession}
         isOpen={sidebarOpen}
       />
+      {sidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       <div className="chat-layout">
         {/* Sub-header */}
