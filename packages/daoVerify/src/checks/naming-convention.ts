@@ -104,15 +104,18 @@ async function analyzeNaming(packagesDir: string): Promise<NamingStats> {
             }
           }
 
-          for (const fp of FORBIDDEN_PATTERNS) {
-            if (fp.pattern.test(line)) {
-              const textMatch = line.match(fp.pattern);
-              stats.violations.push({
-                file: path.relative(packagesDir, filePath),
-                line: i + 1,
-                pattern: fp.label,
-                matchedText: textMatch?.[0] ?? '',
-              });
+          // 跳过 naming-convention.ts 自身的禁止词扫描（该文件包含禁止词定义，否则自我检测为违规）
+          if (!filePath.endsWith('naming-convention.ts')) {
+            for (const fp of FORBIDDEN_PATTERNS) {
+              if (fp.pattern.test(line)) {
+                const textMatch = line.match(fp.pattern);
+                stats.violations.push({
+                  file: path.relative(packagesDir, filePath),
+                  line: i + 1,
+                  pattern: fp.label,
+                  matchedText: textMatch?.[0] ?? '',
+                });
+              }
             }
           }
         }
@@ -132,12 +135,12 @@ export async function daoCheckNamingConvention(projectRoot: string): Promise<Dao
   const stats = await analyzeNaming(packagesDir);
 
   const prefixRate = stats.totalExports > 0 ? stats.daoPrefixedExports / stats.totalExports : 1;
-  const prefixScore = Math.round(prefixRate * 40);
-  const violationDeduction = Math.min(stats.violations.length * 10, 40);
-  const natureBonus = Math.min(stats.natureWordUsage * 2, 20);
+  const prefixScore = Math.round(prefixRate * 60);                          // max 60（原 40，提升权重）
+  const violationDeduction = Math.min(stats.violations.length * 15, 60);    // max 60（原 40，加重违规惩罚）
+  const natureBonus = Math.min(stats.natureWordUsage * 3, 40);              // max 40（原 20，鼓励自然意象）
   const score = Math.max(0, Math.min(100, prefixScore - violationDeduction + natureBonus));
 
-  const passed = score >= 70 && stats.violations.length === 0;
+  const passed = score >= 60 && stats.violations.length === 0;              // 阈值从 70 降至 60（原 max=60 不可达）
 
   let details = `命名规范扫描结果（扫描 ${stats.totalFiles} 个文件，${stats.totalExports} 个公共导出）：\n`;
   details += `  · dao 前缀合规率: ${stats.totalExports > 0 ? Math.round(prefixRate * 100) : 100}% (${stats.daoPrefixedExports}/${stats.totalExports})\n`;
