@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { supabase } from '../integrations/supabase/client'
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../hooks/useAIChat'
 import { Activity, Pause, Play, RefreshCw, Thermometer, Wind, Gauge, Bell, Stethoscope } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -324,10 +324,17 @@ export function MonitorPage(): React.JSX.Element {
   const [lastTick, setLastTick] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const fetchSnapshot = useCallback(async () => {
+  const fetchSnapshot = useCallback(async (): Promise<void> => {
     try {
-      const { data, error: fnErr } = await supabase.functions.invoke<MonitorSnapshot>('dao-monitor')
-      if (fnErr) throw fnErr
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/dao-monitor`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY,
+        },
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json() as MonitorSnapshot
       setSnapshot(data)
       setLastTick(Date.now())
       setError(null)
