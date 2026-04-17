@@ -74,7 +74,12 @@ export function SessionSidebar({
                     onClick={() => onSelect(s.id)}
                   >
                     <MessageSquare size={11} className="sidebar-item-icon" />
-                    <span className="sidebar-item-title">{s.title}</span>
+                    <div className="sidebar-item-body">
+                      <span className="sidebar-item-title">{s.title}</span>
+                      {s.summary && (
+                        <span className="sidebar-item-summary">{s.summary}</span>
+                      )}
+                    </div>
                     <div className="sidebar-item-meta">
                       <span className="sidebar-item-time">{formatRelativeDate(s.updatedAt)}</span>
                       <button

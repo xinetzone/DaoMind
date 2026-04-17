@@ -4,6 +4,7 @@ import type { Message } from './useAIChat'
 export interface Session {
   id: string
   title: string
+  summary?: string
   createdAt: number
   updatedAt: number
   messages: Message[]
@@ -96,6 +97,23 @@ export function useSessions() {
     [currentSessionId],
   )
 
+  /** AI 生成标题后更新当前会话的 title + summary */
+  const updateTitle = useCallback(
+    (title: string, summary: string) => {
+      if (!currentSessionId) return
+      setSessions((prev) => {
+        const next = prev.map((s) =>
+          s.id === currentSessionId
+            ? { ...s, title, summary, updatedAt: Date.now() }
+            : s,
+        )
+        saveSessions(next)
+        return next
+      })
+    },
+    [currentSessionId],
+  )
+
   /** 删除指定会话，自动切换到最近一条 */
   const deleteSession = useCallback(
     (id: string) => {
@@ -119,6 +137,7 @@ export function useSessions() {
     createSession,
     switchSession,
     updateCurrentMessages,
+    updateTitle,
     deleteSession,
   }
 }

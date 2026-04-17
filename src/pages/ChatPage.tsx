@@ -7,6 +7,7 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { useAIChat, SUPABASE_URL, SUPABASE_ANON_KEY } from '../hooks/useAIChat'
 import { useSessions } from '../hooks/useSessions'
 import { useFeedback } from '../hooks/useFeedback'
+import { useSessionSummary } from '../hooks/useSessionSummary'
 import { SessionSidebar } from '../components/SessionSidebar'
 import { MessageFeedback } from '../components/MessageFeedback'
 import { DaoLogo } from '../components/DaoLogo'
@@ -23,7 +24,7 @@ const SUGGESTIONS = [
 ]
 
 export function ChatPage(): React.JSX.Element {
-  const { sessions, currentSessionId, currentSession, createSession, switchSession, updateCurrentMessages, deleteSession } =
+  const { sessions, currentSessionId, currentSession, createSession, switchSession, updateCurrentMessages, updateTitle, deleteSession } =
     useSessions()
 
   const [messages, setMessages] = React.useState<Message[]>(() => currentSession?.messages ?? [])
@@ -39,6 +40,9 @@ export function ChatPage(): React.JSX.Element {
   )
 
   const { getFeedback, submitFeedback } = useFeedback(currentSessionId)
+  const { generateSummary } = useSessionSummary(updateTitle)
+
+  const summaryDoneRef = useRef<string | null>(null)
 
   const { tree: mindTree, loading: mindLoading, error: mindError, generate: generateMind, reset: resetMind } = useMindMap()
   const [showMindMap, setShowMindMap] = React.useState(false)
@@ -49,6 +53,27 @@ export function ChatPage(): React.JSX.Element {
       updateCurrentMessages(messages)
     }
   }, [messages, updateCurrentMessages])
+
+  // Reset summary trigger when switching sessions
+  useEffect(() => {
+    summaryDoneRef.current = null
+  }, [currentSessionId])
+
+  // Auto-generate AI title + summary after first complete exchange
+  useEffect(() => {
+    const lastMsg = messages[messages.length - 1]
+    if (
+      !isLoading &&
+      messages.length === 2 &&
+      lastMsg?.role === 'assistant' &&
+      !lastMsg?.isStreaming &&
+      currentSessionId &&
+      summaryDoneRef.current !== currentSessionId
+    ) {
+      summaryDoneRef.current = currentSessionId
+      void generateSummary(messages)
+    }
+  }, [isLoading, messages, currentSessionId, generateSummary])
 
   // Switch session: load its messages
   const handleSelectSession = (id: string): void => {
