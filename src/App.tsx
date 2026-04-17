@@ -1,13 +1,17 @@
 import React from 'react'
-import { MessageCircle, FlaskConical } from 'lucide-react'
+import { MessageCircle, FlaskConical, Activity } from 'lucide-react'
 import { DaoLogo } from './components/DaoLogo'
 import { ChatPage } from './pages/ChatPage'
 import { AuditPage } from './pages/AuditPage'
+import { MonitorPage } from './pages/MonitorPage'
 
-type Page = 'chat' | 'audit'
+type Page = 'chat' | 'audit' | 'monitor'
 
 function getInitialPage(): Page {
-  return window.location.hash === '#audit' ? 'audit' : 'chat'
+  const h = window.location.hash
+  if (h === '#audit')   return 'audit'
+  if (h === '#monitor') return 'monitor'
+  return 'chat'
 }
 
 export default function App(): React.JSX.Element {
@@ -16,14 +20,17 @@ export default function App(): React.JSX.Element {
   // Sync hash ↔ page state
   React.useEffect(() => {
     const handler = (): void => {
-      setPage(window.location.hash === '#audit' ? 'audit' : 'chat')
+      const h = window.location.hash
+      if (h === '#audit')   setPage('audit')
+      else if (h === '#monitor') setPage('monitor')
+      else setPage('chat')
     }
     window.addEventListener('hashchange', handler)
-    return () => window.removeEventListener('hashchange', handler)
+    return (): void => window.removeEventListener('hashchange', handler)
   }, [])
 
   const navigate = (p: Page): void => {
-    window.location.hash = p === 'audit' ? '#audit' : '#chat'
+    window.location.hash = p === 'audit' ? '#audit' : p === 'monitor' ? '#monitor' : '#chat'
     setPage(p)
   }
 
@@ -52,11 +59,20 @@ export default function App(): React.JSX.Element {
             <FlaskConical size={14} />
             <span>道审</span>
           </button>
+          <button
+            className={`app-nav-tab ${page === 'monitor' ? 'active' : ''}`}
+            onClick={() => navigate('monitor')}
+          >
+            <Activity size={14} />
+            <span>道监</span>
+          </button>
         </div>
       </nav>
 
       <div className="app-content">
-        {page === 'chat' ? <ChatPage /> : <AuditPage />}
+        {page === 'chat'    ? <ChatPage />    :
+         page === 'audit'   ? <AuditPage />   :
+                              <MonitorPage />}
       </div>
     </div>
   )
