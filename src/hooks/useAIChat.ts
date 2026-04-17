@@ -53,6 +53,17 @@ export function useAIChat(
     }
   }, [])
 
+  // Cancel in-progress SSE request when model changes to prevent stale callbacks
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort()
+      }
+      setIsLoading(false)
+      setError(null)
+    }
+  }, [modelId])
+
   const sendMessage = useCallback(
     async (text: string) => {
       const content = text.trim()
@@ -93,7 +104,7 @@ export function useAIChat(
                 const dataMatch = text.match(/data: (.+)/)
                 if (dataMatch) {
                   try {
-                    const errData = JSON.parse(dataMatch[1])
+                    const errData = JSON.parse(dataMatch[1]!)
                     if (errData.type === 'error' && errData.error?.message) {
                       throw new Error(errData.error.message)
                     }
@@ -193,7 +204,7 @@ export function useAIChat(
         setIsLoading(false)
       }
     },
-    [messages, isLoading, setMessages],
+    [messages, isLoading, setMessages, modelId],
   )
 
   const stopStreaming = useCallback(() => {
