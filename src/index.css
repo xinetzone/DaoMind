@@ -315,7 +315,7 @@ img {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 1.5rem 2rem;
+  padding: 1.5rem 1.5rem 1.25rem;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -336,7 +336,7 @@ img {
   width: 44px;
   height: 44px;
   color: var(--primary);
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.75rem;
   animation: float 5s ease-in-out infinite;
 }
 .chat-welcome-title {
@@ -347,7 +347,7 @@ img {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 1rem;
+  margin-bottom: 0.6rem;
   line-height: 1.1;
 }
 .chat-welcome-quote {
@@ -360,13 +360,13 @@ img {
 .chat-welcome-source {
   font-size: 0.8rem;
   color: var(--text-muted);
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.5rem;
 }
 .chat-suggestions {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.6rem;
-  max-width: 520px;
+  max-width: 660px;
   width: 100%;
 }
 .chat-suggestion {
@@ -681,6 +681,10 @@ img {
   }
   .chat-welcome-title {
     font-size: 1.75rem;
+  }
+  .chat-suggestions {
+    grid-template-columns: 1fr;
+    max-width: 420px;
   }
 }
 
