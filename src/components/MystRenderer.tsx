@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import rehypeHighlight from "rehype-highlight";
-import "highlight.js/styles/github-dark.css";
+import "highlight.js/styles/tokyo-night-dark.css";
 import type { Components } from "react-markdown";
 
 /** Strip YAML/TOML front-matter from markdown */
@@ -44,7 +44,15 @@ export function MystRenderer({
 
   const components: Components = {
     pre({ children }) {
-      return <div className="doc-pre">{children}</div>;
+      const codeEl = React.Children.toArray(children)[0] as React.ReactElement<{ className?: string }>;
+      const cls = (codeEl?.props?.className as string) ?? '';
+      const langMatch = cls.match(/language-(\w+)/);
+      const lang = langMatch ? langMatch[1] : '';
+      return (
+        <div className="doc-pre" data-lang={lang || undefined}>
+          {children}
+        </div>
+      );
     },
     code({ className, children }) {
       if (className?.includes("hljs") || className?.startsWith("language-")) {

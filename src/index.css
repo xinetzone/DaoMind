@@ -3,7 +3,7 @@
    道家哲学色彩：无名（深靛蓝）+ 有名（鼠尾草绿）
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* ─── Tokens ─────────────────────────────────────────────── */
 :root {
@@ -36,6 +36,8 @@
   --shadow-glow:0 0 32px rgba(59,78,172,.25);
 
   --transition: all .25s cubic-bezier(.4,0,.2,1);
+
+  --code-font: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   --nav-h: 64px;
 }
@@ -1128,40 +1130,42 @@ footer a:hover { color: var(--primary-light); }
 
 /* Inline code */
 .doc-inline-code {
-  font-family: 'Courier New', monospace;
+  font-family: var(--code-font);
   font-size: 0.85em;
-  color: var(--primary-light);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: 0.1em 0.45em;
+  color: #7ee787;
+  background: rgba(126, 231, 135, 0.1);
+  border: 1px solid rgba(126, 231, 135, 0.2);
+  padding: 0.15em 0.5em;
   border-radius: 4px;
 }
 
 /* Block code */
 .doc-pre {
   position: relative;
-  background: #0f1117;
+  background: #1a1b26;
   border-radius: var(--radius);
-  overflow-x: auto;
+  overflow: hidden;
   margin: 1.25rem 0;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
-.doc-pre::before {
-  content: '';
-  display: block;
-  height: 32px;
-  background: #1a1d2e;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  border-radius: var(--radius) var(--radius) 0 0;
-  background-image: radial-gradient(circle at 14px 50%, #ff5f57 5px, transparent 5px),
-                    radial-gradient(circle at 30px 50%, #ffbd2e 5px, transparent 5px),
-                    radial-gradient(circle at 46px 50%, #28c940 5px, transparent 5px);
+/* Language label — top-right, via data-lang attribute */
+.doc-pre[data-lang]::after {
+  content: attr(data-lang);
+  position: absolute;
+  top: 0.65rem;
+  right: 1rem;
+  font-size: 0.72rem;
+  font-family: var(--code-font);
+  color: rgba(180, 190, 220, 0.45);
+  letter-spacing: 0.05em;
+  pointer-events: none;
+  z-index: 1;
 }
 .doc-code-block {
   display: block;
-  padding: 1.1rem 1.5rem 1.25rem;
-  font-family: 'Courier New', monospace;
-  font-size: 0.85rem;
+  padding: 1.35rem 1.5rem 1.35rem;
+  font-family: var(--code-font);
+  font-size: 0.855rem;
   line-height: 1.7;
   overflow-x: auto;
   background: transparent !important;
