@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../hooks/useAIChat'
+import React from 'react'
 import { Activity, Pause, Play, RefreshCw, Thermometer, Wind, Gauge, Bell, Stethoscope } from 'lucide-react'
+import { useEdgeFetch } from '../hooks/useEdgeFetch'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type QiChannel   = 'tian' | 'di' | 'ren' | 'chong'
@@ -317,49 +317,10 @@ function DiagPanel({ data }: { data: QiDiagnosis[] }): React.JSX.Element {
 
 // ── MonitorPage ───────────────────────────────────────────────────────────────
 export function MonitorPage(): React.JSX.Element {
-  const [snapshot, setSnapshot] = useState<MonitorSnapshot | null>(null)
-  const [loading,  setLoading]  = useState(true)
-  const [error,    setError]    = useState<string | null>(null)
-  const [paused,   setPaused]   = useState(false)
-  const [lastTick, setLastTick] = useState(0)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const { data: snapshot, loading, error, paused, lastFetchAt, setPaused, refresh } =
+    useEdgeFetch<MonitorSnapshot>('dao-monitor', 5000)
 
-  const fetchSnapshot = useCallback(async (): Promise<void> => {
-    try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/dao-monitor`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'apikey': SUPABASE_ANON_KEY,
-        },
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json() as MonitorSnapshot
-      setSnapshot(data)
-      setLastTick(Date.now())
-      setError(null)
-    } catch (e) {
-      setError(String(e))
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  // Initial fetch + auto-refresh every 5s
-  useEffect(() => {
-    void fetchSnapshot()
-  }, [fetchSnapshot])
-
-  useEffect(() => {
-    if (paused) {
-      if (timerRef.current) clearInterval(timerRef.current)
-    } else {
-      timerRef.current = setInterval(() => void fetchSnapshot(), 5000)
-    }
-    return (): void => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [paused, fetchSnapshot])
-
-  const tickAge = lastTick ? Math.round((Date.now() - lastTick) / 1000) : null
+  const tickAge = lastFetchAt ? Math.round((Date.now() - lastFetchAt) / 1000) : null
 
   return (
     <div className="monitor-page">
@@ -373,12 +334,12 @@ export function MonitorPage(): React.JSX.Element {
           )}
         </div>
         <div className="mon-topbar-right">
-          <button className="mon-ctrl-btn" onClick={() => void fetchSnapshot()} title="立即刷新">
+          <button className="mon-ctrl-btn" onClick={refresh} title="立即刷新">
             <RefreshCw size={13} />
           </button>
           <button
             className={`mon-ctrl-btn ${paused ? 'active' : ''}`}
-            onClick={() => setPaused(p => !p)}
+            onClick={() => setPaused(!paused)}
             title={paused ? '继续自动刷新' : '暂停自动刷新'}
           >
             {paused ? <Play size={13} /> : <Pause size={13} />}

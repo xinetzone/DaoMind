@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React from 'react'
 import {
   RefreshCw, Pause, Play, TrendingUp, TrendingDown, Minus, HelpCircle,
   Layers, Cpu, AppWindow, Box, Zap, Activity, GitBranch,
 } from 'lucide-react'
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../hooks/useAIChat'
+import { useEdgeFetch } from '../hooks/useEdgeFetch'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type HealthTrend = 'improving' | 'stable' | 'degrading' | 'unknown'
@@ -168,39 +168,8 @@ function QiChannelRow({ name, label, count, max, cls }: {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export function CollectivePage(): React.JSX.Element {
-  const [snap, setSnap]       = useState<CollectiveSnapshot | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [paused, setPaused]   = useState(false)
-  const [error, setError]     = useState<string | null>(null)
-  const timerRef              = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  const fetchSnap = useCallback(async (): Promise<void> => {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/dao-collective`, {
-        headers: {
-          apikey:        SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data: CollectiveSnapshot = await res.json() as CollectiveSnapshot
-      setSnap(data)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '请求失败')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect((): (() => void) => {
-    void fetchSnap()
-    if (!paused) {
-      timerRef.current = setInterval(() => { void fetchSnap() }, 10000)
-    }
-    return (): void => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [paused, fetchSnap])
+  const { data: snap, loading, error, paused, setPaused, refresh } =
+    useEdgeFetch<CollectiveSnapshot>('dao-collective', 10000)
 
   if (!snap && loading) {
     return (
@@ -215,7 +184,7 @@ export function CollectivePage(): React.JSX.Element {
     return (
       <div className="collective-layout collective-error">
         <span>连接失败：{error}</span>
-        <button className="coll-btn" onClick={() => { void fetchSnap() }}>重试</button>
+        <button className="coll-btn" onClick={refresh}>重试</button>
       </div>
     )
   }
@@ -254,14 +223,14 @@ export function CollectivePage(): React.JSX.Element {
             <button
               className="coll-icon-btn"
               title={paused ? '恢复自动刷新' : '暂停自动刷新'}
-              onClick={() => setPaused((p: boolean): boolean => !p)}
+              onClick={() => setPaused(!paused)}
             >
               {paused ? <Play size={14} /> : <Pause size={14} />}
             </button>
             <button
               className={`coll-icon-btn ${loading ? 'spinning' : ''}`}
               title="立即刷新"
-              onClick={() => { void fetchSnap() }}
+              onClick={refresh}
             >
               <RefreshCw size={14} />
             </button>
