@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { Send, Square, RotateCcw, MessageCircle, X, History } from 'lucide-react'
+import { Send, Square, RotateCcw, MessageCircle, X, History, Download } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -10,6 +10,7 @@ import { useFeedback } from '../hooks/useFeedback'
 import { SessionSidebar } from '../components/SessionSidebar'
 import { MessageFeedback } from '../components/MessageFeedback'
 import { DaoLogo } from '../components/DaoLogo'
+import { downloadMarkdown } from '../utils/exportChat'
 import type { Message } from '../hooks/useAIChat'
 
 const SUGGESTIONS = [
@@ -57,6 +58,17 @@ export function ChatPage(): React.JSX.Element {
     createSession()
     setMessages([])
     setInput('')
+  }
+
+  // Export current session as Markdown
+  const handleExport = (): void => {
+    if (!currentSessionId) return
+    downloadMarkdown({
+      sessionId: currentSessionId,
+      sessionTitle: currentSession?.title ?? '道衍对话',
+      messages,
+      getFeedback,
+    })
   }
 
   // Pre-warm the Edge Function on mount
@@ -155,10 +167,16 @@ export function ChatPage(): React.JSX.Element {
           <span className="chat-subheader-name">道衍 AI</span>
           <span className="chat-model-tag">GLM 5</span>
           {messages.length > 0 && (
-            <button className="chat-icon-btn" onClick={handleNewChat} title="新对话">
-              <RotateCcw size={14} />
-              <span>新对话</span>
-            </button>
+            <>
+              <button className="chat-icon-btn" onClick={handleNewChat} title="新对话">
+                <RotateCcw size={14} />
+                <span>新对话</span>
+              </button>
+              <button className="chat-icon-btn" onClick={handleExport} title="导出 Markdown">
+                <Download size={14} />
+                <span>导出</span>
+              </button>
+            </>
           )}
         </div>
 
