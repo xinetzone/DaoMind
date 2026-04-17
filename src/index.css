@@ -1270,6 +1270,75 @@ img {
   color: var(--text-muted);
   line-height: 1.55;
 }
+
+/* ── Structured detail body ── */
+.audit-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+}
+.audit-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.audit-detail-summary {
+  color: var(--text);
+  font-size: 0.78rem;
+  margin: 0;
+  line-height: 1.45;
+}
+.audit-detail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.audit-detail-bullet {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  padding-left: 0.85rem;
+  position: relative;
+}
+.audit-detail-bullet::before {
+  content: '\00b7';
+  position: absolute;
+  left: 0.1rem;
+  color: var(--secondary);
+  font-weight: 900;
+  font-size: 1.1em;
+}
+.audit-check {
+  color: var(--secondary);
+  font-weight: 700;
+  font-size: 0.82em;
+}
+.audit-detail-citation {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--primary);
+  background: var(--primary-glow);
+  border-left: 2px solid var(--primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 0.3rem 0.55rem;
+  line-height: 1.45;
+  font-style: italic;
+}
+.audit-citation-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  opacity: 0.65;
+}
+
 .audit-card-rec {
   display: flex;
   align-items: flex-start;

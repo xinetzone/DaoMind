@@ -1,5 +1,5 @@
 import React from 'react'
-import { CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react'
+import { CheckCircle, XCircle, AlertTriangle, Info, BookOpen } from 'lucide-react'
 import verifyResults from '../data/verify-results.json'
 
 // Inline types (matches @daomind/verify shapes, no cross-package import needed)
@@ -94,6 +94,67 @@ function ScoreBar({ score }: { score: number }): React.JSX.Element {
   )
 }
 
+// Render a text string with each checkmark highlighted in green
+function renderWithChecks(text: string): React.ReactNode[] {
+  const parts = text.split('\u2713')
+  return parts.flatMap((part, i) =>
+    i === 0
+      ? [<React.Fragment key={i}>{part}</React.Fragment>]
+      : [<span key={`c${i}`} className="audit-check">&#x2713;</span>, <React.Fragment key={`t${i}`}>{part}</React.Fragment>]
+  )
+}
+
+// Structured detail renderer.
+// details format uses \n\n between sections and '  · ' bullet prefix.
+// Citation sections start with '帛书依据'
+function DetailBody({ text }: { text: string }): React.JSX.Element {
+  const sections = text.split('\n\n')
+
+  return (
+    <div className="audit-detail-body">
+      {sections.map((section, si) => {
+        const trimmed = section.trim()
+
+        // Citation block
+        if (trimmed.startsWith('\u5e1b\u4e66\u4f9d\u636e')) {
+          const cite = trimmed.replace(/^\u5e1b\u4e66\u4f9d\u636e[\uff1a:]\s*/, '')
+          return (
+            <div key={si} className="audit-detail-citation">
+              <BookOpen size={11} className="audit-citation-icon" />
+              <span>{cite}</span>
+            </div>
+          )
+        }
+
+        // Regular section: first line = summary, remaining lines with · = bullets
+        const lines = section.split('\n')
+        const summaryLine = lines[0].trim()
+        const bulletLines = lines.slice(1).filter(l => l.trim().startsWith('\u00b7'))
+
+        return (
+          <div key={si} className="audit-detail-section">
+            {summaryLine && (
+              <p className="audit-detail-summary">{renderWithChecks(summaryLine)}</p>
+            )}
+            {bulletLines.length > 0 && (
+              <ul className="audit-detail-list">
+                {bulletLines.map((line, li) => {
+                  const content = line.replace(/^\s*\u00b7\s*/, '').trim()
+                  return (
+                    <li key={li} className="audit-detail-bullet">
+                      {renderWithChecks(content)}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function ResultCard({ result }: { result: VerifyResult }): React.JSX.Element {
   return (
     <div className={`audit-card ${result.passed ? 'passed' : 'failed'}`}>
@@ -109,7 +170,7 @@ function ResultCard({ result }: { result: VerifyResult }): React.JSX.Element {
         <span className="audit-card-score">{result.score}</span>
       </div>
       <ScoreBar score={result.score} />
-      <p className="audit-card-detail">{result.details}</p>
+      <DetailBody text={result.details} />
       {result.recommendation && (
         <p className="audit-card-rec">
           <Info size={11} />
@@ -126,7 +187,7 @@ export function AuditPage(): React.JSX.Element {
 
   return (
     <div className="audit-layout">
-      {/* ── 顶部总览 ── */}
+      {/* top overview */}
       <div className="audit-overview">
         <div className="audit-overview-left">
           <ScoreRing score={report.overallScore} />
@@ -169,7 +230,7 @@ export function AuditPage(): React.JSX.Element {
         </div>
       </div>
 
-      {/* ── 警告 ── */}
+      {/* warnings */}
       {report.warnings.length > 0 && (
         <div className="audit-warnings">
           {report.warnings.map((w, i) => (
@@ -181,7 +242,7 @@ export function AuditPage(): React.JSX.Element {
         </div>
       )}
 
-      {/* ── 六项检验卡片 ── */}
+      {/* six check cards */}
       <div className="audit-cards">
         {report.results.map((r) => (
           <ResultCard key={r.category} result={r} />
