@@ -18,7 +18,16 @@ Deno.serve(async (req) => {
     const AI_API_TOKEN = Deno.env.get("AI_API_TOKEN_8c107efce1b0");
     if (!AI_API_TOKEN) throw new Error("AI_API_TOKEN is not configured");
 
-    const { messages } = await req.json();
+    const body = await req.json();
+
+    // Ping handler — pre-warm the Deno container without calling AI API
+    if (body.ping === true) {
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { messages } = body;
 
     const response = await fetch("https://api.enter.pro/code/api/v1/ai/messages", {
       method: "POST",

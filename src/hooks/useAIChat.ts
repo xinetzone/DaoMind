@@ -7,8 +7,8 @@ export interface Message {
   isStreaming?: boolean;
 }
 
-const SUPABASE_URL = "https://spb-t4n12wh910jns6hr.supabase.opentrust.net";
-const SUPABASE_ANON_KEY =
+export const SUPABASE_URL = "https://spb-t4n12wh910jns6hr.supabase.opentrust.net";
+export const SUPABASE_ANON_KEY =
   "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYW5vbiIsInJlZiI6InNwYi10NG4xMndoOTEwam5zNmhyIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NzYxODE0OTUsImV4cCI6MjA5MTc1NzQ5NX0.XQ9qSuQ43PTFm5bQ-UZVuYF8ZctY7pKJUUCM5zpfuwk";
 
 const FALLBACK_MESSAGES: Record<string, string> = {

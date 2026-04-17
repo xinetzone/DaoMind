@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { Send, Square, RotateCcw, MessageCircle, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useAIChat } from "../hooks/useAIChat";
+import { useAIChat, SUPABASE_URL, SUPABASE_ANON_KEY } from "../hooks/useAIChat";
 import { DaoLogo } from "../components/DaoLogo";
 
 const SUGGESTIONS = [
@@ -19,6 +19,21 @@ export function ChatPage(): React.JSX.Element {
   const [input, setInput] = React.useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Pre-warm the Edge Function on mount to eliminate cold-start delay
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`${SUPABASE_URL}/functions/v1/ai-chat-8c107efce1b0`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ ping: true }),
+      signal: controller.signal,
+    }).catch(() => {}); // fire-and-forget, ignore all errors
+    return (): void => { controller.abort(); };
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
